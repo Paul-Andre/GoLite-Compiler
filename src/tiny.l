@@ -14,12 +14,10 @@ DIGIT [0-9]
 "/" return '/';
 "=" return '=';
 "(" return '(';
-")" return '(';
-
-"==" return tASSIGN;
+")" return ')';
 
 0|[1-9][0-9]* {
-  return tINT;
+  return 1200;
 }
 
 0[0-9]+ {
@@ -29,7 +27,7 @@ DIGIT [0-9]
 
 
 (0|[1-9][0-9]*)\.[0-9]+ {
-  return tFLOAT_LIT;
+  return 1201;
 }
 
 [0-9]+\. {
@@ -50,7 +48,7 @@ DIGIT [0-9]
 
 
 [a-zA-Z_]+[a-zA-Z_0-9]* {
-  return tIDENT;
+  return 1202;
 }
 
 [0-9]+[a-zA-Z_]+[a-zA-Z_0-9]* {
@@ -59,10 +57,17 @@ DIGIT [0-9]
 }
 
 
+
 .       {
   fprintf(stderr, "Error: (line %d) unexpected character `%s`\n", yylineno, yytext);
   exit(1);
 }
 
 %%
-int main() { printf("%d\n", yylex ()); return 0; }
+int main() {
+  int y;
+  while(y = yylex()) {
+    printf("%d\n", y); return 0;
+  }
+}
+
