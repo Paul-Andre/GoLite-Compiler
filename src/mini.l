@@ -1,5 +1,8 @@
 %{
-#include <stdio.h>
+#include "parser.tab.h"
+
+// Stores the line number with each token sent to bison
+#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
 %}
 
 STRING_CHAR [ a-zA-Z0-9~@#$%^&*\-+/`<>=_|'.,;:!?{}[\]()]
@@ -10,8 +13,9 @@ ESCAPE_SEQUENCE [abfnrtv"\\]
 %%
 [\r\n]+
 [ \t]+
+\\\\.*$
 
-"+"|"-"|"*"|"/"|"="|"("|")"|"{"|"}"|"!" {
+"+"|"-"|"*"|"/"|"="|"("|")"|"{"|"}"|"!"|":"|";" {
   return yytext[0];
 }
 
@@ -20,37 +24,42 @@ ESCAPE_SEQUENCE [abfnrtv"\\]
 "&&" return tAND;
 "||" return tOR;
 
-"var" return tVAR
+"var" return tVAR;
 "float" return tFLOAT;
 "int" return tINT;
 "string" return tSTRING;
 
 "while" return tWHILE;
 "if" return tIF;
+"else" return tELSE;
 "print" return tPRINT;
 "read" return tREAD;
 
-"boolean" return tBOOL
+"boolean" return tBOOL;
 "TRUE" return tTRUE;
 "FALSE" return tFALSE;
 
 
 [a-zA-Z_]+[a-zA-Z_0-9]* {
+  yylval.text = strdup(yytext);
   return tIDENT;
 }
 
 0|[1-9][0-9]* {
+  yylval.text = strdup(yytext);
   return tINTVAL;
 }
 
 (0|[1-9][0-9]*)\.[0-9]+ {
+  yylval.text = strdup(yytext);
   return tFLOATVAL;
 }
 
-\"({STRING_CHAR|\\{ESCAPE_SEQUENCE})*\" {
-  yyvalue.string = strdup(yytext);
-  return tSTRINGVAL
+\"({STRING_CHAR}|\\{ESCAPE_SEQUENCE})*\" {
+  yylval.text = strdup(yytext);
+  return tSTRINGVAL;
 }
+
 
 . {
   fprintf(stderr, "Error: (line %d) unexpected character `%s`\n", yylineno, yytext);
