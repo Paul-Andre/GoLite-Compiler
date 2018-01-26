@@ -2,8 +2,8 @@ CC = gcc
 
 CFLAGS = -Wall
 
-main: lex.yy.c
-	$(CC) main.c -o mini -lfl
+minic: lex.yy.c
+	$(CC) main.c -o minic -lfl
 
 parser.tab.c parser.tab.h: mini.y
 	bison -v --output=parser.tab.h mini.y

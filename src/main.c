@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
         case tFLOATVAL:
         case tSTRING:
         case tIDENT:
-          printf("%s %s\n", yytname[yytranslate[token]], yylval.text);
+          printf("%s( %s )\n", yytname[yytranslate[token]], yylval.text);
           break;
         default:
           printf("%s\n", yytname[yytranslate[token]]);
