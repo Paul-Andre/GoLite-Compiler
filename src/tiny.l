@@ -2,6 +2,11 @@
 #include <stdio.h>
 %}
 DIGIT [0-9]
+// Is tab included?
+STRING_CHAR [ a-zA-Z0-9~@#$%^&*\-+/`<>=_|'.,;:!?{}[\]()]
+ESCAPE_SEQUENCE [abfnrtv"\\]
+STRING_ELEMENT ({STRING_CHAR}|\\ESCAPE_SEQUENCE)
+
 %option yylineno
 
 %%
@@ -57,11 +62,31 @@ DIGIT [0-9]
 }
 
 
+\"{STRING_ELEMENT}*\" {
+  return 213412;
+}
 
-.       {
+\"{STRING_ELEMENT}*(\r|\n|<<EOF>>) {
+  fprintf(stderr, "Error: (line %d) unclosed string\n", yylineno);
+  exit(1);
+}
+
+\"{STRING_ELEMENT}*\\ {
+  fprintf(stderr, "Error: (line %d) unrecognized espace sequence in string\n", yylineno);
+  exit(1);
+}
+
+\"{STRING_ELEMENT}*. {
+  fprintf(stderr, "Error: (line %d) unrecognized character in string\n", yylineno);
+  exit(1);
+}
+
+. {
   fprintf(stderr, "Error: (line %d) unexpected character `%s`\n", yylineno, yytext);
   exit(1);
 }
+
+
 
 %%
 int main() {
