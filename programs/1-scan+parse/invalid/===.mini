@@ -1,0 +1,12 @@
+var a: int = 0;
+var b: int = 0;
+
+read a;
+read b;
+
+if a === b {
+  print "a is super equal to b";
+}
+else {
+  print "a is not super equal to b";
+}

@@ -1,0 +1,29 @@
+// This program writes out the given number in binary
+var number: int = 0;
+var tmp: int = 0;
+var resulting_string: string = "";
+
+print "Please enter a positive number\n";
+read number;
+
+if number == 0 {
+  resulting_string = "0";
+}
+else {
+  while number != 0 {
+    tmp = number / 2;
+    // Check if number is divisable by 2
+    // I assume here that division truncates ints
+    if tmp*2 == number {
+      resulting_string = "0" + resulting_string;
+    }
+    else {
+      resulting_string = "1" + resulting_string;
+    }
+    number = tmp;
+  }
+}
+
+print "Your number in binary is: ";
+print resulting_string;
+print "\n";

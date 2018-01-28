@@ -29,3 +29,4 @@ fi
 # You MUST replace the following command with the command for invoking your compiler
 
 ./src/minic "$1" < "$2"
+#~cs520/minic "$1" < "$2"

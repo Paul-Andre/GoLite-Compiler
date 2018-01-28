@@ -1,0 +1,29 @@
+// This program compares two positive integers
+var a: int = 0;
+var b: int = 0;
+
+print "Please input two positive integers to compare:\n";
+read a;
+read b;
+
+while (a != 0 || b != 0) {
+  a = a - 1;
+  b = b - 1;
+}
+
+
+print "The relation between then is: ";
+read a;
+if (a == 0 && b == 0) {
+  print "=";
+}
+else {
+  if (a == 0) {
+    print "<";
+  }
+  if (b == 0) {
+    print ">";
+  }
+}
+
+print "\n";

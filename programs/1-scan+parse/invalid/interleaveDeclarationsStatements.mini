@@ -1,0 +1,4 @@
+var a: int = 5;
+var b: int = 10;
+read a;
+var c: int = a + b;
