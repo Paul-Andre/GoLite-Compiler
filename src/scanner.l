@@ -18,7 +18,8 @@ int needsSemicolon() {
 %}
 
 STRING_CHAR [ a-zA-Z0-9~@#$%^&*\-+/`<>=_|'.,;:!?{}[\]()]
-ESCAPE_SEQUENCE [abfnrtv"\\]
+RUNE_ESCAPE_SEQUENCE [abfnrtv'\\]
+STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
 
 %option yylineno
 
@@ -73,7 +74,7 @@ ESCAPE_SEQUENCE [abfnrtv"\\]
 
 [a-zA-Z_]+[a-zA-Z_0-9]* {
   yylval.text = strdup(yytext);
-  return tIDENT;
+  return tIDENTIFIER;
 }
 
 0|[1-9][0-9]* {
@@ -81,12 +82,37 @@ ESCAPE_SEQUENCE [abfnrtv"\\]
   return tINTVAL;
 }
 
-(0|[1-9][0-9]*)\.[0-9]+ {
+0[0-7]+ {
+  yylval.text = strdup(yytext);
+  return tINTVAL;
+}
+
+0(x|X)[0-9A-Fa-f]+ {
+  yylval.text = strdup(yytext);
+  return tINTVAL;
+}
+
+[0-9]+\.[0-9]* {
   yylval.text = strdup(yytext);
   return tFLOATVAL;
 }
 
-\"({STRING_CHAR}|\\{ESCAPE_SEQUENCE})*\" {
+\.[0-9]+ {
+  yylval.text = strdup(yytext);
+  return tFLOATVAL;
+}
+
+'[^\\\n']|\\{RUNE_ESCAPE_SEQUENCE}' {
+  yylval.text = strdup(yytext);
+  return tRUNE;
+}
+
+\"([^\"\\\n]|\\{STRING_ESCAPE_SEQUENCE})*\" {
+  yylval.text = strdup(yytext);
+  return tSTRINGVAL;
+}
+
+`[^`]*` {
   yylval.text = strdup(yytext);
   return tSTRINGVAL;
 }
