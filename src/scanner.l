@@ -130,7 +130,7 @@ STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
 
 '[^\\\n']|\\{RUNE_ESCAPE_SEQUENCE}' {
   yylval.text = strdup(yytext);
-  RETURN(tRUNE);
+  RETURN(tRUNEVAL);
 }
 
 \"([^\"\\\n]|\\{STRING_ESCAPE_SEQUENCE})*\" {
