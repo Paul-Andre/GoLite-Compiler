@@ -1,6 +1,18 @@
 %{
 #include "parser.tab.h"
 
+int last_token = -1;
+
+#define RETURN(a) last_token = a; return a;
+
+int needsSemicolon() {
+  return a == tIDENTIFIER
+    || a == tINTVAL || a == tFLOATVAL || a == tRUNEVAL || a == tSTRINGVAL
+    || a == tBREAK || a == tCONTINUE || a == tFALLTHROUGH || a == tRETURN
+    || a == tINC || a == tDEC
+    || a == ')' || a == ']' || a == '}'
+}
+
 // Stores the line number with each token sent to bison
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
 %}

@@ -51,20 +51,52 @@ void yyerror(const char *s) {
 %token tINT;
 %token tSTRING;
 
-%token tWHILE;
+%token tFOR
 %token tIF;
 %token tELSE;
-%token tPRINT;
-%token tREAD;
 
-%token tBOOL
-%token tTRUE;
-%token tFALSE;
+
+%token tBREAK;
+%token tCASE;
+%token tCHAN;
+%token tCONST;
+%token tCONTINUE;
+
+%token tDEFAULT;
+%token tDEFER;
+%token tELSE;
+%token tFALLTHROUGH;
+%token tFOR
+
+%token tFUNC;
+%token tGO;
+%token tGOTO;
+%token tIF;
+%token tIMPORT;
+
+%token tINTERFACE;
+%token tMAP;
+%token tPACKAGE;
+%token tRANGE;
+%token tRETURN;
+
+%token tSELECT;
+%token tSTRUCT;
+%token tSWITCH;
+%token tTYPE;
+%token tVAR;
+
+%token tPRINT;
+%token tPRINTLN;
+%token tAPPEND;
+
 
 %token <text> tINTVAL
 %token <text> tFLOATVAL
 %token <text> tSTRINGVAL
-%token <text> tIDENT 
+%token <text> tRUNEVAL
+
+%token <text> tIDENTIFIER
 
 %token UNARY
 
