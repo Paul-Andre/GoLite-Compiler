@@ -10,7 +10,7 @@ int needsSemicolon() {
     || a == tINTVAL || a == tFLOATVAL || a == tRUNEVAL || a == tSTRINGVAL
     || a == tBREAK || a == tCONTINUE || a == tFALLTHROUGH || a == tRETURN
     || a == tINC || a == tDEC
-    || a == ')' || a == ']' || a == '}'
+    || a == ')' || a == ']' || a == '}';
 }
 
 // Stores the line number with each token sent to bison
@@ -27,8 +27,8 @@ ESCAPE_SEQUENCE [abfnrtv"\\]
 [ \t]+
 "//".*$
 
-"+"|"-"|"*"|"/"|"="|"("|")"|"{"|"}"|"!"|":"|";" {
-  return yytext[0];
+"+"|"-"|"*"|"/"|"%"|"&"|"|"|"^"|"<"|">"|"="|"!"|"("|")"|"["|"]"|"{"|"}"|","|"."|";"|":"{
+  RETURN(yytext[0]);
 }
 
 "==" return tEQ;

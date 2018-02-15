@@ -41,19 +41,6 @@ void yyerror(const char *s) {
  * of identifiers separated by spaces.
  */
 
-%token tEQ;
-%token tNEQ;
-%token tAND;
-%token tOR;
-
-%token tVAR
-%token tFLOAT;
-%token tINT;
-%token tSTRING;
-
-%token tFOR
-%token tIF;
-%token tELSE;
 
 
 %token tBREAK;
@@ -89,6 +76,10 @@ void yyerror(const char *s) {
 %token tPRINT;
 %token tPRINTLN;
 %token tAPPEND;
+
+
+%token 
+
 
 
 %token <text> tINTVAL
