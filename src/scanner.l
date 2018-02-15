@@ -6,7 +6,8 @@ int last_token = -1;
 #define RETURN(a) {last_token = a; return a;}
 
 int needsSemicolon() {
-  RETURN(a == tIDENTIFIER
+  int a = last_token;
+  return a == tIDENTIFIER
     || a == tINTVAL || a == tFLOATVAL || a == tRUNEVAL || a == tSTRINGVAL
     || a == tBREAK || a == tCONTINUE || a == tFALLTHROUGH || a == tRETURN
     || a == tINC || a == tDEC
@@ -28,7 +29,7 @@ STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
 [ \t]+
 "//".*$
 
-"+"|"-"|"*"|"/"|"%"|"&"|"|"|"^"|"<"|">"|"="|"!"|"("|")"|"["|"]"|"{"|"}"|","|"."|";"|":"{
+"+"|"-"|"*"|"/"|"%"|"&"|"|"|"^"|"<"|">"|"="|"!"|"("|")"|"["|"]"|"{"|"}"|","|"."|";"|":" {
   RETURN(yytext[0]);
 }
 

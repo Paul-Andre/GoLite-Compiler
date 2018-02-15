@@ -110,6 +110,30 @@ void yyerror(const char *s) {
 %token tDEFINE;
 %token tELLIPSIS;
 
+%token '+'
+%token '-'
+%token '*'
+%token '/'
+%token '%'
+%token '&'
+%token '|'
+%token '^'
+%token '<'
+%token '>'
+%token '='
+%token '!'
+%token '('
+%token ')'
+%token '['
+%token ']'
+%token '{'
+%token '}'
+%token ','
+%token '.'
+%token ';'
+%token ':'
+
+
 %token <text> tINTVAL
 %token <text> tFLOATVAL
 %token <text> tSTRINGVAL
@@ -146,43 +170,7 @@ void yyerror(const char *s) {
  */
 %% 
 
-program : declarations statements
-
-type : tINT | tFLOAT | tSTRING | tBOOL
-
-declarations : 
-           | declaration declarations
-
-declaration : tVAR tIDENT ':' type '=' expr ';'
-
-statements : 
-           | statement statements
-
-
-statement : tREAD tIDENT ';'
-          | tPRINT expr ';'
-          | tIDENT '=' expr ';'
-          | tIF expr '{' statements '}'
-          | tIF expr '{' statements '}' tELSE '{' statements '}'
-          | tWHILE expr '{' statements '}'
-
-expr : tIDENT
-     | tINTVAL
-     | tFLOATVAL
-     | tTRUE
-     | tFALSE
-     | tSTRINGVAL
-     | expr '+' expr
-     | expr '-' expr
-     | expr '*' expr
-     | expr '/' expr
-     | expr tEQ expr
-     | expr tNEQ expr
-     | expr tAND expr
-     | expr tOR expr
-     | '(' expr ')'
-     | '-' expr    %prec UNARY
-     | '!' expr    %prec UNARY
+program : 
 
 %%
 

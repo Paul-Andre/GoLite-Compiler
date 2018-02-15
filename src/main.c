@@ -20,8 +20,9 @@ int main(int argc, char *argv[]) {
       switch(token) {
         case tINTVAL:
         case tFLOATVAL:
-        case tSTRING:
-        case tIDENT:
+        case tRUNEVAL:
+        case tSTRINGVAL:
+        case tIDENTIFIER:
           printf("%s( %s )\n", yytname[yytranslate[token]], yylval.text);
           break;
         default:
