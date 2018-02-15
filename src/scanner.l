@@ -36,20 +36,39 @@ ESCAPE_SEQUENCE [abfnrtv"\\]
 "&&" return tAND;
 "||" return tOR;
 
-"var" return tVAR;
-"float" return tFLOAT;
-"int" return tINT;
-"string" return tSTRING;
+"break" return tBREAK;
+"case" return tCASE;
+"chan" return tCHAN;
+"const" return tCONST;
+"continue" return tCONTINUE;
 
-"while" return tWHILE;
-"if" return tIF;
+"default" return tDEFAULT;
+"defer" return tDEFER;
 "else" return tELSE;
-"print" return tPRINT;
-"read" return tREAD;
+"fallthrough" return tFALLTHROUGH;
+"for" return tFOR;
 
-"boolean" return tBOOL;
-"TRUE" return tTRUE;
-"FALSE" return tFALSE;
+"func" return tFUNC;
+"go" return tGO;
+"goto" return tGOTO;
+"if" return tIF;
+"import" return tIMPORT;
+
+"interface" return tINTERFACE;
+"map" return tMAP;
+"package" return tPACKAGE;
+"range" return tRANGE;
+"return" return tRETURN;
+
+"select" return tSELECT;
+"struct" return tSTRUCT;
+"switch" return tSWITCH;
+"type" return tTYPE;
+"var" return tVAR;
+
+"print" return tPRINT;
+"println" return tPRINTLN;
+"append" return tAPPEND;
 
 
 [a-zA-Z_]+[a-zA-Z_0-9]* {
