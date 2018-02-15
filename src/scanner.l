@@ -3,10 +3,10 @@
 
 int last_token = -1;
 
-#define RETURN(a) {last_token = a; return a;}
+#define RETURN(a) last_token = a; return a;
 
 int needsSemicolon() {
-  RETURN(a == tIDENTIFIER
+  return a == tIDENTIFIER
     || a == tINTVAL || a == tFLOATVAL || a == tRUNEVAL || a == tSTRINGVAL
     || a == tBREAK || a == tCONTINUE || a == tFALLTHROUGH || a == tRETURN
     || a == tINC || a == tDEC
@@ -32,10 +32,36 @@ STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
   RETURN(yytext[0]);
 }
 
-"==" RETURN(tEQ);
-"!=" RETURN(tNEQ);
+"<<" RETURN(tLSHIFT);
+">>" RETURN(tRSHIFT);
+"&^" RETURN(tBWANDNOT);
+
+"+=" RETURN(tPLUSASSIGN);
+"-=" RETURN(tMINUSASSIGN);
+"*=" RETURN(tTIMESASSIGN);
+"/=" RETURN(tDIVASSIGN);
+"%=" RETURN(tREMASSIGN);
+
+"&=" RETURN(tBWANDASSIGN);
+"|=" RETURN(tBWORASSIGN);
+"^=" RETURN(tBWXORASSIGN);
+"<<=" RETURN(tLSHIFTASSIGN);
+">>=" RETURN(tRSHIFTASSIGN);
+"&^=" RETURN(tBWANDNOTASSIGN);
+
+"<-" RETURN(tARROW);
+"--" RETURN(tDEC);
+"++" RETURN(tINC);
+
+"==" RETURN(tEQUAL);
+"!=" RETURN(tNE);
 "&&" RETURN(tAND);
 "||" RETURN(tOR);
+
+"<=" RETURN(tLE);
+">=" RETURN(tGE);
+":=" RETURN(tDEFINE);
+"..." RETURN(tELLIPSIS);
 
 "break" RETURN(tBREAK);
 "case" RETURN(tCASE);

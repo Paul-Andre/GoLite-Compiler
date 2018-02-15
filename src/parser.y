@@ -77,6 +77,7 @@ void yyerror(const char *s) {
 %token tPRINTLN;
 %token tAPPEND;
 
+// Double character operators
 
 %token tLSHIFT;
 %token tRSHIFT;
@@ -87,7 +88,6 @@ void yyerror(const char *s) {
 %token tTIMESASSIGN;
 %token tDIVASSIGN;
 %token tREMASSIGN;
-
 
 %token tBWANDASSIGN;
 %token tBWORASSIGN;
@@ -109,7 +109,6 @@ void yyerror(const char *s) {
 %token tGE;
 %token tDEFINE;
 %token tELLIPSIS;
-
 
 %token <text> tINTVAL
 %token <text> tFLOATVAL
