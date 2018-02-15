@@ -2,13 +2,16 @@ CC = gcc
 
 CFLAGS = -Wall
 
-minic: lex.yy.c
-	$(CC) main.c -o minic -lfl
+golitec: lex.yy.c
+	$(CC) main.c -o golitec -lfl
 
-parser.tab.c parser.tab.h: mini.y
-	bison -v --output=parser.tab.h mini.y
+parser.tab.c parser.tab.h: parser.y
+	bison -v --output=parser.tab.h parser.y
 
-lex.yy.c: mini.l parser.tab.h
-	flex mini.l
+lex.yy.c: scanner.l parser.tab.h
+	flex scanner.l
 clean:
-	rm parser.tab.* lex.yy.*; rm *.o
+	-rm parser.tab.* lex.yy.*;
+	-rm *.o;
+	-rm golitec;
+	-rm parser.output;
