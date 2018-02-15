@@ -78,8 +78,37 @@ void yyerror(const char *s) {
 %token tAPPEND;
 
 
-%token 
+%token tLSHIFT;
+%token tRSHIFT;
+%token tBWANDNOT;
 
+%token tPLUSASSIGN;
+%token tMINUSASSIGN;
+%token tTIMESASSIGN;
+%token tDIVASSIGN;
+%token tREMASSIGN;
+
+
+%token tBWANDASSIGN;
+%token tBWORASSIGN;
+%token tBWXORASSIGN;
+%token tLSHIFTASSIGN;
+%token tRSHIFTASSIGN;
+%token tBWANDNOTASSIGN;
+
+%token tAND;
+%token tOR;
+%token tARROW;
+%token tINC;
+%token tDEC;
+
+%token tEQUAL;
+
+%token tNE;
+%token tLE;
+%token tGE;
+%token tDEFINE;
+%token tELLIPSIS;
 
 
 %token <text> tINTVAL
