@@ -3,10 +3,10 @@
 
 int last_token = -1;
 
-#define RETURN(a) last_token = a; return a;
+#define RETURN(a) {last_token = a; return a;}
 
 int needsSemicolon() {
-  return a == tIDENTIFIER
+  RETURN(a == tIDENTIFIER
     || a == tINTVAL || a == tFLOATVAL || a == tRUNEVAL || a == tSTRINGVAL
     || a == tBREAK || a == tCONTINUE || a == tFALLTHROUGH || a == tRETURN
     || a == tINC || a == tDEC
