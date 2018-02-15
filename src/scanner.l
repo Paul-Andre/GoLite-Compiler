@@ -129,7 +129,7 @@ STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
   RETURN(tFLOATVAL);
 }
 
-'[^\\\n']|\\{RUNE_ESCAPE_SEQUENCE}' {
+'([^\\\n']|\\{RUNE_ESCAPE_SEQUENCE})' {
   yylval.text = strdup(yytext);
   RETURN(tRUNEVAL);
 }
