@@ -18,7 +18,6 @@ int needsSemicolon() {
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
 %}
 
-STRING_CHAR [ a-zA-Z0-9~@#$%^&*\-+/`<>=_|'.,;:!?{}[\]()]
 RUNE_ESCAPE_SEQUENCE [abfnrtv'\\]
 STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
 
