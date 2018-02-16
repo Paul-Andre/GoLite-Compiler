@@ -25,9 +25,17 @@ STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
 %option yylineno
 
 %%
-[\r\n]+
-[ \t]+
+[ \t\r]+
+\n {
+  if (needsSemicolon()) RETURN(';');
+}
 "//".*$
+
+"/*"([^*\n]|(\*+[^*/\n]))*\*+\/  // For a single-line comment do nothing
+"/*"([^*]|(\*+[^*/]))*\*+\/ {
+  if (needsSemicolon()) RETURN(';');
+}
+
 
 "+"|"-"|"*"|"/"|"%"|"&"|"|"|"^"|"<"|">"|"="|"!"|"("|")"|"["|"]"|"{"|"}"|","|"."|";"|":" {
   RETURN(yytext[0]);
