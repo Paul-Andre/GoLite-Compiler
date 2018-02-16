@@ -25,10 +25,20 @@ STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
 
 %%
 [ \t\r]+
+
 \n {
   if (needsSemicolon()) RETURN(';');
 }
-"//".*$
+<<EOF>> {
+  if (needsSemicolon()) {
+    RETURN(';');
+  }
+  else {
+    RETURN(0);
+  }
+}
+
+"//".*
 
 "/*"([^*\n]|(\*+[^*/\n]))*\*+\/  // For a single-line comment do nothing
 "/*"([^*]|(\*+[^*/]))*\*+\/ {
