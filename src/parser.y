@@ -170,7 +170,93 @@ void yyerror(const char *s) {
  */
 %% 
 
-program : 
+program : PackageClause ';' TopLevelDecls
+    ;
+
+PackageClause : tPACKAGE tIDENTIFIER
+    ;
+
+TopLevelDecls : 
+    | TopLevelDecl ';' TopLevelDecls
+    ;
+
+TopLevelDecl : Declaration 
+    | FunctionDecl
+    ;
+
+
+
+Declaration : VarDecl
+    | TypeDecl
+    ;
+
+
+FunctionDecl :
+    ;
+
+
+
+
+VarDecl : tVAR IdentifierList Type
+    | tVAR '(' VarSpecs ')'
+    ;
+
+VarSpecs :
+    | VarSpec ';' VarSpecs
+    ;
+
+VarSpec : IdentifierList Type 
+    | IdentifierList Type '=' ExpressionList
+    | IdentifierList '=' ExpressionList
+    ;
+
+IdentifierList : tIDENTIFIER
+    | tIDENTIFIER ',' IdentifierList
+    ;
+
+ExpressionList : Expression
+    | Expression ',' ExpressionList
+    ;
+
+
+
+
+Type : TypeName
+    | TypeLit
+    | '(' Type ')'
+    ;
+
+TypeName : tIDENTIFIER
+    | QualifiedIdent
+    ;
+
+TypeLit : ArrayType
+    | StructType
+    | FunctionType
+    | SliceType
+    ;
+
+QualifiedIdent :
+    ;
+
+ArrayType :
+    ;
+
+StructType :
+    ;
+
+FunctionType :
+    ;
+
+SliceType :
+    ;
+
+TypeDecl :
+    ;
+
+
+Expression : 
+    ;
 
 %%
 
