@@ -12,7 +12,40 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5bfcb109-c275-4dcd-9139-c98eea8cee7c" name="Default" comment="Add paren to identifier return">
-      <change beforePath="$PROJECT_DIR$/src/parser.y" afterPath="$PROJECT_DIR$/src/parser.y" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/.gitignore" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/2018_group04.cbp" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeCache.txt" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/2018_group04.dir/DependInfo.cmake" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/2018_group04.dir/build.make" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/2018_group04.dir/cmake_clean.cmake" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/2018_group04.dir/depend.make" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/2018_group04.dir/flags.make" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/2018_group04.dir/link.txt" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/2018_group04.dir/progress.make" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CMakeCCompiler.cmake" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CMakeCXXCompiler.cmake" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CMakeDetermineCompilerABI_C.bin" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CMakeDetermineCompilerABI_CXX.bin" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CMakeSystem.cmake" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CompilerIdC/CMakeCCompilerId.c" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CompilerIdC/a.out" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CompilerIdCXX/CMakeCXXCompilerId.cpp" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.9.6/CompilerIdCXX/a.out" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CMakeDirectoryInformation.cmake" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CMakeOutput.log" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Makefile.cmake" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Makefile2" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/TargetDirectories.txt" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-environment.txt" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-log.txt" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/cmake.check_cache" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/feature_tests.bin" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/feature_tests.c" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/feature_tests.cxx" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/progress.marks" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Makefile" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/cmake_install.cmake" afterPath="" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -30,8 +63,8 @@
           <file leaf-file-name="parser.y" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/src/parser.y">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="214">
-                  <caret line="439" column="0" lean-forward="true" selection-start-line="439" selection-start-column="0" selection-end-line="439" selection-end-column="0" />
+                <state relative-caret-position="481">
+                  <caret line="439" column="0" lean-forward="false" selection-start-line="439" selection-start-column="0" selection-end-line="439" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -41,11 +74,31 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-          <file leaf-file-name="scanner.l" pinned="false" current-in-tab="true">
+          <file leaf-file-name="scanner.l" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/src/scanner.l">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="565">
+                <state relative-caret-position="481">
                   <caret line="123" column="29" lean-forward="false" selection-start-line="123" selection-start-column="29" selection-end-line="123" selection-end-column="29" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="CMakeLists.txt" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="0">
+                  <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name=".gitignore" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/.gitignore">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="270">
+                  <caret line="18" column="19" lean-forward="true" selection-start-line="18" selection-start-column="19" selection-end-line="18" selection-end-column="19" />
                   <folding />
                 </state>
               </provider>
@@ -84,6 +137,7 @@
         <option value="$PROJECT_DIR$/programs/1-scan/invalid/invalid-comment1.go" />
         <option value="$PROJECT_DIR$/src/scanner.l" />
         <option value="$PROJECT_DIR$/src/parser.y" />
+        <option value="$PROJECT_DIR$/.gitignore" />
       </list>
     </option>
   </component>
@@ -122,24 +176,6 @@
               <item name="2018_group04" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
               <item name="2018_group04" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="2018_group04" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
-              <item name="2018_group04" type="462c0819:PsiDirectoryNode" />
-              <item name="programs" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="2018_group04" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
-              <item name="2018_group04" type="462c0819:PsiDirectoryNode" />
-              <item name="programs" type="462c0819:PsiDirectoryNode" />
-              <item name="1-scan" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="2018_group04" type="dad4c3:CidrFilesViewHelper$MyProjectTreeStructure$1" />
-              <item name="2018_group04" type="462c0819:PsiDirectoryNode" />
-              <item name="programs" type="462c0819:PsiDirectoryNode" />
-              <item name="1-scan" type="462c0819:PsiDirectoryNode" />
-              <item name="invalid" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
@@ -150,136 +186,6 @@
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
-  </component>
-  <component name="RestoreUpdateTree" date="Moments ago" ActionInfo="_Update">
-    <UpdatedFiles>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Updated from server" />
-        <option name="myStatusName" value="Changed on server" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="CHANGED_ON_SERVER" />
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Updated" />
-          <option name="myStatusName" value="Changed" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="UPDATED" />
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/src/main.c</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/src/parser.y</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/src/scanner.l</PATH>
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Created" />
-          <option name="myStatusName" value="Created" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="CREATED" />
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan/invalid/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan/valid/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan/valid/caves.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan/valid/keywords.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan/valid/literals.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan/valid/operatorsAndPunctuation.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan/valid/vigenere.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/2-parse/invalid/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/2-parse/invalid/var_decl_1.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/2-parse/invalid/var_decl_2.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/2-parse/valid/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/2-parse/valid/var_decl_1.go</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/3-typecheck/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/4-codegen/.gitignore</PATH>
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Deleted" />
-          <option name="myStatusName" value="Deleted" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="true" />
-          <option name="myId" value="REMOVED_FROM_REPOSITORY" />
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan+parse/invalid/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/1-scan+parse/valid/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/2-typecheck/.gitignore</PATH>
-          <PATH vcs="Git" revision="">$PROJECT_DIR$/programs/3-codegen/.gitignore</PATH>
-        </FILE-GROUP>
-        <FILE-GROUP>
-          <option name="myUpdateName" value="Restored" />
-          <option name="myStatusName" value="Will be restored" />
-          <option name="mySupportsDeletion" value="false" />
-          <option name="myCanBeAbsent" value="false" />
-          <option name="myId" value="RESTORED" />
-        </FILE-GROUP>
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Modified" />
-        <option name="myStatusName" value="Modified" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="MODIFIED" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Skipped" />
-        <option name="myStatusName" value="Skipped" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="SKIPPED" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Merged with conflicts" />
-        <option name="myStatusName" value="Will be merged with conflicts" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="MERGED_WITH_CONFLICTS" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Merged with tree conflicts" />
-        <option name="myStatusName" value="Merged with tree conflicts" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="MERGED_WITH_TREE_CONFLICT" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Merged with property conflicts" />
-        <option name="myStatusName" value="Will be merged with property conflicts" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="MERGED_WITH_PROPERTY_CONFLICT" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Merged" />
-        <option name="myStatusName" value="Will be merged" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="MERGED" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Not in repository" />
-        <option name="myStatusName" value="Not in repository" />
-        <option name="mySupportsDeletion" value="true" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="UNKNOWN" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Locally added" />
-        <option name="myStatusName" value="Locally added" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="LOCALLY_ADDED" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Locally removed" />
-        <option name="myStatusName" value="Locally removed" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="LOCALLY_REMOVED" />
-      </FILE-GROUP>
-      <FILE-GROUP>
-        <option name="myUpdateName" value="Switched" />
-        <option name="myStatusName" value="Switched" />
-        <option name="mySupportsDeletion" value="false" />
-        <option name="myCanBeAbsent" value="false" />
-        <option name="myId" value="SWITCHED" />
-      </FILE-GROUP>
-    </UpdatedFiles>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -321,6 +227,7 @@
       <workItem from="1518732986102" duration="888000" />
       <workItem from="1518734546215" duration="2668000" />
       <workItem from="1518910136492" duration="10129000" />
+      <workItem from="1518986347179" duration="286000" />
     </task>
     <task id="LOCAL-00001" summary="Remove unnecessary files">
       <created>1518733298907</created>
@@ -354,7 +261,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="13685000" />
+    <option name="totallyTimeSpent" value="13971000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -364,12 +271,12 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3276923" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28533334" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28533334" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -399,6 +306,22 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/parser.y">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6585">
+          <caret line="439" column="0" lean-forward="true" selection-start-line="439" selection-start-column="0" selection-end-line="439" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/scanner.l">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/parser.y">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -463,7 +386,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
           <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -475,13 +397,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/programs/2-typecheck/generateNestedIfs.py" />
-    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/ast.hpp" />
     <entry file="file://$PROJECT_DIR$/src/Makefile">
       <provider selected="true" editor-type-id="text-editor">
@@ -517,7 +432,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
           <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -525,21 +439,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="51" lean-forward="false" selection-start-line="0" selection-start-column="51" selection-end-line="0" selection-end-column="51" />
-          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/programs/1-scan/invalid/invalid-string.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/programs/1-scan/invalid/invalid-string.go" />
     <entry file="file://$PROJECT_DIR$/src/scanner.l">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="565">
+        <state relative-caret-position="481">
           <caret line="123" column="29" lean-forward="false" selection-start-line="123" selection-start-column="29" selection-end-line="123" selection-end-column="29" />
           <folding />
         </state>
@@ -547,8 +453,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/parser.y">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="214">
-          <caret line="439" column="0" lean-forward="true" selection-start-line="439" selection-start-column="0" selection-end-line="439" selection-end-column="0" />
+        <state relative-caret-position="481">
+          <caret line="439" column="0" lean-forward="false" selection-start-line="439" selection-start-column="0" selection-end-line="439" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="18" column="19" lean-forward="true" selection-start-line="18" selection-start-column="19" selection-end-line="18" selection-end-column="19" />
           <folding />
         </state>
       </provider>
