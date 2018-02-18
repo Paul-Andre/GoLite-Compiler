@@ -115,6 +115,14 @@ STRING_ESCAPE_SEQUENCE [abfnrtv"\\]
 "println" RETURN(tPRINTLN);
 "append" RETURN(tAPPEND);
 
+// TYPES
+
+"int" RETURN(tINTTYPE);
+"float64" RETURN(tFLOATTYPE);
+"bool" RETURN(tBOOLTYPE);
+"rune" RETURN(tRUNETYPE);
+"string" RETURN(tSTRINGTYPE);
+
 
 [a-zA-Z_]+[a-zA-Z_0-9]* {
   yylval.text = strdup(yytext);

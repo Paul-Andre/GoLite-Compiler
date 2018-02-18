@@ -168,10 +168,17 @@ void yyerror(const char *s) {
 /* The second section of a bison file contains the productions. Note that rules with the
  * same LHS may be joined together and separated with a pipe.
  */
-%% 
+%%
+
+// FILE STRUCTURE
+// =============================
 
 program : PackageClause ';' TopLevelDecls
     ;
+
+// PRIMARY PROGRAM STRUCTURE
+// =============================
+
 
 PackageClause : tPACKAGE tIDENTIFIER
     ;
@@ -180,26 +187,95 @@ TopLevelDecls :
     | TopLevelDecl ';' TopLevelDecls
     ;
 
+
+// DECLARATION STRUCTURE
+// ============================
+
 TopLevelDecl : Declaration 
     | FunctionDecl
     ;
-
-
 
 Declaration : VarDecl
     | TypeDecl
     ;
 
 
-FunctionDecl :
-    ;
-
-
+// DECLARATIONS
+// ============================
 
 
 VarDecl : tVAR IdentifierList Type
     | tVAR '(' VarSpecs ')'
+    | ShortVarDecl
     ;
+
+ShortVarDecl : tVAR IdentifierList tDEFINE ExpressionList
+    ;
+
+FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
+    ;
+
+
+// FUNCTION DECLARATION HELPERS
+// ============================
+
+FuncSignature: FuncParameters FuncResult
+    ;
+
+FuncParameters: "("  FuncParameterList  ")"
+    ;
+
+FuncResult:
+    | Type
+
+FuncParameterList: FuncParameterDecl
+    | FuncParameterDecl "," FuncParameterDecl
+    ;
+
+FuncParameterDecl: IdentifierList
+    | IdentifierList Type
+    | tELLIPSIS Type
+
+
+
+// TYPE STRUCTURE
+// ============================
+
+Type : TypeName
+    | TypeLit
+    | '(' Type ')'
+    ;
+
+// TODO: DO WE NEED QUALIFIED IDENTIFIER ..?
+
+TypeName : tIDENTIFIER
+    | QualifiedIdent
+    ;
+
+TypeLit : BasicType
+    | ArrayType
+    | StructType
+    | FunctionType
+    | SliceType
+    ;
+
+
+// TYPES
+// ============================
+
+BasicType: 
+
+
+
+Block : "{" StatementList "}"
+    ;
+
+StatementList = Statement ";"
+
+
+
+
+
 
 VarSpecs :
     | VarSpec ';' VarSpecs
@@ -221,20 +297,6 @@ ExpressionList : Expression
 
 
 
-Type : TypeName
-    | TypeLit
-    | '(' Type ')'
-    ;
-
-TypeName : tIDENTIFIER
-    | QualifiedIdent
-    ;
-
-TypeLit : ArrayType
-    | StructType
-    | FunctionType
-    | SliceType
-    ;
 
 QualifiedIdent :
     ;
