@@ -216,7 +216,28 @@ FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
     ;
 
 
-// FUNCTION DECLARATION HELPERS
+// VARIABLE DECLARATION SUBGROUPS
+// ===========================
+
+VarSpecs :
+    | VarSpec ';' VarSpecs
+    ;
+
+VarSpec : IdentifierList Type
+    | IdentifierList Type '=' ExpressionList
+    | IdentifierList '=' ExpressionList
+    ;
+
+IdentifierList : tIDENTIFIER
+    | tIDENTIFIER ',' IdentifierList
+    ;
+
+ExpressionList : Expression
+    | Expression ',' ExpressionList
+    ;
+
+
+// FUNCTION DECLARATION SUBGROUPS
 // ============================
 
 FuncSignature: FuncParameters FuncResult
@@ -246,7 +267,7 @@ Type : TypeName
     | '(' Type ')'
     ;
 
-// TODO: DO WE NEED QUALIFIED IDENTIFIER ..?
+// TODO: DO WE NEED QUALIFIED IDENTIFIER SINCE WE AREN'T DEALING WITH IMPORTS..?
 
 TypeName : tIDENTIFIER
     | QualifiedIdent
@@ -263,36 +284,50 @@ TypeLit : BasicType
 // TYPES
 // ============================
 
-BasicType: 
+BasicType: tINTTYPE
+    | tFLOATTYPE
+    | tBOOLTYPE
+    | tRUNETYPE
+    | tSTRINGTYPE
 
+ArrayType : "[" Expression "]" Type
+    ;
 
+StructType : "struct" "{"  FieldDecl ";"  "}"
+    ;
+
+FunctionType :
+    ;
+
+SliceType : "[" "]" Type
+    ;
 
 Block : "{" StatementList "}"
     ;
 
 StatementList = Statement ";"
-
-
-
-
-
-
-VarSpecs :
-    | VarSpec ';' VarSpecs
     ;
 
-VarSpec : IdentifierList Type 
-    | IdentifierList Type '=' ExpressionList
-    | IdentifierList '=' ExpressionList
+
+// STRUCT TYPE SUBGROUPS
+// ============================
+
+FieldDecl: IdentifierList Type Tag
+    | EmbeddedField Tag
     ;
 
-IdentifierList : tIDENTIFIER
-    | tIDENTIFIER ',' IdentifierList
+EmbeddedField: "*"  TypeName
+    | TypeName
     ;
 
-ExpressionList : Expression
-    | Expression ',' ExpressionList
+Tag:
+    | tStringVal
     ;
+
+
+
+
+
 
 
 
@@ -301,17 +336,7 @@ ExpressionList : Expression
 QualifiedIdent :
     ;
 
-ArrayType :
-    ;
 
-StructType :
-    ;
-
-FunctionType :
-    ;
-
-SliceType :
-    ;
 
 TypeDecl :
     ;
