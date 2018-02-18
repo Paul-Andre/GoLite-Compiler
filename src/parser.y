@@ -259,6 +259,7 @@ FuncParameterDecl: IdentifierList
 
 
 
+
 // TYPE STRUCTURE
 // ============================
 
@@ -268,7 +269,6 @@ Type : TypeName
     ;
 
 // TODO: DO WE NEED QUALIFIED IDENTIFIER SINCE WE AREN'T DEALING WITH IMPORTS..?
-
 TypeName : tIDENTIFIER
     | QualifiedIdent
     ;
@@ -296,17 +296,13 @@ ArrayType : "[" Expression "]" Type
 StructType : "struct" "{"  FieldDecl ";"  "}"
     ;
 
+// TODO
 FunctionType :
     ;
 
 SliceType : "[" "]" Type
     ;
 
-Block : "{" StatementList "}"
-    ;
-
-StatementList = Statement ";"
-    ;
 
 
 // STRUCT TYPE SUBGROUPS
@@ -325,25 +321,131 @@ Tag:
     ;
 
 
+// STATEMENT STRUCTURE
+// ============================
 
+Statement:
+    | Block
+    | ExpressionStmt
+    | AssignmentStmt
+    | Declaration
+    | IncDecStmt
+    | PrintStmt
+    | PrintlnStmt
+    | ReturnStmt
+    | IfStmt
+    | ForStmt
+    | SwitchStmt
+    | BreakStmt
+    | ContinueStmt
+    ;
 
-
-
-
-
-
-
-QualifiedIdent :
+SimpleStmt:
+    | EmptyStmt
+    | ExpressionStmt
+    | SendStmt
+    | IncDecStmt
+    | Assignment
+    | ShortVarDecl
     ;
 
 
+// STATEMENTS
+// ============================
 
-TypeDecl :
+Block : "{" StatementList "}"
+    ;
+
+ExpressionStmt : Expression
+    ;
+
+AssignmentStmt: ExpressionList assign_op ExpressionList
+
+IncDecStmt: Expression tINC
+    | Expression tDEC
+    ;
+
+PrintStmt: tPRINT "(" ExpressionList ")"
+    ;
+
+PrintlnStmt: tPRINTLN "(" ExpressionList ")"
+    ;
+
+ReturnStmt: tRETURN ExpressionList
+    ;
+
+IfStmt: tIF SimpleStmt Expression Block ElseStmt
+    ;
+
+ElseStmt:
+    | IfStmt
+    | Block
+    ;
+
+SwitchStmt: tSWITCH SimpleStmt Expression "{" CaseClause "}"
+    ;
+
+ForStmt: tFOR Block
+    | tFOR Expression Block
+    | tFOR ForClause Block
+    ;
+
+BreakStmt: tBREAK
+    | tBREAK tIDENTIFIER
+    ;
+
+ContinueStmt: tCONTINUE
+    | tCONTINUE tIDENTIFIER
     ;
 
 
-Expression : 
+// STATEMENT SUBGROUPS
+// ============================
+
+StatementList:
+    Statement ";" Statement
     ;
+
+assign_op:  add_op "="
+    | mul_op ] "="
+    ;
+
+add_op: "+"
+    | "-"
+    | "|"
+    | "^"
+    ;
+
+mul_op: "*"
+    | "/"
+    | "%"
+    | tLSHIFT
+    | tRSHIFT
+    | "&"
+    | tBWANDNOT
+    ;
+
+CaseClause: SwitchCase ":" StatementList
+
+SwitchCase: tCASE ExpressionList
+    | tCASE tDEFAULT
+    ;
+
+ForClause = SimpleStmt ";" Expression ";" SimpleStmt
+
+
+// EXPRESSIONS
+// ============================
+
+
+
+
+// EXPRESSION SUBGROUP
+// ============================
+
+ExpressionList:
+    | Expression
+    | "," Expression
 
 %%
 

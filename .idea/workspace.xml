@@ -12,9 +12,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5bfcb109-c275-4dcd-9139-c98eea8cee7c" name="Default" comment="Add paren to identifier return">
-      <change beforePath="" afterPath="$PROJECT_DIR$/.idea/markdown-exported-files.xml" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/.idea/markdown-navigator.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/src/parser.y" afterPath="$PROJECT_DIR$/src/parser.y" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -33,8 +30,8 @@
           <file leaf-file-name="parser.y" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/src/parser.y">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-1058">
-                  <caret line="224" column="0" lean-forward="true" selection-start-line="224" selection-start-column="0" selection-end-line="224" selection-end-column="0" />
+                <state relative-caret-position="214">
+                  <caret line="439" column="0" lean-forward="true" selection-start-line="439" selection-start-column="0" selection-end-line="439" selection-end-column="0" />
                   <folding />
                 </state>
               </provider>
@@ -47,7 +44,7 @@
           <file leaf-file-name="scanner.l" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/src/scanner.l">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-431">
+                <state relative-caret-position="565">
                   <caret line="123" column="29" lean-forward="false" selection-start-line="123" selection-start-column="29" selection-end-line="123" selection-end-column="29" />
                   <folding />
                 </state>
@@ -323,7 +320,7 @@
       <updated>1518732982028</updated>
       <workItem from="1518732986102" duration="888000" />
       <workItem from="1518734546215" duration="2668000" />
-      <workItem from="1518910136492" duration="5530000" />
+      <workItem from="1518910136492" duration="10129000" />
     </task>
     <task id="LOCAL-00001" summary="Remove unnecessary files">
       <created>1518733298907</created>
@@ -357,7 +354,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="9086000" />
+    <option name="totallyTimeSpent" value="13685000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -542,7 +539,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/scanner.l">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-431">
+        <state relative-caret-position="565">
           <caret line="123" column="29" lean-forward="false" selection-start-line="123" selection-start-column="29" selection-end-line="123" selection-end-column="29" />
           <folding />
         </state>
@@ -550,8 +547,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/parser.y">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1058">
-          <caret line="224" column="0" lean-forward="true" selection-start-line="224" selection-start-column="0" selection-end-line="224" selection-end-column="0" />
+        <state relative-caret-position="214">
+          <caret line="439" column="0" lean-forward="true" selection-start-line="439" selection-start-column="0" selection-end-line="439" selection-end-column="0" />
           <folding />
         </state>
       </provider>
