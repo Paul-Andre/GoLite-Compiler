@@ -191,23 +191,18 @@ TopLevelDecls :
 // DECLARATION STRUCTURE
 // ============================
 
+Declaration : TypeDecl
+    | VarDecl
+    ;
+
 TopLevelDecl : Declaration 
     | FunctionDecl
     ;
 
-Declaration : VarDecl
-    | TypeDecl
-    ;
 
 
 // DECLARATIONS
 // ============================
-
-
-VarDecl : tVAR IdentifierList Type
-    | tVAR '(' VarSpecs ')'
-    | ShortVarDecl
-    ;
 
 ShortVarDecl : tVAR IdentifierList tDEFINE ExpressionList
     ;
@@ -216,8 +211,15 @@ FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
     ;
 
 
-// VARIABLE DECLARATION SUBGROUPS
+// VARIABLE DECLARATION
 // ===========================
+
+// TODO WEED: check that the numbers on each side are the same
+
+VarDecl : tVAR IdentifierList Type
+    | tVAR '(' VarSpecs ')'
+    | ShortVarDecl
+    ;
 
 VarSpecs :
     | VarSpec ';' VarSpecs
@@ -237,7 +239,7 @@ ExpressionList : Expression
     ;
 
 
-// FUNCTION DECLARATION SUBGROUPS
+// FUNCTION DECLARATION
 // ============================
 
 FuncSignature: FuncParameters FuncResult
@@ -267,13 +269,12 @@ Type : TypeName
     | '(' Type ')'
     ;
 
-// TODO: DO WE NEED QUALIFIED IDENTIFIER SINCE WE AREN'T DEALING WITH IMPORTS..?
 TypeName : tIDENTIFIER
     ;
 
 TypeLit : ArrayType
     | StructType
-    | FunctionType
+    /*| FunctionType*/
     | SliceType
     ;
 
@@ -283,7 +284,7 @@ TypeDecl : tTYPE TypeSpec
     | tTYPE '(' TypeSpecs ')'
     ;
 
-TypeSpecs : 
+TypeSpecs : /*empty*/
     | TypeSpec ';' TypeSpecs
     ;
 
@@ -291,6 +292,7 @@ TypeSpec : AliasDecl
     | TypeDef
     ;
 
+// We probably don't need this
 AliasDecl : tIDENTIFIER '=' Type
     ;
 
@@ -298,42 +300,30 @@ TypeDef : tIDENTIFIER Type
     ;
 
 
-// TYPES; Shouldn't basic types be handled by TypeName rule?
+// STRUCT TYPES
 // ============================
 
-//BasicType: tINTTYPE
-//    | tFLOATTYPE
-//    | tBOOLTYPE
-//    | tRUNETYPE
-//    | tSTRINGTYPE
-
-ArrayType : '[' Expression ']' Type
+StructType : tSTRUCT '{'  FieldDecls '}'
     ;
 
-StructType : tSTRUCT '{'  FieldDecl ';'  '}'
+FieldDecls : /*empty*/
+           | FieldDecl ';' FieldDecls
+
+FieldDecl : IdentifierList Type
     ;
 
-// TODO
+
+// OTHER TYPES
+// ============================
+
+ArrayType : '[' tINTVAL ']' Type
+    ;
+
+// TODO (or probably not)
 FunctionType :
     ;
 
 SliceType : '[' ']' Type
-    ;
-
-
-
-// STRUCT TYPE SUBGROUPS
-// ============================
-
-FieldDecl : IdentifierList Type Tag
-    | EmbeddedField Tag
-    ;
-
-EmbeddedField : '*'  TypeName
-    | TypeName
-    ;
-
-Tag : tSTRINGVAL
     ;
 
 
