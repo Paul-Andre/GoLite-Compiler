@@ -243,21 +243,20 @@ ExpressionList : Expression
 FuncSignature: FuncParameters FuncResult
     ;
 
-FuncParameters: "("  FuncParameterList  ")"
+FuncParameters: '('  FuncParameterList  ')'
     ;
 
 FuncResult:
     | Type
 
 FuncParameterList: FuncParameterDecl
-    | FuncParameterDecl "," FuncParameterDecl
+    | FuncParameterDecl ',' FuncParameterDecl
     ;
 
 FuncParameterDecl: IdentifierList
     | IdentifierList Type
     | tELLIPSIS Type
-
-
+    ;
 
 
 // TYPE STRUCTURE
@@ -270,37 +269,55 @@ Type : TypeName
 
 // TODO: DO WE NEED QUALIFIED IDENTIFIER SINCE WE AREN'T DEALING WITH IMPORTS..?
 TypeName : tIDENTIFIER
-    | QualifiedIdent
     ;
 
-TypeLit : BasicType
-    | ArrayType
+TypeLit : ArrayType
     | StructType
     | FunctionType
     | SliceType
     ;
 
-
-// TYPES
+// TYPE DECLARATIONS
 // ============================
-
-BasicType: tINTTYPE
-    | tFLOATTYPE
-    | tBOOLTYPE
-    | tRUNETYPE
-    | tSTRINGTYPE
-
-ArrayType : "[" Expression "]" Type
+TypeDecl : tTYPE TypeSpec
+    | tTYPE '(' TypeSpecs ')'
     ;
 
-StructType : "struct" "{"  FieldDecl ";"  "}"
+TypeSpecs : 
+    | TypeSpec ';' TypeSpecs
+    ;
+
+TypeSpec : AliasDecl
+    | TypeDef
+    ;
+
+AliasDecl : tIDENTIFIER '=' Type
+    ;
+
+TypeDef : tIDENTIFIER Type
+    ;
+
+
+// TYPES; Shouldn't basic types be handled by TypeName rule?
+// ============================
+
+//BasicType: tINTTYPE
+//    | tFLOATTYPE
+//    | tBOOLTYPE
+//    | tRUNETYPE
+//    | tSTRINGTYPE
+
+ArrayType : '[' Expression ']' Type
+    ;
+
+StructType : tSTRUCT '{'  FieldDecl ';'  '}'
     ;
 
 // TODO
 FunctionType :
     ;
 
-SliceType : "[" "]" Type
+SliceType : '[' ']' Type
     ;
 
 
@@ -308,42 +325,36 @@ SliceType : "[" "]" Type
 // STRUCT TYPE SUBGROUPS
 // ============================
 
-FieldDecl: IdentifierList Type Tag
+FieldDecl : IdentifierList Type Tag
     | EmbeddedField Tag
     ;
 
-EmbeddedField: "*"  TypeName
+EmbeddedField : '*'  TypeName
     | TypeName
     ;
 
-Tag:
-    | tStringVal
+Tag : tSTRINGVAL
     ;
 
 
 // STATEMENT STRUCTURE
 // ============================
 
-Statement:
-    | Block
-    | ExpressionStmt
-    | AssignmentStmt
-    | Declaration
-    | IncDecStmt
-    | PrintStmt
-    | PrintlnStmt
+Statement : Declaration
+    | SimpleStmt
     | ReturnStmt
-    | IfStmt
-    | ForStmt
-    | SwitchStmt
     | BreakStmt
     | ContinueStmt
+    | Block
+    | IfStmt
+    | SwitchStmt
+    | ForStmt
+    | PrintStmt
+    | PrintlnStmt
     ;
 
-SimpleStmt:
-    | EmptyStmt
+SimpleStmt : EmptyStmt
     | ExpressionStmt
-    | SendStmt
     | IncDecStmt
     | Assignment
     | ShortVarDecl
@@ -353,22 +364,23 @@ SimpleStmt:
 // STATEMENTS
 // ============================
 
-Block : "{" StatementList "}"
+Block : '{' StatementList '}'
     ;
 
 ExpressionStmt : Expression
     ;
 
-AssignmentStmt: ExpressionList assign_op ExpressionList
+Assignment: ExpressionList assign_op ExpressionList
+    ;
 
 IncDecStmt: Expression tINC
     | Expression tDEC
     ;
 
-PrintStmt: tPRINT "(" ExpressionList ")"
+PrintStmt: tPRINT '(' ExpressionList ')'
     ;
 
-PrintlnStmt: tPRINTLN "(" ExpressionList ")"
+PrintlnStmt: tPRINTLN '(' ExpressionList ')'
     ;
 
 ReturnStmt: tRETURN ExpressionList
@@ -377,12 +389,11 @@ ReturnStmt: tRETURN ExpressionList
 IfStmt: tIF SimpleStmt Expression Block ElseStmt
     ;
 
-ElseStmt:
-    | IfStmt
+ElseStmt: IfStmt
     | Block
     ;
 
-SwitchStmt: tSWITCH SimpleStmt Expression "{" CaseClause "}"
+SwitchStmt: tSWITCH SimpleStmt Expression '{' CaseClause '}'
     ;
 
 ForStmt: tFOR Block
@@ -398,54 +409,61 @@ ContinueStmt: tCONTINUE
     | tCONTINUE tIDENTIFIER
     ;
 
+EmptyStmt:
+    ;
+
 
 // STATEMENT SUBGROUPS
 // ============================
 
-StatementList:
-    Statement ";" Statement
+StatementList: Statement
+    | Statement ';' StatementList
     ;
 
-assign_op:  add_op "="
-    | mul_op ] "="
+assign_op:  add_op '='
+    | mul_op '='
     ;
 
-add_op: "+"
-    | "-"
-    | "|"
-    | "^"
+add_op: '+'
+    | '-'
+    | '|'
+    | '^'
     ;
 
-mul_op: "*"
-    | "/"
-    | "%"
+mul_op: '*'
+    | '/'
+    | '%'
     | tLSHIFT
     | tRSHIFT
-    | "&"
+    | '&'
     | tBWANDNOT
     ;
 
-CaseClause: SwitchCase ":" StatementList
+CaseClause: SwitchCase ':' StatementList
+    ;
 
 SwitchCase: tCASE ExpressionList
     | tCASE tDEFAULT
     ;
 
-ForClause = SimpleStmt ";" Expression ";" SimpleStmt
+ForClause: SimpleStmt ';' Expression ';' SimpleStmt
+    ;
+
 
 
 // EXPRESSIONS
 // ============================
 
-
+Expression:
+    ;
 
 
 // EXPRESSION SUBGROUP
 // ============================
 
-ExpressionList:
-    | Expression
-    | "," Expression
+ExpressionList: Expression
+    | Expression ',' ExpressionList
+    ;
 
 %%
 
