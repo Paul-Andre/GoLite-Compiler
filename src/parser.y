@@ -201,15 +201,6 @@ TopLevelDecl : Declaration
 
 
 
-// DECLARATIONS
-// ============================
-
-ShortVarDecl : tVAR IdentifierList tDEFINE ExpressionList
-    ;
-
-FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
-    ;
-
 
 // VARIABLE DECLARATION
 // ===========================
@@ -218,7 +209,6 @@ FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
 
 VarDecl : tVAR IdentifierList Type
     | tVAR '(' VarSpecs ')'
-    | ShortVarDecl
     ;
 
 VarSpecs :
@@ -238,45 +228,6 @@ ExpressionList : Expression
     | Expression ',' ExpressionList
     ;
 
-
-// FUNCTION DECLARATION
-// ============================
-
-FuncSignature: FuncParameters FuncResult
-    ;
-
-FuncParameters: '('  FuncParameterList  ')'
-    ;
-
-FuncResult:
-    | Type
-
-FuncParameterList: FuncParameterDecl
-    | FuncParameterDecl ',' FuncParameterDecl
-    ;
-
-FuncParameterDecl: IdentifierList
-    | IdentifierList Type
-    | tELLIPSIS Type
-    ;
-
-
-// TYPE STRUCTURE
-// ============================
-
-Type : TypeName
-    | TypeLit
-    | '(' Type ')'
-    ;
-
-TypeName : tIDENTIFIER
-    ;
-
-TypeLit : ArrayType
-    | StructType
-    /*| FunctionType*/
-    | SliceType
-    ;
 
 // TYPE DECLARATIONS
 // ============================
@@ -300,8 +251,62 @@ TypeDef : tIDENTIFIER Type
     ;
 
 
-// STRUCT TYPES
+
+// FUNCTION DECLARATION
 // ============================
+
+FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
+    ;
+
+FuncSignature: FuncParameters FuncResult
+    ;
+
+FuncParameters: '('  FuncParameterList  ')'
+    ;
+
+FuncResult:
+    | Type
+
+FuncParameterList: FuncParameterDecl
+    | FuncParameterDecl ',' FuncParameterDecl
+    ;
+
+FuncParameterDecl: IdentifierList Type
+    ;
+
+
+
+// TYPES
+// ============================
+
+Type : TypeName
+    | TypeLit
+    | '(' Type ')'
+    ;
+
+// Basic types are just identifiers
+TypeName : tIDENTIFIER
+    ;
+
+TypeLit : ArrayType
+    | StructType
+    | SliceType
+    ;
+
+
+// SLICES
+
+SliceType : '[' ']' Type
+    ;
+
+
+// ARRAYS
+
+ArrayType : '[' tINTVAL ']' Type
+    ;
+
+
+// STRUCTS
 
 StructType : tSTRUCT '{'  FieldDecls '}'
     ;
@@ -313,23 +318,11 @@ FieldDecl : IdentifierList Type
     ;
 
 
-// OTHER TYPES
-// ============================
-
-ArrayType : '[' tINTVAL ']' Type
-    ;
-
-// TODO (or probably not)
-FunctionType :
-    ;
-
-SliceType : '[' ']' Type
-    ;
-
 
 // STATEMENT STRUCTURE
 // ============================
 
+// Need to double check if we support fallthrough 
 Statement : Declaration
     | SimpleStmt
     | ReturnStmt
@@ -354,28 +347,60 @@ SimpleStmt : EmptyStmt
 // STATEMENTS
 // ============================
 
+
+EmptyStmt:
+    ;
+
 Block : '{' StatementList '}'
     ;
 
+// TODO WEED: not all expressions are valid; need to weed
 ExpressionStmt : Expression
     ;
 
+
+// TODO WEED: make sure number is same on both sides
+// TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
 Assignment: ExpressionList assign_op ExpressionList
+    ;
+
+assign_op : '='
+          | add_assign_op
+          | mul_assign_op
+          ;
+
+add_assign_op : tPLUSASSIGN | tMINUSASSIGN | tBWORASSIGN | tBWXORASSIGN
+mul_assign_op : tTIMESASSIGN | tDIVASSIGN | tREMASSIGN | tLSHIFTASSIGN
+              | tRSHIFTASSIGN | tBWANDASSIGN |tBWANDNOTASSIGN
+              ;
+
+
+// declaration statements are just Declarations; they were done earlier
+
+// TODO WEED: same number on both sides. Also check for the correct use of _
+ShortVarDecl : tVAR IdentifierList tDEFINE ExpressionList
     ;
 
 IncDecStmt: Expression tINC
     | Expression tDEC
     ;
 
-PrintStmt: tPRINT '(' ExpressionList ')'
+// TODO: ok, this is absurd to read. Need to double check which lists can be empty
+// And invent a better name for this
+PossiblyEmptyExpressionList : /* empty */
+                            | ExpressionList
+
+PrintStmt: tPRINT '(' PossiblyEmptyExpressionList ')'
     ;
 
-PrintlnStmt: tPRINTLN '(' ExpressionList ')'
+PrintlnStmt: tPRINTLN '(' PossiblyEmptyExpressionList ')'
     ;
 
-ReturnStmt: tRETURN ExpressionList
-    ;
+ReturnStmt: tRETURN 
+          | tRETURN Expression
+          ;
 
+// TODO: this is very incomplete
 IfStmt: tIF SimpleStmt Expression Block ElseStmt
     ;
 
@@ -397,9 +422,6 @@ BreakStmt: tBREAK
 
 ContinueStmt: tCONTINUE
     | tCONTINUE tIDENTIFIER
-    ;
-
-EmptyStmt:
     ;
 
 
