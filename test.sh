@@ -44,10 +44,17 @@ do
 	PHASE=$(basename $DIR_PHASE)
 	PHASE_NUM=${PHASE%-*}
 	PHASE_NAME=${PHASE#*-}
-	PREV_PHASE_NUM=`expr $PHASE_NUM - 1`
-	PREV_PHASE=`ls programs | grep $PREV_PHASE_NUM-`
-	PREV_PHASE_NAME=${PREV_PHASE#*-}
-	PREV_MODE=${PREV_PHASE_NAME#*+}
+
+  if [[ $PHASE_NUM != $PHASE ]] 
+  then
+	  PREV_PHASE_NUM=`expr $PHASE_NUM - 1`
+    PREV_PHASE=`ls programs | grep $PREV_PHASE_NUM-`
+    PREV_PHASE_NAME=${PREV_PHASE#*-}
+    PREV_MODE=${PREV_PHASE_NAME#*+}
+  else
+	  PREV_MODE=
+  fi
+
 	MODE=${PHASE_NAME#*+}
 	PHASE_NAME="${PHASE_NAME^}"
 
@@ -75,7 +82,7 @@ do
 			COUNT=0
 			COUNT_PASSED=0
 
-			for TEST in $DIR_TYPE*
+			for TEST in `find $DIR_TYPE -name "*.go" `
 			do
 				((COUNT++))
 
