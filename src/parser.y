@@ -460,6 +460,20 @@ ContinueStmt: tCONTINUE
 // EXPRESSIONS
 // ============================
 
+Expression: UnaryExpr
+          | Expression binary_op Expression
+
+Operand: Literal
+       | Identifier
+       | '(' Expression ')'
+       ;
+
+Literal: tINTVAL
+       | tFLOATVAL
+       | tRUNEVAL
+       | tSTRINGVAL
+       ;
+
 Expression:
     ;
 
