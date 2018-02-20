@@ -141,7 +141,20 @@ void yyerror(const char *s) {
 
 %token <text> tIDENTIFIER
 
-%token UNARY
+
+%token UNARY_PREC
+%token REL_PREC
+%token ADD_PREC
+%token MUL_PREC
+
+%left tOR
+%left tAND
+%left tEQUAL tNE '<' tLE '>' tGE REL_PREC
+%left '+' '-' '|' '^' ADD_PREC
+%left '*' '/' '%' tLSHIFT tRSHIFT '&' tBWANDNOT MUL_PREC
+
+%left UNARY_PREC '!'
+
 
 /* Precedence directives resolve grammar ambiguities by breaking ties between shift/reduce
  * operations. Tokens are grouped into precendence levels, with lower precedence coming first
@@ -153,11 +166,13 @@ void yyerror(const char *s) {
 /*
 %left tOR
 %left tAND
-%nonassoc tEQ tNE
-%left '+' '-'
-%left '*' '/'
-%left UNARY
+%left rel_op
+%left add_op
+%left mul_op
+
+%left unary_op
 */
+
 
 /* Start token (by default if this is missing it takes the first production */
 %start program
@@ -185,7 +200,7 @@ program : PackageClause ';' TopLevelDecls
 PackageClause : tPACKAGE tIDENTIFIER
     ;
 
-TopLevelDecls : 
+TopLevelDecls : %empty
     | TopLevelDecl ';' TopLevelDecls
     ;
 
@@ -209,12 +224,12 @@ TopLevelDecl : Declaration
 
 // TODO WEED: check that the numbers on each side are the same
 
-VarDecl : tVAR IdentifierList Type
+VarDecl : tVAR VarSpec
     | tVAR '(' VarSpecs ')'
     ;
 
-VarSpecs :
-    | VarSpec ';' VarSpecs
+VarSpecs : %empty
+    | VarSpecs ';' VarSpec
     ;
 
 VarSpec : IdentifierList Type
@@ -227,7 +242,7 @@ IdentifierList : tIDENTIFIER
     ;
 
 ExpressionList : Expression
-    | Expression ',' ExpressionList
+    | ExpressionList ',' Expression
     ;
 
 
@@ -237,7 +252,7 @@ TypeDecl : tTYPE TypeSpec
     | tTYPE '(' TypeSpecs ')'
     ;
 
-TypeSpecs : /*empty*/
+TypeSpecs : %empty
     | TypeSpec ';' TypeSpecs
     ;
 
@@ -266,11 +281,11 @@ FuncSignature: FuncParameters FuncResult
 FuncParameters: '('  FuncParameterList  ')'
     ;
 
-FuncResult:
+FuncResult: %empty
     | Type
 
-FuncParameterList: FuncParameterDecl
-    | FuncParameterDecl ',' FuncParameterDecl
+FuncParameterList: %empty
+    | FuncParameterList ',' FuncParameterDecl
     ;
 
 FuncParameterDecl: IdentifierList Type
@@ -313,7 +328,7 @@ ArrayType : '[' tINTVAL ']' Type
 StructType : tSTRUCT '{'  FieldDecls '}'
     ;
 
-FieldDecls : /*empty*/
+FieldDecls : %empty
            | FieldDecl ';' FieldDecls
 
 FieldDecl : IdentifierList Type
@@ -350,13 +365,13 @@ SimpleStmt : EmptyStmt
 // ============================
 
 
-EmptyStmt:
+EmptyStmt: %empty
     ;
 
 Block : '{' StatementList '}'
     ;
 
-StatementList: /* empty */
+StatementList: %empty
              | StatementList Statement ';'
              ;
 
@@ -384,7 +399,7 @@ mul_assign_op : tTIMESASSIGN | tDIVASSIGN | tREMASSIGN | tLSHIFTASSIGN
 // declaration statements are just Declarations; they were done earlier
 
 // TODO WEED: same number on both sides. Also check for the correct use of _
-ShortVarDecl : tVAR IdentifierList tDEFINE ExpressionList
+ShortVarDecl : IdentifierList tDEFINE ExpressionList
     ;
 
 IncDecStmt: Expression tINC
@@ -405,14 +420,14 @@ ReturnStmt: tRETURN
 IfStmt: tIF OptionalSimpleStmt Expression Block ElseStmt
     ;
 
-OptionalSimpleStmt: /* empty */
-                    | SimpleStmt ';'
-                    ;
+OptionalSimpleStmt: %empty
+                  | SimpleStmt ';'
+                  ;
 
 
-ElseStmt: /* empty */
-        | tElse IfStmt
-        | tElse Block
+ElseStmt: %empty
+        | tELSE IfStmt
+        | tELSE Block
         ;
 
 
@@ -420,7 +435,7 @@ SwitchStmt: tSWITCH OptionalSimpleStmt Expression '{' CaseClauses '}'
           | tSWITCH OptionalSimpleStmt '{' CaseClause '}'
     ;
 
-CaseClauses: /* empty */
+CaseClauses: %empty
            | CaseClauses CaseClause
            ;
 
@@ -457,17 +472,16 @@ ContinueStmt: tCONTINUE
 // ============================
 
 Expression: UnaryExpr
-          | Expression binary_op Expression
+          | Expression tOR Expression
+          | Expression tAND Expression
+          | Expression rel_op Expression %prec REL_PREC
+          | Expression add_op Expression %prec ADD_PREC
+          | Expression mul_op Expression %prec MUL_PREC
+          ;
 
 UnaryExpr: PrimaryExpr
-         | unary_op UnaryExpr
-
-
-binary_op: tOR
-         | tAND
-         | rel_op
-         | add_op
-         | mul_op
+         | unary_op UnaryExpr %prec UNARY_PREC
+         ;
 
 rel_op: tEQUAL
       | tNE
@@ -475,6 +489,7 @@ rel_op: tEQUAL
       | tLE
       | '>'
       | tGE
+      ;
 
 add_op: '+'
     | '-'
@@ -498,7 +513,7 @@ unary_op: '+'
         ;
 
 Operand: Literal
-       | Identifier
+       | tIDENTIFIER
        | '(' Expression ')'
        ;
 
@@ -509,38 +524,32 @@ Literal: tINTVAL
        ;
 
 PrimaryExpr: Operand
-           | Conversion
            | PrimaryExpr Selector
            | PrimaryExpr Index
+           | AppendExpr
            | PrimaryExpr Arguments
            ;
 
 // TODO WEED: must not be blank
-Selector: '.' identifier
+Selector: '.' tIDENTIFIER
         ;
 Index: '[' Expression ']'
      ;
 
-Arguments: '(' OptionalExpressionList ')
+Arguments: '(' OptionalExpressionList ')'
          ;
 
-
-AppendExpr: tAPPEND '(' expr ',' expr ')'
+AppendExpr: tAPPEND '(' Expression ',' Expression ')'
           ;
 
-
-
-
+// Type casts are syntactically function calls
 
 
 // EXPRESSION SUBGROUP
 // ============================
 
-ExpressionList: Expression
-    | ExpressionList ',' Expression
-    ;
 
-OptionalExpressionList:  /* empty */
+OptionalExpressionList: %empty
                       | ExpressionList
                       ;
 
