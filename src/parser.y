@@ -417,13 +417,9 @@ ReturnStmt: tRETURN
           ;
 
 
-IfStmt: tIF OptionalSimpleStmt Expression Block ElseStmt
-    ;
-
-OptionalSimpleStmt: %empty
-                  | SimpleStmt ';'
-                  ;
-
+IfStmt: tIF SimpleStmt ';' Expression Block ElseStmt
+      | tIF Expression Block ElseStmt
+      ;
 
 ElseStmt: %empty
         | tELSE IfStmt
@@ -431,8 +427,10 @@ ElseStmt: %empty
         ;
 
 
-SwitchStmt: tSWITCH OptionalSimpleStmt Expression '{' CaseClauses '}'
-          | tSWITCH OptionalSimpleStmt '{' CaseClause '}'
+SwitchStmt: tSWITCH SimpleStmt ';' Expression '{' CaseClauses '}'
+          | tSWITCH Expression '{' CaseClauses '}'
+          | tSWITCH SimpleStmt ';' '{' CaseClauses '}'
+          | tSWITCH '{' CaseClauses '}'
     ;
 
 CaseClauses: %empty
