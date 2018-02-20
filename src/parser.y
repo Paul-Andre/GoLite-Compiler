@@ -185,6 +185,10 @@ void yyerror(const char *s) {
 /* The second section of a bison file contains the productions. Note that rules with the
  * same LHS may be joined together and separated with a pipe.
  */
+
+%glr-parser
+%expect-rr 1
+
 %%
 
 // FILE STRUCTURE
