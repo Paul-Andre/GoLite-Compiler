@@ -1,4 +1,4 @@
 package main
 func main() {
- s._
+  print(s._)
 }
