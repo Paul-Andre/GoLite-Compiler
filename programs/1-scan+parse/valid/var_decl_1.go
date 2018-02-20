@@ -8,8 +8,6 @@ var U,V,W float64
 var UU,VV,WW float64;
 
 var (
-   k int
-   a,b float64
 )
 var (
    kk int;
@@ -31,7 +29,6 @@ var k struct {
 	y, z int
 	k []struct {
 		b [123]float32
-		
 	}
 	l [](struct {
 		b []T

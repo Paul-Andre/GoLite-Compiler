@@ -233,7 +233,7 @@ VarDecl : tVAR VarSpec
     ;
 
 VarSpecs : %empty
-    | VarSpecs ';' VarSpec
+    | VarSpecs VarSpec ';'
     ;
 
 VarSpec : IdentifierList Type
@@ -257,7 +257,7 @@ TypeDecl : tTYPE TypeSpec
     ;
 
 TypeSpecs : %empty
-    | TypeSpec ';' TypeSpecs
+    | TypeSpecs TypeSpec ';'
     ;
 
 TypeSpec : AliasDecl
@@ -282,14 +282,19 @@ FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
 FuncSignature: FuncParameters FuncResult
     ;
 
-FuncParameters: '('  FuncParameterList  ')'
+FuncParameters: '('  OptionalFuncParameterList  ')'
     ;
 
 FuncResult: %empty
     | Type
+    ;
 
-FuncParameterList: %empty
+FuncParameterList: FuncParameterDecl
     | FuncParameterList ',' FuncParameterDecl
+    ;
+
+OptionalFuncParameterList: %empty
+    | FuncParameterList
     ;
 
 FuncParameterDecl: IdentifierList Type
@@ -333,7 +338,7 @@ StructType : tSTRUCT '{'  FieldDecls '}'
     ;
 
 FieldDecls : %empty
-           | FieldDecl ';' FieldDecls
+           | FieldDecls FieldDecl ';'
 
 FieldDecl : IdentifierList Type
     ;
