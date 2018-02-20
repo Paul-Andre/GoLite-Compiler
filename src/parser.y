@@ -150,12 +150,14 @@ void yyerror(const char *s) {
  * denote left-associative and right-associative respectively.
  */
 
+/*
 %left tOR
 %left tAND
-%nonassoc tEQ tNEQ
+%nonassoc tEQ tNE
 %left '+' '-'
 %left '*' '/'
 %left UNARY
+*/
 
 /* Start token (by default if this is missing it takes the first production */
 %start program
@@ -221,7 +223,7 @@ VarSpec : IdentifierList Type
     ;
 
 IdentifierList : tIDENTIFIER
-    | tIDENTIFIER ',' IdentifierList
+    | IdentifierList ',' tIDENTIFIER
     ;
 
 ExpressionList : Expression
@@ -389,15 +391,10 @@ IncDecStmt: Expression tINC
     | Expression tDEC
     ;
 
-// TODO: ok, this is absurd to read. Need to double check which lists can be empty
-// And invent a better name for this
-PossiblyEmptyExpressionList : /* empty */
-                            | ExpressionList
-
-PrintStmt: tPRINT '(' PossiblyEmptyExpressionList ')'
+PrintStmt: tPRINT '(' OptionalExpressionList ')'
     ;
 
-PrintlnStmt: tPRINTLN '(' PossiblyEmptyExpressionList ')'
+PrintlnStmt: tPRINTLN '(' OptionalExpressionList ')'
     ;
 
 ReturnStmt: tRETURN 
@@ -456,26 +453,28 @@ ContinueStmt: tCONTINUE
 
 
 
-
 // EXPRESSIONS
 // ============================
 
 Expression: UnaryExpr
           | Expression binary_op Expression
 
-Operand: Literal
-       | Identifier
-       | '(' Expression ')'
-       ;
+UnaryExpr: PrimaryExpr
+         | unary_op UnaryExpr
 
-Literal: tINTVAL
-       | tFLOATVAL
-       | tRUNEVAL
-       | tSTRINGVAL
-       ;
 
-Expression:
-    ;
+binary_op: tOR
+         | tAND
+         | rel_op
+         | add_op
+         | mul_op
+
+rel_op: tEQUAL
+      | tNE
+      | '<'
+      | tLE
+      | '>'
+      | tGE
 
 add_op: '+'
     | '-'
@@ -492,13 +491,58 @@ mul_op: '*'
     | tBWANDNOT
     ;
 
+unary_op: '+'
+        | '-'
+        | '!'
+        | '^'
+        ;
+
+Operand: Literal
+       | Identifier
+       | '(' Expression ')'
+       ;
+
+Literal: tINTVAL
+       | tFLOATVAL
+       | tRUNEVAL
+       | tSTRINGVAL
+       ;
+
+PrimaryExpr: Operand
+           | Conversion
+           | PrimaryExpr Selector
+           | PrimaryExpr Index
+           | PrimaryExpr Arguments
+           ;
+
+// TODO WEED: must not be blank
+Selector: '.' identifier
+        ;
+Index: '[' Expression ']'
+     ;
+
+Arguments: '(' OptionalExpressionList ')
+         ;
+
+
+AppendExpr: tAPPEND '(' expr ',' expr ')'
+          ;
+
+
+
+
+
 
 // EXPRESSION SUBGROUP
 // ============================
 
 ExpressionList: Expression
-    | Expression ',' ExpressionList
+    | ExpressionList ',' Expression
     ;
+
+OptionalExpressionList:  /* empty */
+                      | ExpressionList
+                      ;
 
 %%
 
