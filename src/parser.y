@@ -354,6 +354,10 @@ EmptyStmt:
 Block : '{' StatementList '}'
     ;
 
+StatementList: /* empty */
+             | StatementList Statement ';'
+             ;
+
 // TODO WEED: not all expressions are valid; need to weed
 ExpressionStmt : Expression
     ;
@@ -400,40 +404,63 @@ ReturnStmt: tRETURN
           | tRETURN Expression
           ;
 
-// TODO: this is very incomplete
-IfStmt: tIF SimpleStmt Expression Block ElseStmt
+
+IfStmt: tIF OptionalSimpleStmt Expression Block ElseStmt
     ;
 
-ElseStmt: IfStmt
-    | Block
+OptionalSimpleStmt: /* empty */
+                    | SimpleStmt ';'
+                    ;
+
+
+ElseStmt: /* empty */
+        | tElse IfStmt
+        | tElse Block
+        ;
+
+
+SwitchStmt: tSWITCH OptionalSimpleStmt Expression '{' CaseClauses '}'
+          | tSWITCH OptionalSimpleStmt '{' CaseClause '}'
     ;
 
-SwitchStmt: tSWITCH SimpleStmt Expression '{' CaseClause '}'
+CaseClauses: /* empty */
+           | CaseClauses CaseClause
+           ;
+
+// TODO: decide if maybe to fuse to next two rules for easier AST building
+CaseClause: SwitchCase ':' StatementList
     ;
+
+SwitchCase: tCASE ExpressionList
+    | tDEFAULT
+    ;
+
 
 ForStmt: tFOR Block
     | tFOR Expression Block
     | tFOR ForClause Block
     ;
 
+// TODO WEED: make sure the last SimpleStmt is not a short variable declaration
+// SimpleStmt can be empty, so not explicitly making them optional should be fine
+ForClause: SimpleStmt ';' Expression ';' SimpleStmt
+    ;
+
 BreakStmt: tBREAK
-    | tBREAK tIDENTIFIER
     ;
 
 ContinueStmt: tCONTINUE
-    | tCONTINUE tIDENTIFIER
     ;
 
 
-// STATEMENT SUBGROUPS
+
+
+
+
+// EXPRESSIONS
 // ============================
 
-StatementList: Statement
-    | Statement ';' StatementList
-    ;
-
-assign_op:  add_op '='
-    | mul_op '='
+Expression:
     ;
 
 add_op: '+'
@@ -449,24 +476,6 @@ mul_op: '*'
     | tRSHIFT
     | '&'
     | tBWANDNOT
-    ;
-
-CaseClause: SwitchCase ':' StatementList
-    ;
-
-SwitchCase: tCASE ExpressionList
-    | tCASE tDEFAULT
-    ;
-
-ForClause: SimpleStmt ';' Expression ';' SimpleStmt
-    ;
-
-
-
-// EXPRESSIONS
-// ============================
-
-Expression:
     ;
 
 
