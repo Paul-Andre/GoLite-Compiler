@@ -3,6 +3,7 @@
 #include "lex.yy.c" // eh?
 
 typedef struct Program Program;
+typedef struct ExpressionNode ExpressionNode;
 
 Program *root;
 
