@@ -18,7 +18,7 @@ void scan() {
 	while(yylex()) {}
 }
 
-void tokens() {
+void print_tokens() {
 	while(1) {
 		int token = yylex();
 		if (token == 0) break;
@@ -39,7 +39,7 @@ void tokens() {
 }
 
 Program *parse() {
-	//yyparse();
+	yyparse();
 	return make_program(12);
 	//return root;
 }

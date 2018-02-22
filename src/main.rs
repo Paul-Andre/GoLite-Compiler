@@ -1,8 +1,10 @@
+use std::env;
+use std::process::exit;
 
 extern "C" {
     fn say_hello();
     fn scan();
-    fn tokens();
+    fn print_tokens();
     fn parse() -> Box<Program>;
 }
 
@@ -20,11 +22,25 @@ pub extern "C" fn make_program(a: i32) -> Box<Program> {
 
 
 fn main() {
-    /*
-    unsafe {
-        tokens();
+
+    let argv = env::args().collect::<Vec<String>>();
+    if argv.len() < 2 {
+        eprintln!("Error: requires mode");
+        exit(1);
     }
-    */
-    let p = unsafe { parse() };
-    println!("{:?}", p);
+    if &argv[1] == "scan" {
+        unsafe{scan();}
+        println!("OK");
+    }
+    else if &argv[1] == "tokens" {
+        unsafe{print_tokens();}
+    }
+    else if &argv[1] == "parse" {
+        let ast: Box<Program> = unsafe{parse()};
+        println!("OK");
+    }
+    else {
+        eprintln!("Error: invalid mode");
+        exit(1);
+    }
 }
