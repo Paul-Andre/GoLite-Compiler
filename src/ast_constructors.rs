@@ -1,15 +1,22 @@
 use std::env;
-mod ast;
+use ast::*;
 
-fn exp_identifier(line: i32, str: String) -> Box<ExpressionNode> {
-    Box::new(ExpressionNode {location: line, expression: Expression::Identifier{ name: str }})
+fn exp_identifier(line: u32, str: String) -> Box<ExpressionNode> {
+    Box::new(
+        ExpressionNode {
+            location: SourceLocation{ line_number: line }, 
+            expression: Expression::Identifier{ name: str},
+            kind: Kind::Undefined 
+        }
+    )
 }
 
-fn exp_rawliteral(line: i32, str: String) -> Box<ExpressionNode> {
+/*
+fn exp_rawliteral(line: u32, str: String) -> Box<ExpressionNode> {
     Box::new(ExpressionNode {location: line, expression: Expression::RawLiteral{ value: str }})
 }
 
-fn exp_binoperation(line: i32, str: operator, left: Box<ExpressionNode, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
+fn exp_binoperation(line: u32, str: operator, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
         ExpressionNode {
             location: line, 
@@ -18,7 +25,7 @@ fn exp_binoperation(line: i32, str: operator, left: Box<ExpressionNode, right: B
     )
 }
 
-fn exp_unoperation(line: i32, str: operator, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
+fn exp_unoperation(line: u32, str: operator, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
         ExpressionNode {
             location: line, 
@@ -27,7 +34,7 @@ fn exp_unoperation(line: i32, str: operator, right: Box<ExpressionNode>) -> Box<
     )
 }
 
-fn exp_index(line: i32, p: Box<ExpressionNode>, i: Box<ExpressionNode>) -> Box<ExpressionNode> {
+fn exp_index(line: u32, p: Box<ExpressionNode>, i: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
         ExpressionNode {
             location: line, 
@@ -36,7 +43,7 @@ fn exp_index(line: i32, p: Box<ExpressionNode>, i: Box<ExpressionNode>) -> Box<E
     )
 }
 
-fn exp_selector(line: i32, p: Box<ExpressionNode>, str: String) -> Box<ExpressionNode> {
+fn exp_selector(line: u32, p: Box<ExpressionNode>, str: String) -> Box<ExpressionNode> {
     Box::new(
         ExpressionNode {
             location: line, 
@@ -45,7 +52,7 @@ fn exp_selector(line: i32, p: Box<ExpressionNode>, str: String) -> Box<Expressio
     )
 }
 
-fn exp_functioncall(line: i32, p: Box<ExpressionNode>, args: Vec<ExpressionNode>) -> Box<ExpressionNode> {
+fn exp_functioncall(line: u32, p: Box<ExpressionNode>, args: Vec<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
         ExpressionNode {
             location: line, 
@@ -54,20 +61,21 @@ fn exp_functioncall(line: i32, p: Box<ExpressionNode>, args: Vec<ExpressionNode>
     )
 }
 
-fn exp_append(line: i32, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
+fn exp_append(line: u32, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
         ExpressionNode {
             location: line, 
-            expression: Expression::Append{ lhs: left, right: rhs }
+            expression: Expression::Append{ lhs: left, rhs: right }
         }
     )
 }
 
-fn exp_typecast(line: i32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
+fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
         ExpressionNode {
             location: line, 
-            expression: Expression::TypeCast{ exp: expr }
+            expression: Expression::TypeCast{ expr: exp }
         }
     )
 }
+*/
