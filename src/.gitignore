@@ -2,4 +2,6 @@ golitec
 lex.yy.c
 parser.output
 parser.tab.h
+bisonparser.o
+libbisonparser.a
 

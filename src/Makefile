@@ -1,17 +1,19 @@
-CC = gcc
+CC = gcc -fPIC
 
 CFLAGS = -Wall
 
-golitec: lex.yy.c
-	$(CC) main.c -o golitec -lfl
+libbisonparser.a: lex.yy.c bisonparser.c
+	$(CC) -c bisonparser.c -o bisonparser.o -lfl
+	ar rcs libbisonparser.a bisonparser.o
 
 parser.tab.c parser.tab.h: parser.y
 	bison -v --output=parser.tab.h parser.y
 
 lex.yy.c: scanner.l parser.tab.h
 	flex scanner.l
+
 clean:
 	-rm parser.tab.* lex.yy.*;
 	-rm *.o;
-	-rm golitec;
+	-rm bisonparser.o libbisonparser.a;
 	-rm parser.output;

@@ -1,0 +1,7 @@
+[package]
+name = "golite"
+version = "0.1.0"
+authors = ["Paul-Andre Henegar <paul-andre.henegar@mail.mcgill.ca>"]
+build = "build.rs"
+
+[dependencies]
