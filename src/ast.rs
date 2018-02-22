@@ -1,12 +1,16 @@
 
-enum Kind{
-    Undefined,
-    Int,
-    Float64,
-    String,
-    Bool,
-    Rune
+enum AstKind{
+    Identifier{name: String},
+    Slice{base: Box<Kind>},
+    Array{base: Box<Kind>, size: String},
+    Struct{ fields: Vec<StructField> }
 }
+
+struct StructField {
+    identifiers: Vec<String>,
+    ast_kind: AstKind
+}
+
 
 struct SourceLocation{
     line_number: u32
