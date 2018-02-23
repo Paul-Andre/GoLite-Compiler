@@ -1,5 +1,15 @@
 pub enum Kind {
     Undefined,
+    Basic(BasicKind)
+}
+
+#[repr("C")]
+#[derive(Copy,Clone,Eq,PartialEq)]
+pub enum BasicKind {
+    Int = 0,
+    Float = 1,
+    Rune = 2,
+    String = 3,
 }
 
 pub enum BinOperator {

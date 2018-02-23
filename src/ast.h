@@ -24,3 +24,17 @@ DECLARE_VEC(expr, ExpressionNode);
 
 typedef struct String String;
 DECLARE_VEC(string, String);
+
+String *make_string(char*);
+
+enum BasicKind {
+  kInt = 0,
+  kFloat = 1,
+  kRune = 2,
+  kString = 3,
+}
+
+ExpressionNode *expr_identifier(uint32_t, char*);
+ExpressionNode *expr_literal(uint32_t, char*, BasicKind);
+
+

@@ -2,20 +2,13 @@ use ast::*;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 
-#[no_mangle]
-pub extern "C" fn exp_identifier(line: u32, string: *const c_char) -> *mut ExpressionNode {
-    let copied_string = unsafe { CStr::from_ptr(string) }.to_str().unwrap().into();
-    Box::into_raw(Box::new(ExpressionNode {
-        location: SourceLocation { line_number: line },
-        expression: Expression::Identifier { name: copied_string },
-        kind: Kind::Undefined,
-    }))
+fn from_char_ptr(s: *const c_char) -> String {
+    unsafe {CStr::from_ptr(string) }.to_str().unwrap().into()
 }
 
 #[no_mangle]
 pub extern "C" fn make_string(string: *const c_char) -> *mut String {
-    Box::into_raw(Box::new(
-            unsafe { CStr::from_ptr(string) }.to_str().unwrap().into()));
+    Box::into_raw(Box::new(from_char_ptr(string)))
 }
 
 macro_rules! create_vec_functions {
@@ -35,10 +28,25 @@ macro_rules! create_vec_functions {
 create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
-/*
-fn exp_rawliteral(line: u32, str: String) -> Box<ExpressionNode> {
-    Box::new(ExpressionNode {location: line, expression: Expression::RawLiteral{ value: str }})
+#[no_mangle]
+pub extern "C" fn expr_identifier(line: u32, string: *const c_char) -> *mut ExpressionNode {
+    Box::into_raw(Box::new(ExpressionNode {
+        location: SourceLocation { line_number: line },
+        expression: Expression::Identifier { name: from_char_ptr(string) },
+        kind: Kind::Undefined,
+    }))
 }
+
+pub extern "C" fn expr_literal(line: u32, string: *const c_char, kind: BasicKind) -> *mut ExpressionNode {
+    Box::into_raw(Box::new(ExpressionNode {
+        location: SourceLocation { line_number: line },
+        expression: Expression::RawLiteral { value: from_char_ptr(string) },
+        kind: Kind::Basic(BasicKind),
+    }))
+}
+
+
+/*
 
 fn exp_binoperation(line: u32, str: operator, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
