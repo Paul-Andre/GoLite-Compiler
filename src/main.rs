@@ -3,6 +3,7 @@ use std::process::exit;
 
 mod ast;
 mod ast_constructors;
+pub use ast_constructors::*;
 
 extern "C" {
     fn say_hello();
