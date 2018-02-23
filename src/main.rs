@@ -32,17 +32,18 @@ fn main() {
         exit(1);
     }
     if &argv[1] == "scan" {
-        unsafe{scan();}
+        unsafe {
+            scan();
+        }
         println!("OK");
-    }
-    else if &argv[1] == "tokens" {
-        unsafe{print_tokens();}
-    }
-    else if &argv[1] == "parse" {
-        let ast: Box<Program> = unsafe{parse()};
+    } else if &argv[1] == "tokens" {
+        unsafe {
+            print_tokens();
+        }
+    } else if &argv[1] == "parse" {
+        let ast: Box<Program> = unsafe { parse() };
         println!("OK");
-    }
-    else {
+    } else {
         eprintln!("Error: invalid mode");
         exit(1);
     }
