@@ -1,14 +1,15 @@
-use std::env;
 use ast::*;
+use std::ffi::CStr;
+use std::os::raw::c_char;
 
-fn exp_identifier(line: u32, str: String) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: SourceLocation{ line_number: line }, 
-            expression: Expression::Identifier{ name: str},
-            kind: Kind::Undefined 
-        }
-    )
+#[no_mangle]
+pub extern "C" fn exp_identifier(line: u32, string: *const c_char) -> *mut ExpressionNode {
+    let copied_string = unsafe { CStr::from_ptr(string) }.to_str().unwrap().into();
+    Box::into_raw(Box::new(ExpressionNode {
+        location: SourceLocation { line_number: line },
+        expression: Expression::Identifier { name: copied_string },
+        kind: Kind::Undefined,
+    }))
 }
 
 /*
