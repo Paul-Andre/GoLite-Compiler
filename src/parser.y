@@ -34,6 +34,9 @@ void yyerror(const char *s) {
  */
 %union {
 	char *text;
+  ExpressionNode *expr;
+  ExpressionNodeVec *expr_vec;
+  StringVec *string_vec;
 }
 
 /* Token directives define the token types to be returned by the scanner (excluding character
@@ -137,10 +140,17 @@ void yyerror(const char *s) {
 
 %token <text> tINTVAL
 %token <text> tFLOATVAL
-%token <text> tSTRINGVAL
 %token <text> tRUNEVAL
+%token <text> tSTRINGVAL
 
 %token <text> tIDENTIFIER
+
+%type <expr> Operand
+%type <expr> Expression
+%type <expr> Literal
+
+%type <expr_vec> ExpressionList
+%type <expr_vec> OptionalExpressionList
 
 
 %token UNARY_PREC
@@ -247,7 +257,15 @@ IdentifierList : tIDENTIFIER
     ;
 
 ExpressionList : Expression
+               {
+               $$ = make_expr_vec();
+               expr_vec_push($$, $1);
+               }
     | ExpressionList ',' Expression
+               {
+               $$ = $1;
+               expr_vec_push($$, $3);
+               }
     ;
 
 
@@ -521,14 +539,16 @@ unary_op: '+'
         ;
 
 Operand: Literal
-       | tIDENTIFIER
+       | tIDENTIFIER {
+         $$ = expr_identifier(123123, $1);
+       }
        | '(' Expression ')'
        ;
 
-Literal: tINTVAL
-       | tFLOATVAL
-       | tRUNEVAL
-       | tSTRINGVAL
+Literal: tINTVAL {$$ = expr_literal(12312, $1, kInt);}
+       | tFLOATVAL {$$ = expr_literal(12312, $1, kFloat);}
+       | tRUNEVAL {$$ = expr_literal(12312, $1, kRune);}
+       | tSTRINGVAL {$$ = expr_literal(12312, $1, kString);}
        ;
 
 PrimaryExpr: Operand
@@ -557,7 +577,7 @@ AppendExpr: tAPPEND '(' Expression ',' Expression ')'
 // ============================
 
 
-OptionalExpressionList: %empty
+OptionalExpressionList: %empty { $$ = make_expr_vec(); }
                       | ExpressionList
                       ;
 

@@ -6,7 +6,6 @@ mod ast_constructors;
 pub use ast_constructors::*;
 
 extern "C" {
-    fn say_hello();
     fn scan();
     fn print_tokens();
     fn parse() -> Box<Program>;

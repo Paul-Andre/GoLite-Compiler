@@ -32,9 +32,9 @@ enum BasicKind {
   kFloat = 1,
   kRune = 2,
   kString = 3,
-}
+};
 
 ExpressionNode *expr_identifier(uint32_t, char*);
-ExpressionNode *expr_literal(uint32_t, char*, BasicKind);
+ExpressionNode *expr_literal(uint32_t, char*,enum BasicKind);
 
 

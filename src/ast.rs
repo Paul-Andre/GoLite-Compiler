@@ -3,7 +3,7 @@ pub enum Kind {
     Basic(BasicKind)
 }
 
-#[repr("C")]
+#[repr(C)]
 #[derive(Copy,Clone,Eq,PartialEq)]
 pub enum BasicKind {
     Int = 0,
@@ -15,9 +15,11 @@ pub enum BasicKind {
 pub enum BinOperator {
 
 }
+
 pub enum UnOperator {
 
 }
+
 pub enum AstKind {
     Identifier { name: String },
     Slice { base: Box<Kind> },

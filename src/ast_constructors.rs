@@ -3,7 +3,7 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 
 fn from_char_ptr(s: *const c_char) -> String {
-    unsafe {CStr::from_ptr(string) }.to_str().unwrap().into()
+    unsafe {CStr::from_ptr(s) }.to_str().unwrap().into()
 }
 
 #[no_mangle]
@@ -13,6 +13,7 @@ pub extern "C" fn make_string(string: *const c_char) -> *mut String {
 
 macro_rules! create_vec_functions {
     ($make_name:ident, $push_name:ident,  $T:ty) => {
+
         #[no_mangle]
         pub extern "C" fn $make_name() -> *mut Vec<$T> {
             Box::into_raw(Box::new(Vec::new()))
@@ -37,11 +38,13 @@ pub extern "C" fn expr_identifier(line: u32, string: *const c_char) -> *mut Expr
     }))
 }
 
+
+#[no_mangle]
 pub extern "C" fn expr_literal(line: u32, string: *const c_char, kind: BasicKind) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
         location: SourceLocation { line_number: line },
         expression: Expression::RawLiteral { value: from_char_ptr(string) },
-        kind: Kind::Basic(BasicKind),
+        kind: Kind::Basic(kind),
     }))
 }
 
