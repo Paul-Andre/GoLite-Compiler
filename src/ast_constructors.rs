@@ -29,27 +29,54 @@ macro_rules! create_vec_functions {
 create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
-#[no_mangle]
-pub extern "C" fn expr_identifier(line: u32, string: *const c_char) -> *mut ExpressionNode {
+/// This is a function that factors out most of the repetition from creating expression nodes
+fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
         location: SourceLocation { line_number: line },
-        expression: Expression::Identifier { name: from_char_ptr(string) },
+        expression: expr,
         kind: Kind::Undefined,
     }))
+}
+
+#[no_mangle]
+pub extern "C" fn expr_identifier(line: u32, string: *const c_char) -> *mut ExpressionNode {
+    make_expr_ptr(
+        line,
+        Expression::Identifier { name: from_char_ptr(string) }
+        )
 }
 
 
 #[no_mangle]
 pub extern "C" fn expr_literal(line: u32, string: *const c_char, kind: BasicKind) -> *mut ExpressionNode {
-    Box::into_raw(Box::new(ExpressionNode {
-        location: SourceLocation { line_number: line },
-        expression: Expression::RawLiteral { value: from_char_ptr(string) },
-        kind: Kind::Basic(kind),
-    }))
+    Box::into_raw(Box::new(
+            ExpressionNode {
+                location: SourceLocation { line_number: line },
+                expression: Expression::RawLiteral { value: from_char_ptr(string) },
+                kind: Kind::Basic(kind),
+            }
+            ))
+}
+
+#[no_mangle]
+pub extern "C" fn expr_append(line: u32,
+                              lhs: *mut ExpressionNode,
+                              rhs: *mut ExpressionNode) -> *mut ExpressionNode {
+
+    make_expr_ptr(
+        line,
+        Expression::Append {
+            lhs: unsafe { Box::from_raw(lhs) },
+            rhs: unsafe { Box::from_raw(rhs) },
+        }
+    )
 }
 
 
+
+
 /*
+ 
 
 fn exp_binoperation(line: u32, str: operator, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(

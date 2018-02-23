@@ -147,6 +147,9 @@ void yyerror(const char *s) {
 
 %type <expr> Operand
 %type <expr> Expression
+%type <expr> UnaryExpr
+%type <expr> AppendExpr
+%type <expr> PrimaryExpr
 %type <expr> Literal
 
 %type <expr_vec> ExpressionList
@@ -542,7 +545,7 @@ Operand: Literal
        | tIDENTIFIER {
          $$ = expr_identifier(123123, $1);
        }
-       | '(' Expression ')'
+       | '(' Expression ')' { $$ = $2; }
        ;
 
 Literal: tINTVAL {$$ = expr_literal(12312, $1, kInt);}
@@ -567,8 +570,11 @@ Index: '[' Expression ']'
 Arguments: '(' OptionalExpressionList ')'
          ;
 
-AppendExpr: tAPPEND '(' Expression ',' Expression ')'
+AppendExpr: tAPPEND '(' Expression ',' Expression ')' {
+          $$ = expr_append(14223, $3, $5);
+          }
           ;
+
 
 // Type casts are syntactically function calls
 

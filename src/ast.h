@@ -36,5 +36,6 @@ enum BasicKind {
 
 ExpressionNode *expr_identifier(uint32_t, char*);
 ExpressionNode *expr_literal(uint32_t, char*,enum BasicKind);
+ExpressionNode *expr_append(uint32_t, ExpressionNode*, ExpressionNode*);
 
 
