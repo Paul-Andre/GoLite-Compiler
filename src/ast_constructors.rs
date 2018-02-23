@@ -2,15 +2,21 @@ use ast::*;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 
-fn from_char_ptr(s: *const c_char) -> String {
-    unsafe {CStr::from_ptr(s) }.to_str().unwrap().into()
+
+/// This function turns a C string into a Rust String
+/// If the C string isn't proper utf-8 (shouldn't be a problem for us), it panics
+unsafe fn from_c_string(s: *const c_char) -> String {
+    CStr::from_ptr(s).to_str().unwrap().into()
 }
 
+/// This function will be used in C to turn a C string into a Rust String
 #[no_mangle]
 pub extern "C" fn make_string(string: *const c_char) -> *mut String {
-    Box::into_raw(Box::new(from_char_ptr(string)))
+    Box::into_raw(Box::new(unsafe { from_c_string(string) }))
 }
 
+/// This is a macros to generate functions that will be used to generate vectors in C.
+/// It assumes that the type that is used will be passed as an opaque pointer in C.
 macro_rules! create_vec_functions {
     ($make_name:ident, $push_name:ident,  $T:ty) => {
 
@@ -26,6 +32,7 @@ macro_rules! create_vec_functions {
     }
 }
 
+// Generate the functions to be used in C
 create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
@@ -42,33 +49,37 @@ fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
 pub extern "C" fn expr_identifier(line: u32, string: *const c_char) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
-        Expression::Identifier { name: from_char_ptr(string) }
-        )
+        Expression::Identifier { name: unsafe { from_c_string(string) } },
+    )
 }
 
 
 #[no_mangle]
-pub extern "C" fn expr_literal(line: u32, string: *const c_char, kind: BasicKind) -> *mut ExpressionNode {
-    Box::into_raw(Box::new(
-            ExpressionNode {
-                location: SourceLocation { line_number: line },
-                expression: Expression::RawLiteral { value: from_char_ptr(string) },
-                kind: Kind::Basic(kind),
-            }
-            ))
+pub extern "C" fn expr_literal(
+    line: u32,
+    string: *const c_char,
+    kind: BasicKind,
+) -> *mut ExpressionNode {
+    Box::into_raw(Box::new(ExpressionNode {
+        location: SourceLocation { line_number: line },
+        expression: Expression::RawLiteral { value: unsafe { from_c_string(string) } },
+        kind: Kind::Basic(kind),
+    }))
 }
 
 #[no_mangle]
-pub extern "C" fn expr_append(line: u32,
-                              lhs: *mut ExpressionNode,
-                              rhs: *mut ExpressionNode) -> *mut ExpressionNode {
+pub extern "C" fn expr_append(
+    line: u32,
+    lhs: *mut ExpressionNode,
+    rhs: *mut ExpressionNode,
+) -> *mut ExpressionNode {
 
     make_expr_ptr(
         line,
         Expression::Append {
             lhs: unsafe { Box::from_raw(lhs) },
             rhs: unsafe { Box::from_raw(rhs) },
-        }
+        },
     )
 }
 

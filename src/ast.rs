@@ -1,10 +1,10 @@
 pub enum Kind {
     Undefined,
-    Basic(BasicKind)
+    Basic(BasicKind),
 }
 
 #[repr(C)]
-#[derive(Copy,Clone,Eq,PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum BasicKind {
     Int = 0,
     Float = 1,
@@ -74,4 +74,3 @@ pub struct ExpressionNode {
     pub kind: Kind,
     pub expression: Expression,
 }
-
