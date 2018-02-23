@@ -12,6 +12,12 @@ pub extern "C" fn exp_identifier(line: u32, string: *const c_char) -> *mut Expre
     }))
 }
 
+#[no_mangle]
+pub extern "C" fn make_string(string: *const c_char) -> *mut String {
+    Box::into_raw(Box::new(
+            unsafe { CStr::from_ptr(string) }.to_str().unwrap().into()));
+}
+
 macro_rules! create_vec_functions {
     ($make_name:ident, $push_name:ident,  $T:ty) => {
         #[no_mangle]
@@ -26,7 +32,8 @@ macro_rules! create_vec_functions {
     }
 }
 
-create_vec_functions!(make_expr_vec, push_to_expr_vec, ExpressionNode);
+create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
+create_vec_functions!(make_string_vec, string_vec_push, String);
 
 /*
 fn exp_rawliteral(line: u32, str: String) -> Box<ExpressionNode> {
