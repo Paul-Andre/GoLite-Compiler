@@ -401,8 +401,6 @@ pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
 
 
 
-
-
 /*
 AST KIND NODE CONSTRUCTORS
 =======================================
