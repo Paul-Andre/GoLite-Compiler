@@ -129,15 +129,15 @@ pub enum Statement {
         rhs: Vec<ExpressionNode>,
     },
     OpAssignment {
-        lhs: ExpressionNode,
-        rhs: ExpressionNode,
+        lhs: Box<ExpressionNode>,
+        rhs: Box<ExpressionNode>,
         operator: BinOperator,
     },
     VarDeclarations { declarations: Vec<VarDeclaration> },
     TypeDeclarations { declarations: Vec<TypeDeclaration> },
     ShortVariableDeclaration {
-        IdentifierList: Vec<String>,
-        ExpressionList: Vec<ExpressionNode>,
+        identifier_list: Vec<String>,
+        expression_list: Vec<ExpressionNode>,
     },
     IncDec {
         is_dec: bool,
