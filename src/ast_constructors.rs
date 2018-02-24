@@ -172,7 +172,7 @@ fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
         }
     )
 }
-*/
+
 
 
 /*
@@ -181,7 +181,7 @@ STATEMENT NODE CONSTRUCTORS
 */
 
 /// This is a function that factors out most of the repetition from creating statement nodes
-fn make_stmt_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
+fn make_statement_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
     Box::into_raw(Box::new(StatementNode {
         line_number: line ,
         statement: stmt
@@ -190,7 +190,7 @@ fn make_stmt_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
 
 
 #[no_mangle]
-pub extern "C" fn make_empty(line: u32) -> *mut StatementNode {
+pub extern "C" fn make_empty_statement(line: u32) -> *mut StatementNode {
     make_stmt_ptr(
         line,
         Statement::Empty
@@ -198,13 +198,42 @@ pub extern "C" fn make_empty(line: u32) -> *mut StatementNode {
 }
 
 #[no_mangle]
-pub extern "C" fn make_block(line: u32, stmts: Vec<StatmentNode>) -> *mut StatementNode {
+pub extern "C" fn make_block_statement(line: u32, stmts: *mut Vec<ExpressionNode>) -> *mut StatementNode {
     make_stmt_ptr(
         line,
-        Statement::
+        Statement::Block(stmts)
     )
 }
 
+#[no_mangle]
+pub extern "C" fn make_expression_statement(line: u32, expr: *mut ExpressionNode) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Expression(Box::from_raw(expr))
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>, rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Assignment {
+            lhs: *unsafe{Box::from_raw(lhs)},
+            rhs: *unsafe{Box::from_raw(rhs)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>, rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Assignment {
+            lhs: *unsafe{Box::from_raw(lhs)},
+            rhs: *unsafe{Box::from_raw(rhs)}
+        }
+    )
+}
 
 
 
