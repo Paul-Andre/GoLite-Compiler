@@ -179,6 +179,7 @@ pub enum Statement {
     },
     Break,
     Continue,
+    Return(Option<Box<ExpressionNode>>)
 }
 
 pub struct StatementNode {
