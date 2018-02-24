@@ -57,7 +57,7 @@ fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
 }
 
 #[no_mangle]
-pub extern "C" fn make_identifier_expr(line: u32, string: *const c_char) -> *mut ExpressionNode {
+pub extern "C" fn make_identifier_expression(line: u32, string: *const c_char) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
         Expression::Identifier { name: unsafe { from_c_string(string) } },
@@ -66,7 +66,7 @@ pub extern "C" fn make_identifier_expr(line: u32, string: *const c_char) -> *mut
 
 
 #[no_mangle]
-pub extern "C" fn make_literal(
+pub extern "C" fn make_literal_expression(
     line: u32,
     string: *const c_char,
     kind: BasicKind,
@@ -79,7 +79,7 @@ pub extern "C" fn make_literal(
 }
 
 #[no_mangle]
-pub extern "C" fn make_append(
+pub extern "C" fn make_append_expression(
     line: u32,
     lhs: *mut ExpressionNode,
     rhs: *mut ExpressionNode,
@@ -95,7 +95,7 @@ pub extern "C" fn make_append(
 }
 
 
-fn make_binary_operation(
+fn make_binary_operation_expression(
     line: u32,
     operator: BinOperator,
     left: *mut ExpressionNode,
@@ -111,7 +111,7 @@ fn make_binary_operation(
     )
 }
 
-fn expr_unary_operation(line: u32, operator: UnOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
+fn make_unary_operation_expression(line: u32, operator: UnOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
         Expression::UnOperation {
@@ -121,7 +121,7 @@ fn expr_unary_operation(line: u32, operator: UnOperator, right: *mut ExpressionN
     )
 }
 
-fn make_index(line: u32, p: *mut ExpressionNode, i: *mut ExpressionNode) -> *mut ExpressionNode {
+fn make_index_expression(line: u32, p: *mut ExpressionNode, i: *mut ExpressionNode) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
         Expression::Index {
@@ -131,7 +131,7 @@ fn make_index(line: u32, p: *mut ExpressionNode, i: *mut ExpressionNode) -> *mut
     )
 }
 
-fn make_selector(line: u32, p: *mut ExpressionNode, str: *const c_char) -> *mut ExpressionNode {
+fn make_selector_expression(line: u32, p: *mut ExpressionNode, str: *const c_char) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
         Expression::Selector {
@@ -141,7 +141,7 @@ fn make_selector(line: u32, p: *mut ExpressionNode, str: *const c_char) -> *mut 
     )
 }
 
-fn make_function_call(
+fn make_function_call_expression(
     line: u32,
     p: *mut ExpressionNode,
     args: *mut Vec<ExpressionNode>
