@@ -84,67 +84,83 @@ pub extern "C" fn expr_append(
 }
 
 
-fn exp_binoperation(line: u32, str: operator, left: *mut ExpressionNode, right: *mut ExpressionNode)
-    -> *mut ExpressionNode {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::BinOperation{ op: str, lhs: left, rhs: right }
-        }
+fn exp_binoperation(
+    line: u32,
+    str: operator,
+    left: *mut ExpressionNode,
+    right: *mut ExpressionNode,
+) -> *mut ExpressionNode {
+    make_expr_ptr(
+        line,
+        Expression::BinOperation {
+            op: str,
+            lhs: left,
+            rhs: right,
+        },
     )
 }
 
 fn exp_unoperation(line: u32, str: operator, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::UnOperation{ op: str, rhs: right }
-        }
-    )
+    Box::new(ExpressionNode {
+        location: line,
+        expression: Expression::UnOperation {
+            op: str,
+            rhs: right,
+        },
+    })
 }
 
 fn exp_index(line: u32, p: Box<ExpressionNode>, i: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::Index{ primary: p, index: i }
-        }
-    )
+    Box::new(ExpressionNode {
+        location: line,
+        expression: Expression::Index {
+            primary: p,
+            index: i,
+        },
+    })
 }
 
 fn exp_selector(line: u32, p: Box<ExpressionNode>, str: String) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::Selector{ primary: p, name: str }
-        }
-    )
+    Box::new(ExpressionNode {
+        location: line,
+        expression: Expression::Selector {
+            primary: p,
+            name: str,
+        },
+    })
 }
 
-fn exp_functioncall(line: u32, p: Box<ExpressionNode>, args: Vec<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::FunctionCall{ primary: p, arguments: args }
-        }
-    )
+fn exp_functioncall(
+    line: u32,
+    p: Box<ExpressionNode>,
+    args: Vec<ExpressionNode>,
+) -> Box<ExpressionNode> {
+    Box::new(ExpressionNode {
+        location: line,
+        expression: Expression::FunctionCall {
+            primary: p,
+            arguments: args,
+        },
+    })
 }
 
-fn exp_append(line: u32, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::Append{ lhs: left, rhs: right }
-        }
-    )
+fn exp_append(
+    line: u32,
+    left: Box<ExpressionNode>,
+    right: Box<ExpressionNode>,
+) -> Box<ExpressionNode> {
+    Box::new(ExpressionNode {
+        location: line,
+        expression: Expression::Append {
+            lhs: left,
+            rhs: right,
+        },
+    })
 }
 
 fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::TypeCast{ expr: exp }
-        }
-    )
+    Box::new(ExpressionNode {
+        location: line,
+        expression: Expression::TypeCast { expr: exp },
+    })
 }
-
