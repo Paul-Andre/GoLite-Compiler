@@ -53,7 +53,7 @@ pub extern "C" fn make_program_ptr(pkg: *const c_char,
 
     Box::into_raw(Box::new(Program {
         package_name: unsafe { from_c_string(pkg) } ,
-        declarations: unsafe { *unsafe{Box::from_raw(dcls)}}
+        declarations: *unsafe{Box::from_raw(dcls)}
     }))
 }
 
@@ -494,17 +494,17 @@ pub extern "C" fn make_case_clause(line: u32,
                                    stmts: *mut Vec<StatementNode>) -> *mut CaseClause {
 
     let tag: SwitchCase;
-    
+
     if tags.is_null() {
         tag = SwitchCase::Default;
     } else {
-        tag = SwitchCase::Cases( unsafe { *unsafe{Box::from_raw(tags)} })
+        tag = SwitchCase::Cases( *unsafe{Box::from_raw(tags)} )
     }
 
     Box::into_raw(Box::new(CaseClause {
         line_number: line,
         tag,
-        statements: unsafe { *unsafe{Box::from_raw(stmts)}}
+        statements: *unsafe{Box::from_raw(stmts)}
     }))
 }
 
