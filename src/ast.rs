@@ -50,8 +50,8 @@ pub enum UnaryOperator {
 
 pub enum AstKind {
     Identifier { name: String },
-    Slice { base: Box<Kind> },
-    Array { base: Box<Kind>, size: String },
+    Slice { base: Box<AstKind> },
+    Array { base: Box<AstKind>, size: String },
     Struct { fields: Vec<StructField> },
 }
 
