@@ -34,10 +34,12 @@ void yyerror(const char *s) {
  * optionally (b) non-terminals (variables in productions) with AST information if any.
  */
 %union {
-	char *text;
-  ExpressionNode *expr;
-  ExpressionNodeVec *expr_vec;
-  StringVec *string_vec;
+    char *text;
+    ExpressionNode *expr;
+    ExpressionNodeVec *expr_vec;
+    StringVec *string_vec;
+    StatementNode *stmt;
+    StatementNodeVec *stmt_vec;
 }
 
 /* Token directives define the token types to be returned by the scanner (excluding character
@@ -156,6 +158,22 @@ void yyerror(const char *s) {
 %type <expr_vec> expression_list
 %type <expr_vec> OptionalExpressionList
 
+%type <stmt> ExpressionStmt
+%type <stmt> Assignment
+%type <stmt> Declaration
+%type <stmt> SimpleStmt
+%type <stmt> BreakStmt
+%type <stmt> ContinueStmt
+%type <stmt> IfStmt
+%type <stmt> SwitchStmt
+%type <stmt> ForStmt
+%type <stmt> PrintStmt
+%type <stmt> PrintlnStmt
+
+%type <stmt_vec> StatementList
+%type <stmt_vec> Block
+
+
 
 %token UNARY_PREC
 %token REL_PREC
@@ -227,8 +245,8 @@ TopLevelDecls : %empty                  { }
 // DECLARATION STRUCTURE
 // ============================
 
-Declaration : TypeDecl
-    | VarDecl
+Declaration : TypeDecl      { $$ = make_declaration_statement() }
+    | VarDecl               { $$ = make_declaration_statement() }
     ;
 
 TopLevelDecl : Declaration 
@@ -243,7 +261,7 @@ TopLevelDecl : Declaration
 
 // TODO WEED: check that the numbers on each side are the same
 
-VarDecl : tVAR VarSpec
+VarDecl : tVAR VarSpec          
     | tVAR '(' VarSpecs ')'
     ;
 
@@ -299,7 +317,7 @@ TypeDef : tIDENTIFIER Type
 // FUNCTION DECLARATION
 // ============================
 
-FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block
+FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block    
     ;
 
 FuncSignature: FuncParameters FuncResult
@@ -377,7 +395,7 @@ Statement : Declaration
     | ReturnStmt
     | BreakStmt
     | ContinueStmt
-    | Block
+    | Block                 { $$ = make_block_statement(yylineno, $1) }
     | IfStmt
     | SwitchStmt
     | ForStmt
@@ -397,18 +415,22 @@ SimpleStmt : EmptyStmt
 // ============================
 
 
-EmptyStmt: %empty
+EmptyStmt: %empty               { $$ = make_empty_statement(yylineno); }
     ;
 
-Block : '{' StatementList '}'
+Block : '{' StatementList '}'   
     ;
 
-StatementList: %empty
-             | StatementList Statement ';'
+StatementList: %empty                       { $$ = make_stmt_vec() }
+             | StatementList Statement ';'  
+             { 
+                $$ = $1;
+                $$ = stmt_vec_push($$, $2);
+             }
              ;
 
 // TODO WEED: not all expressions are valid; need to weed
-ExpressionStmt : Expression { $$ = make_expression_statemen(yylineno, $1); }
+ExpressionStmt : Expression { $$ = make_expression_statement(yylineno, $1); }
     ;
 
 
@@ -417,25 +439,25 @@ ExpressionStmt : Expression { $$ = make_expression_statemen(yylineno, $1); }
 Assignment: expression_list '=' expression_list   
                 { $$ = make_assignment_statement(yylineno, $1, $3) }
             expression_list add_assign_op expression_list   
-                { $$ = make_op_assignment_statement(yylineno, $1, $3) }
+                { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
             expression_list mul_assign_op expression_list   
-                { $$ = make_op_assignment_statement(yylineno, $1, $3) }
+                { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
     ;
 
 
-add_assign_op : tPLUSASSIGN    
-              | tMINUSASSIGN 
-              | tBWORASSIGN 
-              | tBWXORASSIGN
+add_assign_op : tPLUSASSIGN       { $$ = opAdd }
+              | tMINUSASSIGN      { $$ = opSub }
+              | tBWORASSIGN       { $$ = opBwOr }
+              | tBWXORASSIGN      { $$ = opBwXor }
               ;
 
-mul_assign_op : tTIMESASSIGN 
-              | tDIVASSIGN 
-              | tREMASSIGN 
-              | tLSHIFTASSIGN
-              | tRSHIFTASSIGN 
-              | tBWANDASSIGN 
-              | tBWANDNOTASSIGN
+mul_assign_op : tTIMESASSIGN      { $$ = opMul }
+              | tDIVASSIGN        { $$ = opDiv }
+              | tREMASSIGN        { $$ = opMod }
+              | tLSHIFTASSIGN     { $$ = opLShift }
+              | tRSHIFTASSIGN     { $$ = opRShift }
+              | tBWANDASSIGN      { $$ = opBwAnd }
+              | tBWANDNOTASSIGN   { $$ = opBwAndNot }
               ;
 
 
@@ -443,66 +465,76 @@ mul_assign_op : tTIMESASSIGN
 
 // TODO WEED: same number on both sides. Also check for the correct use of _
 ShortVarDecl : identifier_list tDEFINE expression_list
+             { $$ = make_short_var_declaration_statement(yylineno, $1, $3) }
     ;
 
-IncDecStmt: Expression tINC
-    | Expression tDEC
+IncDecStmt: Expression tINC { $$ = make_inc_dec_statement(yylineno, 0, $1) }
+    | Expression tDEC       { $$ = make_inc_dec_statement(yylineno, 1, $1) }
     ;
 
-PrintStmt: tPRINT '(' OptionalExpressionList ')'
+PrintStmt: tPRINT '(' OptionalExpressionList ')' { $$ = make_print_statement(yylineno, $3) }
     ;
 
-PrintlnStmt: tPRINTLN '(' OptionalExpressionList ')'
+PrintlnStmt: tPRINTLN '(' OptionalExpressionList ')' { $$ = make_println_statement(yylineno, $3) }
     ;
 
-ReturnStmt: tRETURN 
+ReturnStmt: tRETURN             
           | tRETURN Expression
           ;
 
 
-IfStmt: tIF SimpleStmt ';' Expression Block ElseStmt
+IfStmt: tIF SimpleStmt ';' Expression Block ElseStmt 
+            { $$ = make_if_statement(yylineno, $2, $4, $5, $6) }
       | tIF Expression Block ElseStmt
+            { $$ = make_if_statement(yylineno, NULL, $2, $3, $4) }
       ;
 
-ElseStmt: %empty
+ElseStmt: %empty        { $$ = NULL }
         | tELSE IfStmt
-        | tELSE Block
+        | tELSE Block   { $$ = make_block_statement(yylineno, $2) }
         ;
 
 
 SwitchStmt: tSWITCH SimpleStmt ';' Expression '{' CaseClauses '}'
+                { $$ = make_switch_statement(yylineno, $2, $4, $6) }
           | tSWITCH Expression '{' CaseClauses '}'
+                { $$ = make_switch_statement(yylineno, NULL, $2, $4) }
           | tSWITCH SimpleStmt ';' '{' CaseClauses '}'
+                { $$ = make_switch_statement(yylineno, $2, NULL, $5) }
           | tSWITCH '{' CaseClauses '}'
+                { $$ = make_switch_statement(yylineno, NULL, NULL, $6) }
     ;
 
-CaseClauses: %empty
-           | CaseClauses CaseClause
+CaseClauses: %empty                 { $$ = make_case_clause_vec() }
+           | CaseClauses CaseClause 
+                { 
+                $$ = $1;
+                case_clause_vec_push($$, $2);
+                }
            ;
 
 // TODO: decide if maybe to fuse to next two rules for easier AST building
-CaseClause: SwitchCase ':' StatementList
+CaseClause: SwitchCase ':' StatementList    { $$ = make_case_clause(yylineno, $1, $3) }
     ;
 
-SwitchCase: tCASE expression_list
+SwitchCase: tCASE expression_list           
     | tDEFAULT
     ;
 
 
-ForStmt: tFOR Block             
-    | tFOR Expression Block
-    | tFOR ForClause Block
+ForStmt: tFOR Block                         { $$ = make_loop_statement(yylineno, $2) }
+    | tFOR Expression Block                 { $$ = make_while_statement(yylineno, $2, $3) }
+    | tFOR SimpleStmt ';' Expression ';' SimpleStmt Block
+        { $$ = make_for_statement(yylineno, $2, $4, $6, $7); }
     ;
 
 // TODO WEED: make sure the last SimpleStmt is not a short variable declaration
 // SimpleStmt can be empty, so not explicitly making them optional should be fine
-ForClause: SimpleStmt ';' Expression ';' SimpleStmt
+
+BreakStmt: tBREAK           { $$ = make_break_statement(yylineno) }
     ;
 
-BreakStmt: tBREAK
-    ;
-
-ContinueStmt: tCONTINUE
+ContinueStmt: tCONTINUE     { $$ = make_continue_statement(yylineno) }
     ;
 
 
@@ -512,7 +544,7 @@ ContinueStmt: tCONTINUE
 // EXPRESSIONS
 // ============================
 
-Expression: UnaryExpr                                    { $$ = $1 }
+Expression: UnaryExpr                                    
           | Expression tOR Expression                    
             {$$ = make_bin_operation_expression(yylieno, $2, opOr, $2)}
           | Expression tAND Expression                   
@@ -559,9 +591,9 @@ unary_op: '+'               { $$ = opPlus }
         | '^'               { $$ = opNot }
         ;
 
-Operand: Literal            { $$ = $1 }
+Operand: Literal
        | tIDENTIFIER        { $$ = expr_identifier(yylineno, $1); }
-       | '(' Expression ')' { $$ = $2; }
+       | '(' Expression ')'
        ;
 
 Literal: tINTVAL            {$$ = expr_literal(yylineno, $1, kInt);}
@@ -570,7 +602,7 @@ Literal: tINTVAL            {$$ = expr_literal(yylineno, $1, kInt);}
        | tSTRINGVAL         {$$ = expr_literal(yylineno, $1, kString);}
        ;
 
-PrimaryExpr: Operand                { $$ = $1 }
+PrimaryExpr: Operand
            | PrimaryExpr Selector   { $$ = make_selector_expression(yylineno, $1, $2) }
            | PrimaryExpr Index      { $$ = make_index_expression(yylineno, $1, $2) }
            | AppendExpr             { $$ = $1 }
@@ -578,7 +610,7 @@ PrimaryExpr: Operand                { $$ = $1 }
            ;
 
 // TODO WEED: must not be blank
-Selector: '.' tIDENTIFIER           { $$ = $2 }
+Selector: '.' tIDENTIFIER
         ;
 
 Index: '[' Expression ']'
@@ -599,7 +631,7 @@ AppendExpr: tAPPEND '(' Expression ',' Expression ')'
 // ============================
 
 
-OptionalExpressionList: %empty { $$ = make_expr_vec(); }
+OptionalExpressionList: %empty          { $$ = make_expr_vec(); }
                       | expression_list
                       ;
 
