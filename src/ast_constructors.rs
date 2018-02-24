@@ -216,8 +216,8 @@ pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut Box<Expressi
     make_statement_ptr(
         line,
         Statement::OpAssignment {
-            lhs: *unsafe{Box::from_raw(lhs)},
-            rhs: *unsafe{Box::from_raw(rhs)},
+            lhs: unsafe{Box::from_raw(lhs)},
+            rhs: unsafe{Box::from_raw(rhs)},
             operator: op
         }
     )
@@ -262,7 +262,7 @@ pub extern "C" fn make_inc_dec_statement(line: u32, is_dec: bool, expr: *mut Box
         line,
         Statement::IncDec {
             is_dec,
-            expr: *unsafe{Box::from_raw(expr)}
+            expr: unsafe{Box::from_raw(expr)}
         }
     )
 }
@@ -288,7 +288,8 @@ pub extern "C" fn make_println_statement(line: u32, exprs: *mut Vec<ExpressionNo
 }
 
 #[no_mangle]
-pub extern "C" fn make_if_statement(line: u32, init: *mut Box<StatementNode>,
+pub extern "C" fn make_if_statement(line: u32,
+                                    init: *mut Box<StatementNode>,
                                     cond: *mut Box<ExpressionNode>,
                                     if_branch: *mut Vec<StatementNode>,
                                     else_branch: *mut Box<StatementNode> ) -> *mut StatementNode {
@@ -297,8 +298,8 @@ pub extern "C" fn make_if_statement(line: u32, init: *mut Box<StatementNode>,
         make_statement_ptr(
             line,
             Statement::If {
-                init: *unsafe{Box::from_raw(init)},
-                condition: *unsafe{Box::from_raw(cond)},
+                init: unsafe{Box::from_raw(init)},
+                condition: unsafe{Box::from_raw(cond)},
                 if_branch: *unsafe{Box::from_raw(if_branch)},
                 else_branch: None
             }
@@ -307,8 +308,8 @@ pub extern "C" fn make_if_statement(line: u32, init: *mut Box<StatementNode>,
         make_statement_ptr(
             line,
             Statement::If {
-                init: *unsafe{Box::from_raw(init)},
-                condition: *unsafe{Box::from_raw(cond)},
+                init: unsafe{Box::from_raw(init)},
+                condition: unsafe{Box::from_raw(cond)},
                 if_branch: *unsafe{Box::from_raw(if_branch)},
                 else_branch: Some(*unsafe{Box::from_raw(else_branch)})
             }
@@ -332,7 +333,7 @@ pub extern "C" fn make_while_statement(line: u32, cond: *mut Box<ExpressionNode>
     make_statement_ptr(
         line,
         Statement::While {
-            condition: *unsafe{Box::from_raw(cond)},
+            condition: unsafe{Box::from_raw(cond)},
             body: *unsafe{Box::from_raw(body)}
         }
     )
