@@ -39,7 +39,7 @@ create_vec_functions!(make_string_vec, string_vec_push, String);
 /// This is a function that factors out most of the repetition from creating expression nodes
 fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
-        location: SourceLocation { line_number: line },
+        line_number: line,
         expression: expr,
         kind: Kind::Undefined,
     }))
@@ -61,7 +61,7 @@ pub extern "C" fn expr_literal(
     kind: BasicKind,
 ) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
-        location: SourceLocation { line_number: line },
+        line_number: line,
         expression: Expression::RawLiteral { value: unsafe { from_c_string(string) } },
         kind: Kind::Basic(kind),
     }))
