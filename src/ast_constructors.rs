@@ -36,6 +36,17 @@ macro_rules! create_vec_functions {
 create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
+//Statement vectors
+create_vec_functions!(make_stmt_vec, stmt_vec_push, StatementNode);
+
+
+
+
+/*
+EXPRESSION NODE CONSTRUCTORS
+=======================================
+*/
+
 /// This is a function that factors out most of the repetition from creating expression nodes
 fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
@@ -161,7 +172,7 @@ fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
         }
     )
 }
-*/
+
 
 
 /*
@@ -169,15 +180,66 @@ STATEMENT NODE CONSTRUCTORS
 =======================================
 */
 
-
 /// This is a function that factors out most of the repetition from creating statement nodes
-fn make_stmt_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
-    Box::into_raw(Box::new(ExpressionNode {
-        location: SourceLocation { line_number: line },
-        expression: expr,
-        kind: Kind::Undefined,
+fn make_statement_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
+    Box::into_raw(Box::new(StatementNode {
+        line_number: line ,
+        statement: stmt
     }))
 }
+
+
+#[no_mangle]
+pub extern "C" fn make_empty_statement(line: u32) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Empty
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_block_statement(line: u32, stmts: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Block(stmts)
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_expression_statement(line: u32, expr: *mut ExpressionNode) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Expression(Box::from_raw(expr))
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>, rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Assignment {
+            lhs: *unsafe{Box::from_raw(lhs)},
+            rhs: *unsafe{Box::from_raw(rhs)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>, rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Assignment {
+            lhs: *unsafe{Box::from_raw(lhs)},
+            rhs: *unsafe{Box::from_raw(rhs)}
+        }
+    )
+}
+
+
+
+
+
+
 
 
 
