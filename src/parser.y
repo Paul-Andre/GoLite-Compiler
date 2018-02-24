@@ -187,7 +187,6 @@ void yyerror(const char *s) {
 
 // Statements
 %type <stmt> Statement
-%type <stmt> SimpleStmt
 
 %type <stmt> Declaration
 %type <stmt> SimpleStmt
