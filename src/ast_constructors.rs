@@ -143,3 +143,43 @@ fn make_function_call_expression(
         },
     )
 }
+
+fn exp_append(line: u32, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
+    Box::new(
+        ExpressionNode {
+            location: line, 
+            expression: Expression::Append{ lhs: left, rhs: right }
+        }
+    )
+}
+
+fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
+    Box::new(
+        ExpressionNode {
+            location: line, 
+            expression: Expression::TypeCast{ expr: exp }
+        }
+    )
+}
+*/
+
+
+/*
+STATEMENT NODE CONSTRUCTORS
+=======================================
+*/
+
+
+/// This is a function that factors out most of the repetition from creating statement nodes
+fn make_stmt_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
+    Box::into_raw(Box::new(ExpressionNode {
+        location: SourceLocation { line_number: line },
+        expression: expr,
+        kind: Kind::Undefined,
+    }))
+}
+
+
+
+
+
