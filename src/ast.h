@@ -22,6 +22,12 @@
 typedef struct ExpressionNode ExpressionNode;
 DECLARE_VEC(expression, ExpressionNode);
 
+typedef struct VarSpec VarSpec;
+DECLARE_VEC(var_spec, VarSpec);
+
+typedef struct VarTypeSpec TypeSpec;
+DECLARE_VEC(type_spec, VarTypeSpec);
+
 typedef struct String String;
 DECLARE_VEC(string, String);
 
@@ -77,6 +83,13 @@ enum UnaryOperator {
     opNot,
 };
 
+Program *make_program(char*, TopLevelDeclarationVec*);
+
+TopLevelDeclarationNode *make_var_top_level_declaration(uint32_t, VarSpecVec*);
+TopLevelDeclarationNode *make_type_top_level_declaration(uint32_t, TypeSpecVec*);
+TopLevelDeclarationNode *make_function_top_level_declaration(
+    uint32_t, char*, FieldVec*, AstKindNode*, StatementNodeVec*);
+
 ExpressionNode *make_identifier_expression(uint32_t, char*);
 ExpressionNode *make_literal_expression(uint32_t, char*,enum BasicKind);
 ExpressionNode *make_append_expression(uint32_t, ExpressionNode*, ExpressionNode*);
@@ -91,8 +104,8 @@ StatementNode *make_block_statement(uint32_t, StatementNodeVec*);
 StatementNode *make_expression_statement(uint32_t, ExpressionNode*);
 StatementNode *make_assignment_statement(uint32_t, ExpressionNodeVec*, ExpressionNodeVec*);
 StatementNode *make_op_assignment_statement(uint32_t, ExpressionNode*, ExpressionNode*);
-StatementNode *make_var_declaration_statement(uint32_t, VarDeclarationVec*);
-StatementNode *make_type_declaration_statement(uint32_t, TypeDeclarationVec*);
+StatementNode *make_var_declaration_statement(uint32_t, VarSpecVec*);
+StatementNode *make_type_declaration_statement(uint32_t, TypeSpecVec*);
 StatementNode *make_short_var_declaration_statement(uint32_t, StringVec*, ExpressionNodeVec*);
 StatementNode *make_inc_dec_statement(uint32_t, int, ExpressionNode*);
 StatementNode *make_print_statement(uint32_t, ExpressionNodeVec*);
@@ -112,4 +125,8 @@ AstKindNode *make_array_kind(uint32_t, AstKindNode*, char*);
 AstKindNode *make_struct_kind(uint32_t, FieldVec*);
 
 Field *make_field(uint32_t, StringVec*, AstKindNode*);
+
+CaseClause *make_case_clause(uint32_t, ExpressionNodeVec*, StatementNodeVec*);
+VarSpec *make_var_spec(uint32_t, StringVec*, AstKindNode*, ExpressionNodeVec*);
+TypeSpec *make_type_spec(uint32_t, StringVec*, AstKindNode*);
 
