@@ -152,7 +152,7 @@ void yyerror(const char *s) {
 %type <expr> PrimaryExpr
 %type <expr> Literal
 
-%type <expr_vec> ExpressionList
+%type <expr_vec> expression_list
 %type <expr_vec> OptionalExpressionList
 
 
@@ -250,21 +250,21 @@ VarSpecs : %empty
     | VarSpecs VarSpec ';'
     ;
 
-VarSpec : IdentifierList Type
-    | IdentifierList Type '=' ExpressionList
-    | IdentifierList '=' ExpressionList
+VarSpec : identifier_list Type
+    | identifier_list Type '=' expression_list
+    | identifier_list '=' expression_list
     ;
 
-IdentifierList : tIDENTIFIER
-    | IdentifierList ',' tIDENTIFIER
+identifier_list : tIDENTIFIER
+    | identifier_list ',' tIDENTIFIER
     ;
 
-ExpressionList : Expression
+expression_list : Expression
                {
                $$ = make_expr_vec();
                expr_vec_push($$, $1);
                }
-    | ExpressionList ',' Expression
+    | expression_list ',' Expression
                {
                $$ = $1;
                expr_vec_push($$, $3);
@@ -319,7 +319,7 @@ OptionalFuncParameterList: %empty
     | FuncParameterList
     ;
 
-FuncParameterDecl: IdentifierList Type
+FuncParameterDecl: identifier_list Type
     ;
 
 
@@ -362,7 +362,7 @@ StructType : tSTRUCT '{'  FieldDecls '}'
 FieldDecls : %empty
            | FieldDecls FieldDecl ';'
 
-FieldDecl : IdentifierList Type
+FieldDecl : identifier_list Type
     ;
 
 
@@ -413,7 +413,7 @@ ExpressionStmt : Expression
 
 // TODO WEED: make sure number is same on both sides
 // TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
-Assignment: ExpressionList assign_op ExpressionList
+Assignment: expression_list assign_op expression_list
     ;
 
 assign_op : '='
@@ -430,7 +430,7 @@ mul_assign_op : tTIMESASSIGN | tDIVASSIGN | tREMASSIGN | tLSHIFTASSIGN
 // declaration statements are just Declarations; they were done earlier
 
 // TODO WEED: same number on both sides. Also check for the correct use of _
-ShortVarDecl : IdentifierList tDEFINE ExpressionList
+ShortVarDecl : identifier_list tDEFINE expression_list
     ;
 
 IncDecStmt: Expression tINC
@@ -472,7 +472,7 @@ CaseClauses: %empty
 CaseClause: SwitchCase ':' StatementList
     ;
 
-SwitchCase: tCASE ExpressionList
+SwitchCase: tCASE expression_list
     | tDEFAULT
     ;
 
@@ -584,7 +584,7 @@ AppendExpr: tAPPEND '(' Expression ',' Expression ')' {
 
 
 OptionalExpressionList: %empty { $$ = make_expr_vec(); }
-                      | ExpressionList
+                      | expression_list
                       ;
 
 %%
