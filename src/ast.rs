@@ -113,8 +113,8 @@ pub enum Statement {
         declarations: Vec<TypeDeclaration>
     },
     ShortVariableDeclaration {
-        IdentifierList: Vec<String>,
-        ExpressionList: Vec<ExpressionNode>,
+        identifier_list: Vec<String>,
+        expression_list: Vec<ExpressionNode>,
     },
     IncDec {
         is_dec: bool,

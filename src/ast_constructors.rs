@@ -36,6 +36,17 @@ macro_rules! create_vec_functions {
 create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
+//Statement vectors
+create_vec_functions!(make_stmt_vec, stmt_vec_push, StatementNode);
+
+
+
+
+/*
+EXPRESSION NODE CONSTRUCTORS
+=======================================
+*/
+
 /// This is a function that factors out most of the repetition from creating expression nodes
 fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
@@ -84,10 +95,7 @@ pub extern "C" fn expr_append(
 }
 
 
-
-
 /*
- 
 
 fn exp_binoperation(line: u32, str: operator, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
     Box::new(
@@ -159,15 +167,37 @@ STATEMENT NODE CONSTRUCTORS
 =======================================
 */
 
-
 /// This is a function that factors out most of the repetition from creating statement nodes
-fn make_stmt_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
-    Box::into_raw(Box::new(ExpressionNode {
-        location: SourceLocation { line_number: line },
-        expression: expr,
-        kind: Kind::Undefined,
+fn make_stmt_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
+    Box::into_raw(Box::new(StatementNode {
+        line_number: line ,
+        statement: stmt
     }))
 }
+
+
+#[no_mangle]
+pub extern "C" fn make_empty(line: u32) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::Empty
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_block(line: u32, stmts: Vec<StatmentNode>) -> *mut StatementNode {
+    make_stmt_ptr(
+        line,
+        Statement::
+    )
+}
+
+
+
+
+
+
+
 
 
 
