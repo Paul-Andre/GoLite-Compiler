@@ -1,6 +1,7 @@
 use ast::*;
 use std::ffi::CStr;
 use std::os::raw::c_char;
+use std::os::raw::c_int;
 
 
 /// This function turns a C string into a Rust String
@@ -33,11 +34,13 @@ macro_rules! create_vec_functions {
 }
 
 // Generate the functions to be used in C
-create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
+create_vec_functions!(make_expression_vec, expression_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
 //Statement vectors
 create_vec_functions!(make_statement_vec, statement_vec_push, StatementNode);
+
+create_vec_functions!(make_field_vec, field_vec_push, StatementNode);
 
 
 /*
@@ -320,11 +323,11 @@ pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<
 }
 
 #[no_mangle]
-pub extern "C" fn make_inc_dec_statement(line: u32, is_dec: bool, expr: *mut ExpressionNode ) -> *mut StatementNode {
+pub extern "C" fn make_inc_dec_statement(line: u32, is_dec: c_int, expr: *mut ExpressionNode ) -> *mut StatementNode {
     make_statement_ptr(
         line,
         Statement::IncDec {
-            is_dec,
+            if c_int == 0 {false} else {true},
             expr: unsafe{Box::from_raw(expr)}
         }
     )
@@ -462,6 +465,21 @@ pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
         Statement::Continue
 
     )
+}
+
+pub extern "C" fn make_return_statement(line: u32, value: *mut ExpressionNode) -> *mut StatementNode{
+    if value.is_null() {
+        make_statement_ptr(
+            line,
+            Statement::Return(None)
+        )
+    } else {
+        make_statement_ptr(
+            line,
+            Statement::Return(Some(unsafe{Box::from_raw(value)}))
+        )
+    }
+    
 }
 
 

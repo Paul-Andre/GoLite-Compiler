@@ -20,12 +20,23 @@
 
 
 typedef struct ExpressionNode ExpressionNode;
-DECLARE_VEC(expr, ExpressionNode);
+DECLARE_VEC(expression, ExpressionNode);
 
 typedef struct String String;
 DECLARE_VEC(string, String);
 
 String *make_string(char*);
+
+typedef struct StatementNode StatementNode;
+DECLARE_VEC(statement, StatementNode);
+
+typedef struct AstKindNode AstKindNode;
+
+typedef struct Field Field;
+DECLARE_VEC(field, Field);
+
+typedef struct CaseClause CaseClause;
+DECLARE_VEC(case_clause, CaseClause);
 
 enum BasicKind {
   kInt = 0,
@@ -75,4 +86,30 @@ ExpressionNode *make_selector_expression(uint32_t, ExpressionNode*, char *);
 ExpressionNode *make_index_expression(uint32_t, ExpressionNode*, ExpressionNode*);
 ExpressionNode *make_function_call_expression(uint32_t, ExpressionNode*, ExpressionNodeVec*);
 
+StatementNode *make_empty_statement(uint32_t);
+StatementNode *make_block_statement(uint32_t, StatementNodeVec*);
+StatementNode *make_expression_statement(uint32_t, ExpressionNode*);
+StatementNode *make_assignment_statement(uint32_t, ExpressionNodeVec*, ExpressionNodeVec*);
+StatementNode *make_op_assignment_statement(uint32_t, ExpressionNode*, ExpressionNode*);
+StatementNode *make_var_declaration_statement(uint32_t, VarDeclarationVec*);
+StatementNode *make_type_declaration_statement(uint32_t, TypeDeclarationVec*);
+StatementNode *make_short_var_declaration_statement(uint32_t, StringVec*, ExpressionNodeVec*);
+StatementNode *make_inc_dec_statement(uint32_t, int, ExpressionNode*);
+StatementNode *make_print_statement(uint32_t, ExpressionNodeVec*);
+StatementNode *make_println_statement(uint32_t, ExpressionNodeVec*);
+StatementNode *make_if_statement(uint32_t, StatementNode*, ExpressionNode*, StatementNodeVec*, StatementNode*);
+StatementNode *make_loop_statement(uint32_t, StatementNodeVec*);
+StatementNode *make_while_statement(uint32_t, ExpressionNode*, StatementNodeVec*);
+StatementNode *make_for_statement(uint32_t, StatementNode*, ExpressionNode*, StatementNode*, StatementNodeVec*);
+StatementNode *make_switch_statement(uint32_t, StatementNode*, ExpressionNode*, CaseClauseVec*);
+StatementNode *make_break_statement(uint32_t);
+StatementNode *make_continue_statement(uint32_t);
+StatementNode *make_return_statement(uint32_t, ExpressionNode*);
+
+AstKindNode *make_identifier_kind(uint32_t, char*);
+AstKindNode *make_slice_kind(uint32_t, AstKindNode*);
+AstKindNode *make_array_kind(uint32_t, AstKindNode*, char*);
+AstKindNode *make_struct_kind(uint32_t, FieldVec*);
+
+Field *make_field(uint32_t, StringVec*, AstKindNode*)
 
