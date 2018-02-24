@@ -118,14 +118,14 @@ pub struct TypeDeclaration {
     pub kind: Box<AstKindNode>,
 }
 
-pub enum CaseClauseTag {
+pub enum SwitchCase {
     Default,
     Cases(Vec<ExpressionNode>),
 }
 
 pub struct CaseClause {
     pub line_number: u32,
-    pub tag: CaseClauseTag,
+    pub tag: SwitchCase,
     pub statements: Vec<StatementNode>,
 }
 
