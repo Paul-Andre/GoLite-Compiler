@@ -47,6 +47,33 @@ func main() {
     t int
   )
 
+  // Some if statements
+  if e,r,t,s := 3,4,5,0; x > y {
+
+  } else {
+
+  }
+  if ; x > y {
+
+  } else if s == 0 {
+
+  }
+
+  // Some for loops
+  for {
+    println("Hello World");
+  }
+
+  for exp {
+
+  }
+
+  for i=34; 4<5; h(+x) {
+
+  }
+
+
+
   // some random return statements
   return
   return 1
