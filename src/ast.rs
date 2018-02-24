@@ -52,12 +52,12 @@ pub enum AstKind {
     Identifier { name: String },
     Slice { base: Box<AstKindNode> },
     Array { base: Box<AstKindNode>, size: String },
-    Struct { fields: Vec<StructField> },
+    Struct { fields: Vec<Field> },
 }
 
 pub struct AstKindNode {
-    line_number: u32,
-    ast_kind: AstKind
+    pub line_number: u32,
+    pub ast_kind: AstKind
 }
 
 // This is either the field of a struct or a list of parameters declared with the same type for a
@@ -107,15 +107,15 @@ pub struct ExpressionNode {
 }
 
 pub struct VarDeclaration {
-    line_number: u32,
-    names: Vec<String>,
-    kind: Option<Box<AstKindNode>>,
-    rhs: Vec<ExpressionNode>,
+    pub line_number: u32,
+    pub names: Vec<String>,
+    pub kind: Option<Box<AstKindNode>>,
+    pub rhs: Vec<ExpressionNode>,
 }
 
 pub struct TypeDeclaration {
-    names: String,
-    kind: Box<AstKindNode>,
+    pub names: String,
+    pub kind: Box<AstKindNode>,
 }
 
 pub enum CaseClauseTag {
@@ -124,9 +124,9 @@ pub enum CaseClauseTag {
 }
 
 pub struct CaseClause {
-    line_number: u32,
-    tag: CaseClauseTag,
-    statements: Vec<StatementNode>,
+    pub line_number: u32,
+    pub tag: CaseClauseTag,
+    pub statements: Vec<StatementNode>,
 }
 
 
@@ -182,8 +182,8 @@ pub enum Statement {
 }
 
 pub struct StatementNode {
-    line_number: u32,
-    statement: Statement,
+    pub line_number: u32,
+    pub statement: Statement,
 }
 
 pub enum TopLevelDeclaration {
@@ -198,11 +198,11 @@ pub enum TopLevelDeclaration {
 }
 
 pub struct TopLevelDeclarationNode {
-    line_number: u32,
-    top_level_declaration: TopLevelDeclaration
+    pub line_number: u32,
+    pub top_level_declaration: TopLevelDeclaration
 }
 
-struct Program {
-    package_name: String,
-    declarations: Vec<TopLevelDeclaration>,
+pub struct Program {
+    pub package_name: String,
+    pub declarations: Vec<TopLevelDeclaration>,
 }
