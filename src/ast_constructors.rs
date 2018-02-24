@@ -1,6 +1,7 @@
 use ast::*;
 use std::ffi::CStr;
 use std::os::raw::c_char;
+use std::ptr;
 
 
 /// This function turns a C string into a Rust String
@@ -37,7 +38,7 @@ create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
 //Statement vectors
-create_vec_functions!(make_stmt_vec, stmt_vec_push, StatementNode);
+create_vec_functions!(make_statement_make_statement_vec_push, StatementNode);
 
 
 
@@ -191,7 +192,7 @@ fn make_statement_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
 
 #[no_mangle]
 pub extern "C" fn make_empty_statement(line: u32) -> *mut StatementNode {
-    make_stmt_ptr(
+    make_statement_ptr(
         line,
         Statement::Empty
     )
@@ -199,23 +200,24 @@ pub extern "C" fn make_empty_statement(line: u32) -> *mut StatementNode {
 
 #[no_mangle]
 pub extern "C" fn make_block_statement(line: u32, stmts: *mut Vec<ExpressionNode>) -> *mut StatementNode {
-    make_stmt_ptr(
+    make_statement_ptr(
         line,
-        Statement::Block(stmts)
+        Statement::Block(Box::from_raw(stmt))
     )
 }
 
 #[no_mangle]
 pub extern "C" fn make_expression_statement(line: u32, expr: *mut ExpressionNode) -> *mut StatementNode {
-    make_stmt_ptr(
+    make_statement_ptr(
         line,
         Statement::Expression(Box::from_raw(expr))
     )
 }
 
 #[no_mangle]
-pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>, rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
-    make_stmt_ptr(
+pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>,
+                                            rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+    make_statement_ptr(
         line,
         Statement::Assignment {
             lhs: *unsafe{Box::from_raw(lhs)},
@@ -225,15 +227,200 @@ pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionN
 }
 
 #[no_mangle]
-pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>, rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
-    make_stmt_ptr(
+pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut Box<ExpressionNode>,
+                                               rhs: *mut Box<ExpressionNode>,
+                                               op: BinaryOperator) -> *mut StatementNode {
+    make_statement_ptr(
         line,
-        Statement::Assignment {
+        Statement::OpAssignment {
             lhs: *unsafe{Box::from_raw(lhs)},
-            rhs: *unsafe{Box::from_raw(rhs)}
+            rhs: *unsafe{Box::from_raw(rhs)},
+            operator: op
         }
     )
 }
+
+#[no_mangle]
+pub extern "C" fn make_var_declaration_statement(line: u32,
+                                                 decls: *mut Vec<VarDeclaration>) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::VarDeclarations {
+            declarations: *unsafe{Box::from_raw(decls)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_type_declaration_statement(line: u32, decls: *mut Vec<VarDeclaration>) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::TypeDeclarations {
+            declarations: *unsafe{Box::from_raw(decls)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<String>,
+                                                       exprs: *mut Vec<ExpressionNode> ) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::ShortVariableDeclaration {
+            identifier_list: *unsafe{Box::from_raw(ids)},
+            expression_list: *unsafe{Box::from_raw(exprs)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_inc_dec_statement(line: u32, is_dec: bool, expr: *mut Box<ExpressionNode> ) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::IncDec {
+            is_dec,
+            expr: *unsafe{Box::from_raw(expr)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_print_statement(line: u32, exprs: *mut Vec<ExpressionNode> ) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::Print {
+            expr: *unsafe{Box::from_raw(exprs)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_println_statement(line: u32, exprs: *mut Vec<ExpressionNode> ) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::Println {
+            expr: *unsafe{Box::from_raw(exprs)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_if_statement(line: u32, init: *mut Box<StatementNode>,
+                                    cond: *mut Box<ExpressionNode>,
+                                    if_branch: *mut Vec<StatementNode>,
+                                    else_branch: *mut Box<StatementNode> ) -> *mut StatementNode {
+
+    if else_branch.is_null() {
+        make_statement_ptr(
+            line,
+            Statement::If {
+                init: *unsafe{Box::from_raw(init)},
+                condition: *unsafe{Box::from_raw(cond)},
+                if_branch: *unsafe{Box::from_raw(if_branch)},
+                else_branch: None
+            }
+        )
+    } else {
+        make_statement_ptr(
+            line,
+            Statement::If {
+                init: *unsafe{Box::from_raw(init)},
+                condition: *unsafe{Box::from_raw(cond)},
+                if_branch: *unsafe{Box::from_raw(if_branch)},
+                else_branch: Some(*unsafe{Box::from_raw(else_branch)})
+            }
+        )
+    }
+}
+
+
+#[no_mangle]
+pub extern "C" fn make_loop_statement(line: u32, body: *mut Vec<StatementNode> ) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::Loop {
+            body: *unsafe{Box::from_raw(body)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_while_statement(line: u32, cond: *mut Box<ExpressionNode>, body: *mut Vec<StatementNode> ) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::While {
+            condition: *unsafe{Box::from_raw(cond)},
+            body: *unsafe{Box::from_raw(body)}
+        }
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_for_statement(line: u32,
+                                     init: *mut Box<StatementNode>,
+                                     cond: *mut Box<ExpressionNode>,
+                                     post: *mut Box<StatementNode>,
+                                     body: *mut Vec<StatementNode> ) -> *mut StatementNode {
+    make_statement_ptr(
+        line,
+        Statement::For {
+            init: unsafe{Box::from_raw(init)},
+            condition: unsafe{Box::from_raw(cond)},
+            post: unsafe{Box::from_raw(post)},
+            body: *unsafe{Box::from_raw(body)}
+        }
+    )
+}
+
+
+#[no_mangle]
+pub extern "C" fn make_switch_statement(line: u32,
+                                     init: *mut Box<StatementNode>,
+                                     expr: *mut Box<ExpressionNode>,
+                                     body: *mut Vec<CaseClause> ) -> *mut StatementNode {
+
+    if expr.is_null() {
+        make_statement_ptr(
+            line,
+            Statement::For {
+                init: unsafe{Box::from_raw(init)},
+                expr: None,
+                body: *unsafe{Box::from_raw(body)}
+            }
+        )
+    } else {
+        make_statement_ptr(
+            line,
+            Statement::For {
+                init: unsafe{Box::from_raw(init)},
+                expr: Some(unsafe{Box::from_raw(expr)}),
+                body: *unsafe{Box::from_raw(body)}
+            }
+        )
+    }
+}
+
+pub extern "C" fn make_break_statement(line: u32){
+    make_statement_ptr(
+        line,
+        Statement::Break
+
+    )
+}
+
+pub extern "C" fn make_continue_statement(line: u32){
+    make_statement_ptr(
+        line,
+        Statement::Continue
+
+    )
+}
+
+
+
+
+
+
 
 
 
