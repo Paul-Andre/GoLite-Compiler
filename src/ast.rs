@@ -106,14 +106,14 @@ pub struct ExpressionNode {
     pub expression: Expression,
 }
 
-pub struct VarDeclaration {
+pub struct VarSpec {
     pub line_number: u32,
     pub names: Vec<String>,
     pub kind: Option<Box<AstKindNode>>,
     pub rhs: Option<Vec<ExpressionNode>>,
 }
 
-pub struct TypeDeclaration {
+pub struct TypeSpec {
     pub names: String,
     pub kind: Box<AstKindNode>,
 }
@@ -143,8 +143,8 @@ pub enum Statement {
         rhs: Box<ExpressionNode>,
         operator: BinaryOperator,
     },
-    VarDeclarations { declarations: Vec<VarDeclaration> },
-    TypeDeclarations { declarations: Vec<TypeDeclaration> },
+    VarDeclarations { declarations: Vec<VarSpec> },
+    TypeDeclarations { declarations: Vec<TypeSpec> },
     ShortVariableDeclaration {
         identifier_list: Vec<String>,
         expression_list: Vec<ExpressionNode>,
@@ -194,14 +194,14 @@ pub struct VarDeclaration {
     pub rhs: Vec<ExpressionNode>,
 }
 
-pub struct TypeDeclaration {
+pub struct TypeSpec {
     pub names: String,
     pub kind: Box<AstKindNode>,
 }
 
 pub enum TopLevelDeclaration {
-    VarDeclarations { declarations: Vec<VarDeclaration> },
-    TypeDeclarations { declarations: Vec<TypeDeclaration> },
+    VarDeclarations { declarations: Vec<VarSpec> },
+    TypeDeclarations { declarations: Vec<TypeSpec> },
     FunctionDeclaration {
         name: String,
         parameters: Vec<Field>,

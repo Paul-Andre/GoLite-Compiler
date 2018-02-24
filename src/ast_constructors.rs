@@ -16,6 +16,15 @@ pub extern "C" fn make_string(string: *const c_char) -> *mut String {
     Box::into_raw(Box::new(unsafe { from_c_string(string) }))
 }
 
+
+unsafe fn from_raw_or_none<T>(t: *mut T) -> Option<Box<T>> {
+    if t.is_null() {
+        None
+    } else {
+        Some( unsafe { Box::from_raw(t) } )
+    }
+}
+
 /// This is a macros to generate functions that will be used to generate vectors in C.
 /// It assumes that the type that is used will be passed as an opaque pointer in C.
 macro_rules! create_vec_functions {
@@ -32,6 +41,7 @@ macro_rules! create_vec_functions {
         }
     }
 }
+
 
 // Generate the functions to be used in C
 create_vec_functions!(make_expression_vec, expression_vec_push, ExpressionNode);
@@ -101,7 +111,7 @@ pub extern "C" fn make_function_top_level_declaration(line: u32,
         TopLevelDeclaration::FunctionDeclaration{
             name: unsafe { from_c_string(name) },
             parameters: *unsafe { Box::from_raw(params) },
-            return_kind: Some(unsafe { Box::from_raw(return_kind) }),
+            return_kind: unsafe { from_raw_or_none(return_kind) },
             body: *unsafe { Box::from_raw(body) }
         }
     )
@@ -375,28 +385,15 @@ pub extern "C" fn make_if_statement(line: u32,
                                     cond: *mut ExpressionNode,
                                     if_branch: *mut Vec<StatementNode>,
                                     else_branch: *mut StatementNode ) -> *mut StatementNode {
-
-    if else_branch.is_null() {
-        make_statement_ptr(
-            line,
-            Statement::If {
-                init: unsafe{Box::from_raw(init)},
-                condition: unsafe{Box::from_raw(cond)},
-                if_branch: *unsafe{Box::from_raw(if_branch)},
-                else_branch: None
-            }
-        )
-    } else {
-        make_statement_ptr(
-            line,
-            Statement::If {
-                init: unsafe{Box::from_raw(init)},
-                condition: unsafe{Box::from_raw(cond)},
-                if_branch: *unsafe{Box::from_raw(if_branch)},
-                else_branch: Some(unsafe{Box::from_raw(else_branch)})
-            }
-        )
-    }
+    make_statement_ptr(
+        line,
+        Statement::If {
+            init: unsafe{Box::from_raw(init)},
+            condition: unsafe{Box::from_raw(cond)},
+            if_branch: *unsafe{Box::from_raw(if_branch)},
+            else_branch: unsafe{from_raw_or_none(else_branch)},
+        }
+    )
 }
 
 #[no_mangle]
@@ -443,26 +440,14 @@ pub extern "C" fn make_switch_statement(line: u32,
                                      init: *mut StatementNode,
                                      expr: *mut ExpressionNode,
                                      body: *mut Vec<CaseClause> ) -> *mut StatementNode {
-
-    if expr.is_null() {
-        make_statement_ptr(
-            line,
-            Statement::Switch {
-                init: unsafe{Box::from_raw(init)},
-                expr: None,
-                body: *unsafe{Box::from_raw(body)}
-            }
-        )
-    } else {
-        make_statement_ptr(
-            line,
-            Statement::Switch {
-                init: unsafe{Box::from_raw(init)},
-                expr: Some(unsafe{Box::from_raw(expr)}),
-                body: *unsafe{Box::from_raw(body)}
-            }
-        )
-    }
+    make_statement_ptr(
+        line,
+        Statement::Switch {
+            init: unsafe{Box::from_raw(init)},
+            expr: unsafe{from_raw_or_none(expr)},
+            body: *unsafe{Box::from_raw(body)}
+        }
+    )
 }
 
 #[no_mangle]
@@ -484,18 +469,10 @@ pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
 }
 
 pub extern "C" fn make_return_statement(line: u32, value: *mut ExpressionNode) -> *mut StatementNode{
-    if value.is_null() {
-        make_statement_ptr(
-            line,
-            Statement::Return(None)
-        )
-    } else {
-        make_statement_ptr(
-            line,
-            Statement::Return(Some(unsafe{Box::from_raw(value)}))
-        )
-    }
-    
+    make_statement_ptr(
+        line,
+        Statement::Return(unsafe{from_raw_or_none(value)})
+    )
 }
 
 
@@ -505,6 +482,45 @@ STATEMENT NODE HELPERS
 */
 
 
+fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode, rhs: *mut Vec<ExpressionNode>) 
+    -> *mut VarSpec
+{
+    let names = *unsafe { Box::from_raw( names ) };
+    if !rhs.is_null() {
+        let rhs = *unsafe { Box::from_raw( names ) };
+        if (names.len() != rhs.len()) {
+            eprintln!("Error: line {}: different number of elements on the sides or the assignment", line);
+            exit(1);
+        }
+
+        Box::into_raw( Box::new(
+                VarSpec{
+                    line_number: line,
+                    names: names,
+                    kind: unsafe{ from_raw_or_none(kind) },
+                    rhs: rhs,
+                }))
+    } else {
+        Box::into_raw( Box::new(
+                VarSpec{
+                    line_number: line,
+                    names: names,
+                    kind: unsafe{ from_raw_or_none(kind) },
+                    rhs: None,
+                }))
+    }
+}
+
+fn make_type_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode)
+    -> *mut TypeSpec
+{
+        Box::into_raw( Box::new(
+                TypeSpec{
+                    line_number: line,
+                    names: names,
+                    kind: unsafe{ Box::from_raw(kind) },
+                }))
+}
 
 
 
