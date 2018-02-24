@@ -12,13 +12,40 @@ pub enum BasicKind {
     String = 3,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum BinOperator {
+    Or,
+    And,
 
+    Eq,
+    Neq,
+    Lt,
+    Leq,
+    Gt,
+    Geq,
 
+    Add,
+    Sub,
+    BwOr,
+    BwXor,
+
+    Mul,
+    Div,
+    Mod,
+    LShift,
+    RShift,
+    BwAnd,
+    BwAndNot,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum UnOperator {
-
+    Plus,
+    Neg,
+    BwCompl,
+    Not,
 }
 
 pub enum AstKind {
@@ -74,7 +101,7 @@ pub struct ExpressionNode {
 pub struct VarDeclaration {
     names: Vec<String>,
     kind: Option<AstKind>,
-    rhs: Vec<ExpressionNode>
+    rhs: Vec<ExpressionNode>,
 }
 
 pub struct TypeDeclaration {
@@ -84,20 +111,20 @@ pub struct TypeDeclaration {
 
 pub enum CaseClauseTag {
     Default,
-    Cases( Vec<ExpressionNode> )
+    Cases(Vec<ExpressionNode>),
 }
 
 pub struct CaseClause {
     tag: CaseClauseTag,
-    statements: Vec<StatementNode>
+    statements: Vec<StatementNode>,
 }
 
 
 pub enum Statement {
     Empty,
-    Block( Vec<StatementNode> ),
-    Expression( Box<ExpressionNode> ),
-    Assignment{
+    Block(Vec<StatementNode>),
+    Expression(Box<ExpressionNode>),
+    Assignment {
         lhs: Vec<ExpressionNode>,
         rhs: Vec<ExpressionNode>,
     },
@@ -106,35 +133,25 @@ pub enum Statement {
         rhs: ExpressionNode,
         operator: BinOperator,
     },
-    VarDeclarations {
-        declarations: Vec<VarDeclaration>
-    },
-    TypeDeclarations {
-        declarations: Vec<TypeDeclaration>
-    },
+    VarDeclarations { declarations: Vec<VarDeclaration> },
+    TypeDeclarations { declarations: Vec<TypeDeclaration> },
     ShortVariableDeclaration {
         identifier_list: Vec<String>,
         expression_list: Vec<ExpressionNode>,
     },
     IncDec {
         is_dec: bool,
-        expr: Box<ExpressionNode>
+        expr: Box<ExpressionNode>,
     },
-    Print {
-        exprs: Vec<ExpressionNode>
-    },
-    Println {
-        exprs: Vec<ExpressionNode>
-    },
+    Print { exprs: Vec<ExpressionNode> },
+    Println { exprs: Vec<ExpressionNode> },
     If {
         init: Box<StatementNode>,
         condition: Box<ExpressionNode>,
         if_branch: Vec<StatementNode>,
         else_branch: Option<Box<StatementNode>>,
     },
-    Loop {
-        body: Vec<StatementNode>,
-    },
+    Loop { body: Vec<StatementNode> },
     While {
         condition: Box<ExpressionNode>,
         body: Vec<StatementNode>,
@@ -153,7 +170,7 @@ pub enum Statement {
     Break,
     Continue,
 }
-        
+
 pub struct StatementNode {
     line_number: u32,
     statement: Statement,
@@ -167,22 +184,17 @@ pub struct Parameter {
 
 
 pub enum TopLevelDeclaration {
-    VarDeclarations {
-        declarations: Vec<VarDeclaration>
-    },
-    TypeDeclarations {
-        declarations: Vec<TypeDeclaration>
-    },
+    VarDeclarations { declarations: Vec<VarDeclaration> },
+    TypeDeclarations { declarations: Vec<TypeDeclaration> },
     FunctionDeclaration {
         name: String,
         parameters: Vec<Parameter>,
         return_kind: Option<Box<AstKind>>,
-        body: Vec<StatementNode>
-    }
-
+        body: Vec<StatementNode>,
+    },
 }
 
 struct Program {
     package_name: String,
-    declarations: Vec<TopLevelDeclaration>
+    declarations: Vec<TopLevelDeclaration>,
 }
