@@ -14,7 +14,7 @@ pub enum BasicKind {
 
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub enum BinOperator {
+pub enum BinaryOperator {
     Or,
     And,
 
@@ -41,7 +41,7 @@ pub enum BinOperator {
 
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub enum UnOperator {
+pub enum UnaryOperator {
     Plus,
     Neg,
     BwCompl,
@@ -63,13 +63,13 @@ pub struct StructField {
 pub enum Expression {
     Identifier { name: String },
     RawLiteral { value: String },
-    BinOperation {
-        op: BinOperator,
+    BinaryOperation {
+        op: BinaryOperator,
         lhs: Box<ExpressionNode>,
         rhs: Box<ExpressionNode>,
     },
-    UnOperation {
-        op: UnOperator,
+    UnaryOperation {
+        op: UnaryOperator,
         rhs: Box<ExpressionNode>,
     },
     Index {
@@ -131,7 +131,7 @@ pub enum Statement {
     OpAssignment {
         lhs: ExpressionNode,
         rhs: ExpressionNode,
-        operator: BinOperator,
+        operator: BinaryOperator,
     },
     VarDeclarations { declarations: Vec<VarDeclaration> },
     TypeDeclarations { declarations: Vec<TypeDeclaration> },

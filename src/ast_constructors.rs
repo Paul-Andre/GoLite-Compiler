@@ -86,13 +86,13 @@ pub extern "C" fn make_append_expression(
 
 fn make_binary_operation_expression(
     line: u32,
-    operator: BinOperator,
+    operator: BinaryOperator,
     left: *mut ExpressionNode,
     right: *mut ExpressionNode,
 ) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
-        Expression::BinOperation {
+        Expression::BinaryOperation {
             op: operator,
             lhs: unsafe { Box::from_raw(left) },
             rhs: unsafe { Box::from_raw(right) },
@@ -100,10 +100,10 @@ fn make_binary_operation_expression(
     )
 }
 
-fn make_unary_operation_expression(line: u32, operator: UnOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
+fn make_unary_operation_expression(line: u32, operator: UnaryOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
-        Expression::UnOperation {
+        Expression::UnaryOperation {
             op: operator,
             rhs: unsafe { Box::from_raw(right)},
         },
