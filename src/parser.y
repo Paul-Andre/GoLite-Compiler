@@ -654,14 +654,14 @@ unary_op: '+'               { $$ = opPlus }
         ;
 
 Operand: Literal
-       | tIDENTIFIER        { $$ = expr_identifier(yylineno, $1); }
+       | tIDENTIFIER        { $$ = make_identifier_expression(yylineno, $1); }
        | '(' Expression ')'
        ;
 
-Literal: tINTVAL            {$$ = expr_literal(yylineno, $1, kInt);}
-       | tFLOATVAL          {$$ = expr_literal(yylineno, $1, kFloat);}
-       | tRUNEVAL           {$$ = expr_literal(yylineno, $1, kRune);}
-       | tSTRINGVAL         {$$ = expr_literal(yylineno, $1, kString);}
+Literal: tINTVAL            {$$ = make_literal_expression(yylineno, $1, kInt);}
+       | tFLOATVAL          {$$ = make_literal_expression(yylineno, $1, kFloat);}
+       | tRUNEVAL           {$$ = make_literal_expression(yylineno, $1, kRune);}
+       | tSTRINGVAL         {$$ = make_literal_expression(yylineno, $1, kString);}
        ;
 
 PrimaryExpr: Operand
