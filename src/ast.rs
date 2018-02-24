@@ -187,6 +187,18 @@ pub struct StatementNode {
     pub statement: Statement,
 }
 
+pub struct VarDeclaration {
+    pub line_number: u32,
+    pub names: Vec<String>,
+    pub kind: Option<Box<AstKindNode>>,
+    pub rhs: Vec<ExpressionNode>,
+}
+
+pub struct TypeDeclaration {
+    pub names: String,
+    pub kind: Box<AstKindNode>,
+}
+
 pub enum TopLevelDeclaration {
     VarDeclarations { declarations: Vec<VarDeclaration> },
     TypeDeclarations { declarations: Vec<TypeDeclaration> },

@@ -36,10 +36,15 @@ void yyerror(const char *s) {
 %union {
     char *text;
     ExpressionNode *expr;
-    ExpressionNodeVec *expr_vec;
+    ExpressionNodeVec *expression_vec;
     StringVec *string_vec;
     StatementNode *stmt;
     StatementNodeVec *stmt_vec;
+    enum BinaryOperator bin_op;
+    enum UnaryOperator un_op;
+    CaseClause *case_clause;
+    CaseClauseVec *case_clause_vec; 
+    
 }
 
 /* Token directives define the token types to be returned by the scanner (excluding character
@@ -148,6 +153,16 @@ void yyerror(const char *s) {
 
 %token <text> tIDENTIFIER
 
+
+%type <text> Selector
+
+%type <bin_op> add_assign_op
+%type <bin_op> mul_assign_op
+%type <bin_op> rel_op
+%type <bin_op> add_op
+%type <un_op> unary_op
+
+// Expressions
 %type <expr> Operand
 %type <expr> Expression
 %type <expr> UnaryExpr
@@ -155,13 +170,19 @@ void yyerror(const char *s) {
 %type <expr> PrimaryExpr
 %type <expr> Literal
 
-%type <expr_vec> expression_list
-%type <expr_vec> OptionalExpressionList
+%type <expr> Index
 
-%type <stmt> ExpressionStmt
-%type <stmt> Assignment
+%type <expression_vec> expression_list
+%type <expression_vec> OptionalExpressionList
+%type <expression_vec> Arguments
+
+// Statements
+%type <stmt> Statement
+%type <stmt> SimpleStmt
+
 %type <stmt> Declaration
 %type <stmt> SimpleStmt
+%type <stmt> ReturnStmt
 %type <stmt> BreakStmt
 %type <stmt> ContinueStmt
 %type <stmt> IfStmt
@@ -170,8 +191,20 @@ void yyerror(const char *s) {
 %type <stmt> PrintStmt
 %type <stmt> PrintlnStmt
 
+%type <stmt> ElseStmt
+
+%type <stmt> EmptyStmt
+%type <stmt> ExpressionStmt
+%type <stmt> IncDecStmt
+%type <stmt> Assignment
+%type <stmt> ShortVarDecl
+
 %type <stmt_vec> StatementList
 %type <stmt_vec> Block
+
+// Case Clause
+%type <case_clause> CaseClause
+%type <case_clause_vec> CaseClauses
 
 
 
@@ -280,13 +313,13 @@ identifier_list : tIDENTIFIER
 
 expression_list : Expression
                {
-               $$ = make_expr_vec();
-               expr_vec_push($$, $1);
+               $$ = make_expression_vec();
+               expression_vec_push($$, $1);
                }
     | expression_list ',' Expression
                {
                $$ = $1;
-               expr_vec_push($$, $3);
+               expression_vec_push($$, $3);
                }
     ;
 
@@ -421,11 +454,11 @@ EmptyStmt: %empty               { $$ = make_empty_statement(yylineno); }
 Block : '{' StatementList '}'   
     ;
 
-StatementList: %empty                       { $$ = make_stmt_vec() }
+StatementList: %empty                       { $$ = make_statement_vec() }
              | StatementList Statement ';'  
              { 
                 $$ = $1;
-                $$ = stmt_vec_push($$, $2);
+                $$ = statement_vec_push($$, $2);
              }
              ;
 
@@ -486,7 +519,7 @@ ReturnStmt: tRETURN
 IfStmt: tIF SimpleStmt ';' Expression Block ElseStmt 
             { $$ = make_if_statement(yylineno, $2, $4, $5, $6) }
       | tIF Expression Block ElseStmt
-            { $$ = make_if_statement(yylineno, NULL, $2, $3, $4) }
+            { $$ = make_if_statement(yylineno, make_empty_statement(yylineno), $2, $3, $4) }
       ;
 
 ElseStmt: %empty        { $$ = NULL }
@@ -498,11 +531,11 @@ ElseStmt: %empty        { $$ = NULL }
 SwitchStmt: tSWITCH SimpleStmt ';' Expression '{' CaseClauses '}'
                 { $$ = make_switch_statement(yylineno, $2, $4, $6) }
           | tSWITCH Expression '{' CaseClauses '}'
-                { $$ = make_switch_statement(yylineno, NULL, $2, $4) }
+                { $$ = make_switch_statement(yylineno, make_empty_statement(yylineno), $2, $4) }
           | tSWITCH SimpleStmt ';' '{' CaseClauses '}'
                 { $$ = make_switch_statement(yylineno, $2, NULL, $5) }
           | tSWITCH '{' CaseClauses '}'
-                { $$ = make_switch_statement(yylineno, NULL, NULL, $6) }
+                { $$ = make_switch_statement(yylineno, make_empty_statement(yylineno), NULL, $6) }
     ;
 
 CaseClauses: %empty                 { $$ = make_case_clause_vec() }
@@ -514,11 +547,8 @@ CaseClauses: %empty                 { $$ = make_case_clause_vec() }
            ;
 
 // TODO: decide if maybe to fuse to next two rules for easier AST building
-CaseClause: SwitchCase ':' StatementList    { $$ = make_case_clause(yylineno, $1, $3) }
-    ;
-
-SwitchCase: tCASE expression_list           
-    | tDEFAULT
+CaseClause: tCASE expression_list ':' StatementList    { $$ = make_case_clause(yylineno, $1, $3) }
+          | tDEFAULT ':' StatementList    { $$ = make_case_clause(yylineno, $1, $3) }
     ;
 
 
@@ -631,7 +661,7 @@ AppendExpr: tAPPEND '(' Expression ',' Expression ')'
 // ============================
 
 
-OptionalExpressionList: %empty          { $$ = make_expr_vec(); }
+OptionalExpressionList: %empty          { $$ = make_expression_vec(); }
                       | expression_list
                       ;
 

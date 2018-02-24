@@ -43,6 +43,70 @@ create_vec_functions!(make_statement_vec, statement_vec_push, StatementNode);
 create_vec_functions!(make_field_vec, field_vec_push, Field);
 create_vec_functions!(make_case_clause_vec, case_clause_vec_push, CaseClause);
 
+/*
+PROGRAM CONSTRUCTOR
+=======================================
+*/
+
+pub extern "C" fn make_program_ptr(pkg: *const c_char,
+                                   dcls: *mut Vec<TopLevelDeclaration>) -> *mut Program {
+
+    Box::into_raw(Box::new(Program {
+        package_name: unsafe { from_c_string(pkg) } ,
+        declarations: unsafe { *unsafe{Box::from_raw(dcls)}}
+    }))
+}
+
+
+/*
+TOP DECLARATION NODE CONSTRUCTORS
+=======================================
+*/
+
+
+/// This is a function that factors out most of the repetition from creating top level declaration nodes
+fn make_top_level_declaration_ptr(line: u32, dcl: TopLevelDeclaration) -> *mut TopLevelDeclarationNode {
+    Box::into_raw(Box::new(TopLevelDeclarationNode {
+        line_number: line ,
+        top_level_declaration: dcl
+    }))
+}
+
+#[no_mangle]
+pub extern "C" fn make_var_top_level_declaration(line: u32,
+                                                 decls:  *mut Vec<VarDeclaration>) -> *mut TopLevelDeclarationNode {
+    make_top_level_declaration_ptr(
+        line,
+        TopLevelDeclaration::VarDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_type_top_level_declaration(line: u32,
+                                                 decls:  *mut Vec<TypeDeclaration>) -> *mut TopLevelDeclarationNode {
+    make_top_level_declaration_ptr(
+        line,
+        TopLevelDeclaration::TypeDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_function_top_level_declaration(line: u32,
+                                                      name:  *const c_char,
+                                                      params: *mut Vec<Field>,
+                                                      return_kind: *mut AstKindNode,
+                                                      body: *mut Vec<StatementNode>) -> *mut TopLevelDeclarationNode {
+    make_top_level_declaration_ptr(
+        line,
+        TopLevelDeclaration::FunctionDeclaration{
+            name: unsafe { from_c_string(name) },
+            parameters: *unsafe { Box::from_raw(params) },
+            return_kind: Some(unsafe { Box::from_raw(return_kind) }),
+            body: *unsafe { Box::from_raw(body) }
+        }
+    )
+}
+
 
 
 /*
@@ -335,7 +399,6 @@ pub extern "C" fn make_if_statement(line: u32,
     }
 }
 
-
 #[no_mangle]
 pub extern "C" fn make_loop_statement(line: u32, body: *mut Vec<StatementNode> ) -> *mut StatementNode {
     make_statement_ptr(
@@ -402,6 +465,7 @@ pub extern "C" fn make_switch_statement(line: u32,
     }
 }
 
+#[no_mangle]
 pub extern "C" fn make_break_statement(line: u32) -> *mut StatementNode{
     make_statement_ptr(
         line,
@@ -410,6 +474,7 @@ pub extern "C" fn make_break_statement(line: u32) -> *mut StatementNode{
     )
 }
 
+#[no_mangle]
 pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
     make_statement_ptr(
         line,
@@ -432,6 +497,14 @@ pub extern "C" fn make_return_statement(line: u32, value: *mut ExpressionNode) -
     }
     
 }
+
+
+/*
+STATEMENT NODE HELPERS
+=======================================
+*/
+
+
 
 
 
