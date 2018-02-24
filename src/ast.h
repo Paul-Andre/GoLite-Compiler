@@ -111,5 +111,5 @@ AstKindNode *make_slice_kind(uint32_t, AstKindNode*);
 AstKindNode *make_array_kind(uint32_t, AstKindNode*, char*);
 AstKindNode *make_struct_kind(uint32_t, FieldVec*);
 
-Field *make_field(uint32_t, StringVec*, AstKindNode*)
+Field *make_field(uint32_t, StringVec*, AstKindNode*);
 

@@ -125,7 +125,7 @@ pub enum SwitchCase {
 
 pub struct CaseClause {
     pub line_number: u32,
-    pub tag: SwitchCase,
+    pub switch_case: SwitchCase,
     pub statements: Vec<StatementNode>,
 }
 

@@ -40,8 +40,8 @@ create_vec_functions!(make_string_vec, string_vec_push, String);
 //Statement vectors
 create_vec_functions!(make_statement_vec, statement_vec_push, StatementNode);
 
-create_vec_functions!(make_field_vec, field_vec_push, StatementNode);
-
+create_vec_functions!(make_field_vec, field_vec_push, Field);
+create_vec_functions!(make_case_clause_vec, case_clause_vec_push, CaseClause);
 
 
 
@@ -202,11 +202,19 @@ pub extern "C" fn make_expression_statement(line: u32, expr: *mut ExpressionNode
 #[no_mangle]
 pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>,
                                             rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+
+    let lhs = *unsafe{Box::from_raw(lhs)};
+    let rhs = *unsafe{Box::from_raw(rhs)};
+    if (lhs.len() != rhs.len()) {
+        eprintln!("Error: line {}: lhs and rhs of assignment have a different amount of elements.");
+        exit(1);
+    }
+
     make_statement_ptr(
         line,
         Statement::Assignment {
-            lhs: *unsafe{Box::from_raw(lhs)},
-            rhs: *unsafe{Box::from_raw(rhs)}
+            lhs,
+            rhs
         }
     )
 }
@@ -249,6 +257,14 @@ pub extern "C" fn make_type_declaration_statement(line: u32, decls: *mut Vec<Typ
 #[no_mangle]
 pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<String>,
                                                        exprs: *mut Vec<ExpressionNode> ) -> *mut StatementNode {
+
+    let lhs = *unsafe{Box::from_raw(lhs)};
+    let rhs = *unsafe{Box::from_raw(rhs)};
+    if (lhs.len() != rhs.len()) {
+        eprintln!("Error: line {}: lhs and rhs of short declaration have a different number of elements.");
+        exit(1);
+    }
+
     make_statement_ptr(
         line,
         Statement::ShortVariableDeclaration {

@@ -438,9 +438,9 @@ ExpressionStmt : Expression { $$ = make_expression_statement(yylineno, $1); }
 // TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
 Assignment: expression_list '=' expression_list   
                 { $$ = make_assignment_statement(yylineno, $1, $3) }
-            expression_list add_assign_op expression_list   
+            expression add_assign_op expression
                 { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
-            expression_list mul_assign_op expression_list   
+            expression mul_assign_op expression
                 { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
     ;
 
