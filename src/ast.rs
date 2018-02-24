@@ -50,14 +50,20 @@ pub enum UnaryOperator {
 
 pub enum AstKind {
     Identifier { name: String },
-    Slice { base: Box<AstKind> },
-    Array { base: Box<AstKind>, size: String },
+    Slice { base: Box<AstKindNode> },
+    Array { base: Box<AstKindNode>, size: String },
     Struct { fields: Vec<StructField> },
 }
 
+pub struct AstKindNode {
+    line_number: u32,
+    ast_kind: AstKind
+}
+
+
 pub struct StructField {
     pub identifiers: Vec<String>,
-    pub ast_kind: AstKind,
+    pub ast_kind: Box<AstKindNode>,
 }
 
 pub enum Expression {
@@ -99,14 +105,15 @@ pub struct ExpressionNode {
 }
 
 pub struct VarDeclaration {
+    line_number: u32,
     names: Vec<String>,
-    kind: Option<AstKind>,
+    kind: Option<Box<AstKindNode>>,
     rhs: Vec<ExpressionNode>,
 }
 
 pub struct TypeDeclaration {
     names: String,
-    kind: AstKind,
+    kind: Box<AstKindNode>,
 }
 
 pub enum CaseClauseTag {
@@ -115,6 +122,7 @@ pub enum CaseClauseTag {
 }
 
 pub struct CaseClause {
+    line_number: u32,
     tag: CaseClauseTag,
     statements: Vec<StatementNode>,
 }
@@ -179,7 +187,7 @@ pub struct StatementNode {
 
 pub struct Parameter {
     name: String,
-    kind: Box<AstKind>,
+    kind: Box<AstKindNode>,
 }
 
 
@@ -189,9 +197,14 @@ pub enum TopLevelDeclaration {
     FunctionDeclaration {
         name: String,
         parameters: Vec<Parameter>,
-        return_kind: Option<Box<AstKind>>,
+        return_kind: Option<Box<AstKindNode>>,
         body: Vec<StatementNode>,
     },
+}
+
+pub struct TopLevelDeclarationNode {
+    line_number: u32,
+    top_level_declaration: TopLevelDeclaration
 }
 
 struct Program {
