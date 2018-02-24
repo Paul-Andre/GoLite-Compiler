@@ -46,7 +46,7 @@ fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
 }
 
 #[no_mangle]
-pub extern "C" fn expr_identifier(line: u32, string: *const c_char) -> *mut ExpressionNode {
+pub extern "C" fn make_identifier_expr(line: u32, string: *const c_char) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
         Expression::Identifier { name: unsafe { from_c_string(string) } },
@@ -55,7 +55,7 @@ pub extern "C" fn expr_identifier(line: u32, string: *const c_char) -> *mut Expr
 
 
 #[no_mangle]
-pub extern "C" fn expr_literal(
+pub extern "C" fn make_literal(
     line: u32,
     string: *const c_char,
     kind: BasicKind,
@@ -68,7 +68,7 @@ pub extern "C" fn expr_literal(
 }
 
 #[no_mangle]
-pub extern "C" fn expr_append(
+pub extern "C" fn make_append(
     line: u32,
     lhs: *mut ExpressionNode,
     rhs: *mut ExpressionNode,
@@ -84,53 +84,63 @@ pub extern "C" fn expr_append(
 }
 
 
-
-
-/*
- 
-
-fn exp_binoperation(line: u32, str: operator, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::BinOperation{ op: str, lhs: left, rhs: right }
-        }
+fn make_binary_operation(
+    line: u32,
+    operator: BinOperator,
+    left: *mut ExpressionNode,
+    right: *mut ExpressionNode,
+) -> *mut ExpressionNode {
+    make_expr_ptr(
+        line,
+        Expression::BinOperation {
+            op: operator,
+            lhs: unsafe { Box::from_raw(left) },
+            rhs: unsafe { Box::from_raw(right) },
+        },
     )
 }
 
-fn exp_unoperation(line: u32, str: operator, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::UnOperation{ op: str, rhs: right }
-        }
+fn expr_unary_operation(line: u32, operator: UnOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
+    make_expr_ptr(
+        line,
+        Expression::UnOperation {
+            op: operator,
+            rhs: unsafe { Box::from_raw(right)},
+        },
     )
 }
 
-fn exp_index(line: u32, p: Box<ExpressionNode>, i: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::Index{ primary: p, index: i }
-        }
+fn make_index(line: u32, p: *mut ExpressionNode, i: *mut ExpressionNode) -> *mut ExpressionNode {
+    make_expr_ptr(
+        line,
+        Expression::Index {
+            primary: unsafe{ Box::from_raw(p) },
+            index: unsafe{ Box::from_raw(i) },
+        },
     )
 }
 
-fn exp_selector(line: u32, p: Box<ExpressionNode>, str: String) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::Selector{ primary: p, name: str }
-        }
+fn make_selector(line: u32, p: *mut ExpressionNode, str: *const c_char) -> *mut ExpressionNode {
+    make_expr_ptr(
+        line,
+        Expression::Selector {
+            primary: unsafe { Box::from_raw(p) },
+            name: unsafe { from_c_string(str) },
+        },
     )
 }
 
-fn exp_functioncall(line: u32, p: Box<ExpressionNode>, args: Vec<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::FunctionCall{ primary: p, arguments: args }
-        }
+fn make_function_call(
+    line: u32,
+    p: *mut ExpressionNode,
+    args: *mut Vec<ExpressionNode>
+) -> *mut ExpressionNode {
+    make_expr_ptr(
+        line,
+        Expression::FunctionCall {
+            primary: unsafe{ Box::from_raw(p) },
+            arguments: *unsafe{ Box::from_raw(args) },
+        },
     )
 }
 
