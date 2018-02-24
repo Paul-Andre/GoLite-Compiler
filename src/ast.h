@@ -20,7 +20,7 @@
 
 
 typedef struct ExpressionNode ExpressionNode;
-DECLARE_VEC(expr, ExpressionNode);
+DECLARE_VEC(expression, ExpressionNode);
 
 typedef struct String String;
 DECLARE_VEC(string, String);
@@ -28,7 +28,15 @@ DECLARE_VEC(string, String);
 String *make_string(char*);
 
 typedef struct StatementNode StatementNode;
-DECLARE_VEC(stmt, StatementNode);
+DECLARE_VEC(statement, StatementNode);
+
+typedef struct AstKindNode AstKindNode;
+
+typedef struct Field Field;
+DECLARE_VEC(field, Field);
+
+typedef struct CaseClause CaseClause;
+DECLARE_VEC(case_clause, CaseClause);
 
 enum BasicKind {
   kInt = 0,
@@ -97,4 +105,11 @@ StatementNode *make_switch_statement(uint32_t, StatementNode*, ExpressionNode*, 
 StatementNode *make_break_statement(uint32_t);
 StatementNode *make_continue_statement(uint32_t);
 StatementNode *make_return_statement(uint32_t, ExpressionNode*);
+
+AstKindNode *make_identifier_kind(uint32_t, char*);
+AstKindNode *make_slice_kind(uint32_t, AstKindNode*);
+AstKindNode *make_array_kind(uint32_t, AstKindNode*, char*);
+AstKindNode *make_struct_kind(uint32_t, FieldVec*);
+
+Field *make_field(uint32_t, StringVec*, AstKindNode*)
 

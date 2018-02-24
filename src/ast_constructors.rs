@@ -34,11 +34,13 @@ macro_rules! create_vec_functions {
 }
 
 // Generate the functions to be used in C
-create_vec_functions!(make_expr_vec, expr_vec_push, ExpressionNode);
+create_vec_functions!(make_expression_vec, expression_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
 
 //Statement vectors
 create_vec_functions!(make_statement_vec, statement_vec_push, StatementNode);
+
+create_vec_functions!(make_field_vec, field_vec_push, StatementNode);
 
 
 
