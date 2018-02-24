@@ -84,12 +84,8 @@ pub extern "C" fn expr_append(
 }
 
 
-
-
-/*
- 
-
-fn exp_binoperation(line: u32, str: operator, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
+fn exp_binoperation(line: u32, str: operator, left: *mut ExpressionNode, right: *mut ExpressionNode)
+    -> *mut ExpressionNode {
     Box::new(
         ExpressionNode {
             location: line, 
@@ -151,4 +147,4 @@ fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
         }
     )
 }
-*/
+

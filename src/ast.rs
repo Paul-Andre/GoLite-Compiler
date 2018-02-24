@@ -12,13 +12,41 @@ pub enum BasicKind {
     String = 3,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum BinOperator {
+    Or,
+    And,
 
+    Eq,
+    Neq,
+    Lt,
+    Leq,
+    Gt,
+    Geq,
+
+    Add,
+    Sub,
+    BwOr,
+    BwXor,
+
+    Mul,
+    Div,
+    Mod,
+    LShift,
+    RShift,
+    BwAnd,
+    BwAndNot,
 
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum UnOperator {
-
+    Plus,
+    Neg,
+    BwCompl,
+    Not,
 }
 
 pub enum AstKind {
