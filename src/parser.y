@@ -44,7 +44,10 @@ void yyerror(const char *s) {
     enum UnaryOperator un_op;
     CaseClause *case_clause;
     CaseClauseVec *case_clause_vec; 
-    
+    TopLevelDeclaration *top_level_decl;
+    VariableSpec *var_spec;
+    VariableSpecVec *var_spec_vec;    
+    StringVec *string_vec;
 }
 
 /* Token directives define the token types to be returned by the scanner (excluding character
@@ -150,17 +153,23 @@ void yyerror(const char *s) {
 %token <text> tFLOATVAL
 %token <text> tRUNEVAL
 %token <text> tSTRINGVAL
-
 %token <text> tIDENTIFIER
-
 
 %type <text> Selector
 
+// Operators
 %type <bin_op> add_assign_op
 %type <bin_op> mul_assign_op
 %type <bin_op> rel_op
 %type <bin_op> add_op
 %type <un_op> unary_op
+
+// Declarations
+%type <var_spec> VarSpec
+%type <var_spec_vec> VarSpecs
+%type <var_spec_vec> VarDecl
+
+%type <string_vec> identifier_list
 
 // Expressions
 %type <expr> Operand
@@ -278,12 +287,9 @@ TopLevelDecls : %empty                  { }
 // DECLARATION STRUCTURE
 // ============================
 
-Declaration : TypeDecl      { $$ = make_declaration_statement() }
-    | VarDecl               { $$ = make_declaration_statement() }
-    ;
-
-TopLevelDecl : Declaration 
-    | FunctionDecl
+TopLevelDecl : TypeDecl     { $$ = make_type_top_level_declaration(yylineno, $1) }
+    | VarDecl               { $$ = make_variable_top_level_declaration(yylineno, $1) }
+    | FunctionDecl          { }
     ;
 
 
@@ -294,21 +300,39 @@ TopLevelDecl : Declaration
 
 // TODO WEED: check that the numbers on each side are the same
 
-VarDecl : tVAR VarSpec          
+VarDecl : tVAR VarSpec         
+        { 
+        $$ = make_variable_declaration_vec();
+        variable_declaration_vec_push($$, $2);
+        }
     | tVAR '(' VarSpecs ')'
+        { $$ = $3; }
     ;
 
 VarSpecs : %empty
+        { $$ = make_variable_declaration_vec(); }
     | VarSpecs VarSpec ';'
+        {
+        $$ = $1;
+        variable_declaration_vec_push($$, $2);
+        }
     ;
 
-VarSpec : identifier_list Type
-    | identifier_list Type '=' expression_list
-    | identifier_list '=' expression_list
+VarSpec : identifier_list Type      { $$ = make_var_spec(yylineno, $1, make_expression_vec(), $2); }
+    | identifier_list Type '=' expression_list { $$ = make_var_spec(yylineno, $1, $4, $2); }
+    | identifier_list '=' expression_list      { $$ = make_var_spec(yylineno, $1, $3, NULL); }
     ;
 
 identifier_list : tIDENTIFIER
+                { 
+                $$ = make_identifier_vec();
+                identifier_vec_push($$, $1);
+                }
     | identifier_list ',' tIDENTIFIER
+                {
+                $$ = $1;
+                identifier_vec_push($$, $1);
+                }
     ;
 
 expression_list : Expression
@@ -350,28 +374,30 @@ TypeDef : tIDENTIFIER Type
 // FUNCTION DECLARATION
 // ============================
 
-FunctionDecl : tFUNC tIDENTIFIER FuncSignature Block    
-    ;
-
-FuncSignature: FuncParameters FuncResult
+FunctionDecl : tFUNC tIDENTIFIER FuncParameters FuncResult Block    
+             { $$ = make_function_top_level_declaration(yylineno, $2, $3, $4, $5) }
     ;
 
 FuncParameters: '('  OptionalFuncParameterList  ')'
     ;
 
-FuncResult: %empty
+FuncResult: %empty  { $$ = NULL }
     | Type
     ;
 
-FuncParameterList: FuncParameterDecl
+FuncParameterList: FuncParameterDecl            
+                 { 
+                 $$ = make_function_parameter_list_vec() 
+                 function_parameter_list_push($$, $1)
+                 }
     | FuncParameterList ',' FuncParameterDecl
     ;
 
-OptionalFuncParameterList: %empty
+OptionalFuncParameterList: %empty { $$ = make_function_parameter_list_vec() }
     | FuncParameterList
     ;
 
-FuncParameterDecl: identifier_list Type
+FuncParameterDecl: identifier_list Type { $$ = make_field(yylineno, $1, $2) }
     ;
 
 
@@ -385,7 +411,7 @@ Type : TypeName
     ;
 
 // Basic types are just identifiers
-TypeName : tIDENTIFIER
+TypeName : tIDENTIFIER                      { $$ = make_identifier_kind(yylineno, $1) }
     ;
 
 TypeLit : ArrayType
@@ -396,25 +422,30 @@ TypeLit : ArrayType
 
 // SLICES
 
-SliceType : '[' ']' Type
+SliceType : '[' ']' Type                    { $$ = make_slice_kind(yylineno, $3) }
     ;
 
 
 // ARRAYS
 
-ArrayType : '[' tINTVAL ']' Type
+ArrayType : '[' tINTVAL ']' Type            { $$ = make_array_kind(yylineno, $2, $4) }
     ;
 
 
 // STRUCTS
 
-StructType : tSTRUCT '{'  FieldDecls '}'
+StructType : tSTRUCT '{'  FieldDecls '}'    { $$ = make_struct_kind(yylineno, $3) }
     ;
 
-FieldDecls : %empty
-           | FieldDecls FieldDecl ';'
+FieldDecls : %empty                         { $$ = make_field_vec() }
+           | FieldDecls FieldDecl ';'      
+                {
+                $$ = $1;
+                field_vec_push($$, $2);
+                }
+    ;
 
-FieldDecl : identifier_list Type
+FieldDecl : identifier_list Type            { $$ = make_field(yylineno, $1, $2) }
     ;
 
 
@@ -423,12 +454,13 @@ FieldDecl : identifier_list Type
 // ============================
 
 // Need to double check if we support fallthrough 
-Statement : Declaration
+Statement : VarDecl                         { $$ = make_var_declaration_statement(yylineno, $1) }
+    | TypeDecl                              { $$ = make_type_declaration_statement(yylineno, $1) }
     | SimpleStmt
     | ReturnStmt
     | BreakStmt
     | ContinueStmt
-    | Block                 { $$ = make_block_statement(yylineno, $1) }
+    | Block                                 { $$ = make_block_statement(yylineno, $1) }
     | IfStmt
     | SwitchStmt
     | ForStmt
@@ -576,15 +608,15 @@ ContinueStmt: tCONTINUE     { $$ = make_continue_statement(yylineno) }
 
 Expression: UnaryExpr                                    
           | Expression tOR Expression                    
-            {$$ = make_bin_operation_expression(yylieno, $2, opOr, $2)}
+            {$$ = make_bin_operation_expression(yylineno, opOr, $1, $3)}
           | Expression tAND Expression                   
-            {$$ = make_bin_operation_expression(yylineno, $2, opAnd, $2)}
+            {$$ = make_bin_operation_expression(yylineno, opAnd, $1, $3)}
           | Expression rel_op Expression %prec REL_PREC  
-            {$$ = make_bin_operation_expression(yylineno, $2, $1, $2)}
+            {$$ = make_bin_operation_expression(yylineno, $2, $1, $3)}
           | Expression add_op Expression %prec ADD_PREC  
-            {$$ = make_bin_operation_expression(yylineno, $2, $1, $2)}
+            {$$ = make_bin_operation_expression(yylineno, $2, $1, $3)}
           | Expression mul_op Expression %prec MUL_PREC  
-            {$$ = make_bin_operation_expression(yylineno, $2, $1, $2)}
+            {$$ = make_bin_operation_expression(yylineno, $2, $1, $3)}
           ;
 
 UnaryExpr: PrimaryExpr                                  
