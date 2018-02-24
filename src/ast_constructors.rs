@@ -152,3 +152,24 @@ fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
     )
 }
 */
+
+
+/*
+STATEMENT NODE CONSTRUCTORS
+=======================================
+*/
+
+
+/// This is a function that factors out most of the repetition from creating statement nodes
+fn make_stmt_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
+    Box::into_raw(Box::new(ExpressionNode {
+        location: SourceLocation { line_number: line },
+        expression: expr,
+        kind: Kind::Undefined,
+    }))
+}
+
+
+
+
+
