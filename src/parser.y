@@ -351,22 +351,24 @@ expression_list : Expression
 // TYPE DECLARATIONS
 // ============================
 TypeDecl : tTYPE TypeSpec
+        { 
+        $$ = make_type_spec_vec();
+        type_spec_vec_push($$, $2);
+        }
     | tTYPE '(' TypeSpecs ')'
+        { $$ = $3; }
     ;
 
 TypeSpecs : %empty
+        { $$ = make_type_spec_vec(); }
     | TypeSpecs TypeSpec ';'
+        {
+        $$ = $1;
+        type_spec_vec_push($$, $2);
+        }
     ;
 
-TypeSpec : AliasDecl
-    | TypeDef
-    ;
-
-// We probably don't need this
-AliasDecl : tIDENTIFIER '=' Type
-    ;
-
-TypeDef : tIDENTIFIER Type
+TypeSpec : tIDENTIFIER Type  { $$ = make_type_spec(yylineno, $1, $2); }
     ;
 
 
