@@ -408,23 +408,34 @@ StatementList: %empty
              ;
 
 // TODO WEED: not all expressions are valid; need to weed
-ExpressionStmt : Expression
+ExpressionStmt : Expression { $$ = make_expression_statemen(yylineno, $1); }
     ;
 
 
 // TODO WEED: make sure number is same on both sides
 // TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
-Assignment: expression_list assign_op expression_list
+Assignment: expression_list '=' expression_list   
+                { $$ = make_assignment_statement(yylineno, $1, $3) }
+            expression_list add_assign_op expression_list   
+                { $$ = make_op_assignment_statement(yylineno, $1, $3) }
+            expression_list mul_assign_op expression_list   
+                { $$ = make_op_assignment_statement(yylineno, $1, $3) }
     ;
 
-assign_op : '='
-          | add_assign_op
-          | mul_assign_op
-          ;
 
-add_assign_op : tPLUSASSIGN | tMINUSASSIGN | tBWORASSIGN | tBWXORASSIGN
-mul_assign_op : tTIMESASSIGN | tDIVASSIGN | tREMASSIGN | tLSHIFTASSIGN
-              | tRSHIFTASSIGN | tBWANDASSIGN |tBWANDNOTASSIGN
+add_assign_op : tPLUSASSIGN    
+              | tMINUSASSIGN 
+              | tBWORASSIGN 
+              | tBWXORASSIGN
+              ;
+
+mul_assign_op : tTIMESASSIGN 
+              | tDIVASSIGN 
+              | tREMASSIGN 
+              | tLSHIFTASSIGN
+              | tRSHIFTASSIGN 
+              | tBWANDASSIGN 
+              | tBWANDNOTASSIGN
               ;
 
 
@@ -478,7 +489,7 @@ SwitchCase: tCASE expression_list
     ;
 
 
-ForStmt: tFOR Block             { $$ = make_for_statment }
+ForStmt: tFOR Block             
     | tFOR Expression Block
     | tFOR ForClause Block
     ;
@@ -501,16 +512,22 @@ ContinueStmt: tCONTINUE
 // EXPRESSIONS
 // ============================
 
-Expression: UnaryExpr                                    { $$ }
-          | Expression tOR Expression                    {$$ = make_bin_operation_expression(1234, $2, $1, $2)}
-          | Expression tAND Expression                   {$$ = make_bin_operation_expression(1234, $2, $1, $2)}
-          | Expression rel_op Expression %prec REL_PREC  {$$ = make_bin_operation_expression(1234, $2, $1, $2)}
-          | Expression add_op Expression %prec ADD_PREC  {$$ = make_bin_operation_expression(1234, $2, $1, $2)}
-          | Expression mul_op Expression %prec MUL_PREC  {$$ = make_bin_operation_expression(1234, $2, $1, $2)}
+Expression: UnaryExpr                                    { $$ = $1 }
+          | Expression tOR Expression                    
+            {$$ = make_bin_operation_expression(yylieno, $2, opOr, $2)}
+          | Expression tAND Expression                   
+            {$$ = make_bin_operation_expression(yylineno, $2, opAnd, $2)}
+          | Expression rel_op Expression %prec REL_PREC  
+            {$$ = make_bin_operation_expression(yylineno, $2, $1, $2)}
+          | Expression add_op Expression %prec ADD_PREC  
+            {$$ = make_bin_operation_expression(yylineno, $2, $1, $2)}
+          | Expression mul_op Expression %prec MUL_PREC  
+            {$$ = make_bin_operation_expression(yylineno, $2, $1, $2)}
           ;
 
 UnaryExpr: PrimaryExpr                                  
-         | unary_op UnaryExpr %prec UNARY_PREC { $$ = make_unary_operation_expression(1234, $1, $2) }
+         | unary_op UnaryExpr %prec UNARY_PREC 
+            { $$ = make_unary_operation_expression(yylieno, $1, $2) }
          ;
 
 rel_op: tEQUAL              { $$ = opEq }
@@ -543,37 +560,35 @@ unary_op: '+'               { $$ = opPlus }
         ;
 
 Operand: Literal            { $$ = $1 }
-       | tIDENTIFIER {
-         $$ = expr_identifier(123123, $1);
-       }
+       | tIDENTIFIER        { $$ = expr_identifier(yylineno, $1); }
        | '(' Expression ')' { $$ = $2; }
        ;
 
-Literal: tINTVAL {$$ = expr_literal(12312, $1, kInt);}
-       | tFLOATVAL {$$ = expr_literal(12312, $1, kFloat);}
-       | tRUNEVAL {$$ = expr_literal(12312, $1, kRune);}
-       | tSTRINGVAL {$$ = expr_literal(12312, $1, kString);}
+Literal: tINTVAL            {$$ = expr_literal(yylineno, $1, kInt);}
+       | tFLOATVAL          {$$ = expr_literal(yylineno, $1, kFloat);}
+       | tRUNEVAL           {$$ = expr_literal(yylineno, $1, kRune);}
+       | tSTRINGVAL         {$$ = expr_literal(yylineno, $1, kString);}
        ;
 
 PrimaryExpr: Operand                { $$ = $1 }
-           | PrimaryExpr Selector   { $$ = make_selector_expression(1234, $1, $2) }
-           | PrimaryExpr Index      { $$ = make_index_expression(1234, $1, $2) }
-           | AppendExpr             { $$ = make_append
-           | PrimaryExpr Arguments
+           | PrimaryExpr Selector   { $$ = make_selector_expression(yylineno, $1, $2) }
+           | PrimaryExpr Index      { $$ = make_index_expression(yylineno, $1, $2) }
+           | AppendExpr             { $$ = $1 }
+           | PrimaryExpr Arguments  { $$ = make_function_call_expression(yylineno, $1, $2) }
            ;
 
 // TODO WEED: must not be blank
-Selector: '.' tIDENTIFIER   { $$ = $2 }
+Selector: '.' tIDENTIFIER           { $$ = $2 }
         ;
+
 Index: '[' Expression ']'
      ;
 
 Arguments: '(' OptionalExpressionList ')'
          ;
 
-AppendExpr: tAPPEND '(' Expression ',' Expression ')' {
-          $$ = expr_append(14223, $3, $5);
-          }
+AppendExpr: tAPPEND '(' Expression ',' Expression ')' 
+          { $$ = make_append_expression(yylineno, $3, $5); }
           ;
 
 
