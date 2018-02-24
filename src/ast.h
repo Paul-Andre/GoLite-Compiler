@@ -34,8 +34,45 @@ enum BasicKind {
   kString = 3,
 };
 
-ExpressionNode *expr_identifier(uint32_t, char*);
-ExpressionNode *expr_literal(uint32_t, char*,enum BasicKind);
-ExpressionNode *expr_append(uint32_t, ExpressionNode*, ExpressionNode*);
+enum BinOperator {
+    opOr,
+    opAnd,
+
+    opEq,
+    opNeq,
+    opLt,
+    opLeq,
+    opGt,
+    opGeq,
+
+    opAdd,
+    opSub,
+    opBwOr,
+    opBwXor,
+
+    opMul,
+    opDiv,
+    opMod,
+    opLShift,
+    opRShift,
+    opBwAnd,
+    opBwAndNot,
+}
+
+enum UnOperator {
+    opPlus,
+    opNeg,
+    opBwCompl,
+    opNot,
+}
+
+ExpressionNode *make_identifier_expression(uint32_t, char*);
+ExpressionNode *make_literal_expression(uint32_t, char*,enum BasicKind);
+ExpressionNode *make_append_expression(uint32_t, ExpressionNode*, ExpressionNode*);
+ExpressionNode *make_binary_operation_expression(uint32_t, BinOperator, ExpressionNode*, ExpressionNode*);
+ExpressionNode *make_unary_operation_expression(uint32_t, UnOperator, ExpressionNode*);
+ExpressionNode *make_selector_expression(uint32_t, ExpressionNode*, char *);
+ExpressionNode *make_index_expression(uint32_t, UnOperator ExpressionNode*, ExpressionNode*);
+ExpressionNode *make_function_call_expression(uint32_t, ExpressionNode*, ExpressionNodeVec*);
 
 
