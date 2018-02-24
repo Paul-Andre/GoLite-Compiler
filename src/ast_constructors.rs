@@ -225,10 +225,49 @@ pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut Vec<Expressi
 
 
 
+
+
+
+
 /*
 AST KIND NODE CONSTRUCTORS
 =======================================
 */
 
 
+/// This is a function that factors out most of the repetition
+fn make_ast_kind_ptr(line: u32, expr: AstKind) -> *mut AstKindNode {
+    Box::into_raw(Box::new( AstKindNode{
+        line_number: line,
+        ast_kind: expr,
+    }))
+}
+
+#[no_mangle]
+pub extern "C" fn make_identifier_kind(line: u32, string: *const c_char) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Identifier { name: unsafe { from_c_string(string) } },
+    )
+}
+
+
+#[no_mangle]
+pub extern "C" fn make_slice_kind(line: u32, base: *mut AstKindNode) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Slice { base: unsafe { Box::from_raw(base) } },
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_array_kind(line: u32, base: *mut AstKindNode, size: *const c_char) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Array {
+            base: unsafe { Box::from_raw(base) },
+            size: unsafe { from_c_string(size) },
+        },
+    )
+}
 
