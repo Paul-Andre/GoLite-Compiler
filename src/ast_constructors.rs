@@ -144,24 +144,7 @@ fn make_function_call_expression(
     )
 }
 
-fn exp_append(line: u32, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::Append{ lhs: left, rhs: right }
-        }
-    )
-}
 
-fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::TypeCast{ expr: exp }
-        }
-    )
-}
-*/
 
 
 /*
