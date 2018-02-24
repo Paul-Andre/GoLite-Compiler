@@ -106,18 +106,6 @@ pub struct ExpressionNode {
     pub expression: Expression,
 }
 
-pub struct VarDeclaration {
-    pub line_number: u32,
-    pub names: Vec<String>,
-    pub kind: Option<Box<AstKindNode>>,
-    pub rhs: Vec<ExpressionNode>,
-}
-
-pub struct TypeDeclaration {
-    pub names: String,
-    pub kind: Box<AstKindNode>,
-}
-
 pub enum CaseClauseTag {
     Default,
     Cases(Vec<ExpressionNode>),
@@ -184,6 +172,18 @@ pub enum Statement {
 pub struct StatementNode {
     pub line_number: u32,
     pub statement: Statement,
+}
+
+pub struct VarDeclaration {
+    pub line_number: u32,
+    pub names: Vec<String>,
+    pub kind: Option<Box<AstKindNode>>,
+    pub rhs: Vec<ExpressionNode>,
+}
+
+pub struct TypeDeclaration {
+    pub names: String,
+    pub kind: Box<AstKindNode>,
 }
 
 pub enum TopLevelDeclaration {
