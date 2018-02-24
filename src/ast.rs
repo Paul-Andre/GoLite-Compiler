@@ -14,7 +14,7 @@ pub enum BasicKind {
 
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub enum BinOperator {
+pub enum BinaryOperator {
     Or,
     And,
 
@@ -41,7 +41,7 @@ pub enum BinOperator {
 
 #[repr(C)]
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub enum UnOperator {
+pub enum UnaryOperator {
     Plus,
     Neg,
     BwCompl,
@@ -50,26 +50,34 @@ pub enum UnOperator {
 
 pub enum AstKind {
     Identifier { name: String },
-    Slice { base: Box<Kind> },
-    Array { base: Box<Kind>, size: String },
+    Slice { base: Box<AstKindNode> },
+    Array { base: Box<AstKindNode>, size: String },
     Struct { fields: Vec<StructField> },
 }
 
-pub struct StructField {
+pub struct AstKindNode {
+    line_number: u32,
+    ast_kind: AstKind
+}
+
+// This is either the field of a struct or a list of parameters declared with the same type for a
+// function
+pub struct Field {
+    pub line_number: u32,
     pub identifiers: Vec<String>,
-    pub ast_kind: AstKind,
+    pub kind: Box<AstKindNode>,
 }
 
 pub enum Expression {
     Identifier { name: String },
     RawLiteral { value: String },
-    BinOperation {
-        op: BinOperator,
+    BinaryOperation {
+        op: BinaryOperator,
         lhs: Box<ExpressionNode>,
         rhs: Box<ExpressionNode>,
     },
-    UnOperation {
-        op: UnOperator,
+    UnaryOperation {
+        op: UnaryOperator,
         rhs: Box<ExpressionNode>,
     },
     Index {
@@ -99,14 +107,15 @@ pub struct ExpressionNode {
 }
 
 pub struct VarDeclaration {
+    line_number: u32,
     names: Vec<String>,
-    kind: Option<AstKind>,
+    kind: Option<Box<AstKindNode>>,
     rhs: Vec<ExpressionNode>,
 }
 
 pub struct TypeDeclaration {
     names: String,
-    kind: AstKind,
+    kind: Box<AstKindNode>,
 }
 
 pub enum CaseClauseTag {
@@ -115,6 +124,7 @@ pub enum CaseClauseTag {
 }
 
 pub struct CaseClause {
+    line_number: u32,
     tag: CaseClauseTag,
     statements: Vec<StatementNode>,
 }
@@ -131,7 +141,7 @@ pub enum Statement {
     OpAssignment {
         lhs: Box<ExpressionNode>,
         rhs: Box<ExpressionNode>,
-        operator: BinOperator,
+        operator: BinaryOperator,
     },
     VarDeclarations { declarations: Vec<VarDeclaration> },
     TypeDeclarations { declarations: Vec<TypeDeclaration> },
@@ -176,22 +186,20 @@ pub struct StatementNode {
     statement: Statement,
 }
 
-
-pub struct Parameter {
-    name: String,
-    kind: Box<AstKind>,
-}
-
-
 pub enum TopLevelDeclaration {
     VarDeclarations { declarations: Vec<VarDeclaration> },
     TypeDeclarations { declarations: Vec<TypeDeclaration> },
     FunctionDeclaration {
         name: String,
-        parameters: Vec<Parameter>,
-        return_kind: Option<Box<AstKind>>,
+        parameters: Vec<Field>,
+        return_kind: Option<Box<AstKindNode>>,
         body: Vec<StatementNode>,
     },
+}
+
+pub struct TopLevelDeclarationNode {
+    line_number: u32,
+    top_level_declaration: TopLevelDeclaration
 }
 
 struct Program {

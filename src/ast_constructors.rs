@@ -98,13 +98,13 @@ pub extern "C" fn make_append_expression(
 
 fn make_binary_operation_expression(
     line: u32,
-    operator: BinOperator,
+    operator: BinaryOperator,
     left: *mut ExpressionNode,
     right: *mut ExpressionNode,
 ) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
-        Expression::BinOperation {
+        Expression::BinaryOperation {
             op: operator,
             lhs: unsafe { Box::from_raw(left) },
             rhs: unsafe { Box::from_raw(right) },
@@ -112,10 +112,10 @@ fn make_binary_operation_expression(
     )
 }
 
-fn make_unary_operation_expression(line: u32, operator: UnOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
+fn make_unary_operation_expression(line: u32, operator: UnaryOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
-        Expression::UnOperation {
+        Expression::UnaryOperation {
             op: operator,
             rhs: unsafe { Box::from_raw(right)},
         },
@@ -156,23 +156,6 @@ fn make_function_call_expression(
     )
 }
 
-fn exp_append(line: u32, left: Box<ExpressionNode>, right: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::Append{ lhs: left, rhs: right }
-        }
-    )
-}
-
-fn exp_typecast(line: u32, exp: Box<ExpressionNode>) -> Box<ExpressionNode> {
-    Box::new(
-        ExpressionNode {
-            location: line, 
-            expression: Expression::TypeCast{ expr: exp }
-        }
-    )
-}
 
 
 
@@ -431,4 +414,72 @@ pub extern "C" fn make_continue_statement(line: u32){
 
 
 
+
+
+/*
+AST KIND NODE CONSTRUCTORS
+=======================================
+*/
+
+
+/// This is a function that factors out most of the repetition
+fn make_ast_kind_ptr(line: u32, expr: AstKind) -> *mut AstKindNode {
+    Box::into_raw(Box::new( AstKindNode{
+        line_number: line,
+        ast_kind: expr,
+    }))
+}
+
+#[no_mangle]
+pub extern "C" fn make_identifier_kind(line: u32, string: *const c_char) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Identifier { name: unsafe { from_c_string(string) } },
+    )
+}
+
+
+#[no_mangle]
+pub extern "C" fn make_slice_kind(line: u32, base: *mut AstKindNode) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Slice { base: unsafe { Box::from_raw(base) } },
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_array_kind(line: u32, base: *mut AstKindNode, size: *const c_char) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Array {
+            base: unsafe { Box::from_raw(base) },
+            size: unsafe { from_c_string(size) },
+        },
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_struct_kind(line: u32, fields: *mut Vec<Field>) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Struct {
+            fields: *unsafe{ Box::from_raw(fields) }
+        },
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_field(line: u32, fields: *mut Vec<String>, kind: *mut AstKindNode)
+-> *mut Field
+{
+    Box::into_raw( Box::new(
+            Field {
+                line_number: line,
+                identifiers: *unsafe{ Box::from_raw(fields) },
+                kind: unsafe{ Box::from_raw(kind) }
+            }))
+}
+
+
+        
 
