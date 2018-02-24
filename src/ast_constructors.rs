@@ -324,10 +324,11 @@ pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<
 
 #[no_mangle]
 pub extern "C" fn make_inc_dec_statement(line: u32, is_dec: c_int, expr: *mut ExpressionNode ) -> *mut StatementNode {
+
     make_statement_ptr(
         line,
         Statement::IncDec {
-            if c_int == 0 {false} else {true},
+            is_dec: if is_dec == 0 {false} else {true},
             expr: unsafe{Box::from_raw(expr)}
         }
     )
@@ -488,6 +489,24 @@ STATEMENT NODE HELPERS
 =======================================
 */
 
+pub extern "C" fn make_case_clause(line: u32,
+                                   tags: *mut Vec<ExpressionNode>,
+                                   stmts: *mut Vec<StatementNode>) -> *mut CaseClause {
+
+    let tag: SwitchCase;
+    
+    if tags.is_null() {
+        tag = SwitchCase::Default;
+    } else {
+        tag = SwitchCase::Cases( unsafe { *unsafe{Box::from_raw(tags)} })
+    }
+
+    Box::into_raw(Box::new(CaseClause {
+        line_number: line,
+        tag,
+        statements: unsafe { *unsafe{Box::from_raw(stmts)}}
+    }))
+}
 
 
 
