@@ -271,3 +271,28 @@ pub extern "C" fn make_array_kind(line: u32, base: *mut AstKindNode, size: *cons
     )
 }
 
+#[no_mangle]
+pub extern "C" fn make_struct_kind(line: u32, fields: *mut Vec<Field>) -> *mut AstKindNode {
+    make_ast_kind_ptr(
+        line,
+        AstKind::Struct {
+            fields: *unsafe{ Box::from_raw(fields) }
+        },
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn make_field(line: u32, fields: *mut Vec<String>, kind: *mut AstKindNode)
+-> *mut Field
+{
+    Box::into_raw( Box::new(
+            Field {
+                line_number: line,
+                identifiers: *unsafe{ Box::from_raw(fields) },
+                kind: unsafe{ Box::from_raw(kind) }
+            }))
+}
+
+
+        
+

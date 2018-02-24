@@ -60,10 +60,12 @@ pub struct AstKindNode {
     ast_kind: AstKind
 }
 
-
-pub struct StructField {
+// This is either the field of a struct or a list of parameters declared with the same type for a
+// function
+pub struct Field {
+    pub line_number: u32,
     pub identifiers: Vec<String>,
-    pub ast_kind: Box<AstKindNode>,
+    pub kind: Box<AstKindNode>,
 }
 
 pub enum Expression {
@@ -184,19 +186,12 @@ pub struct StatementNode {
     statement: Statement,
 }
 
-
-pub struct Parameter {
-    name: String,
-    kind: Box<AstKindNode>,
-}
-
-
 pub enum TopLevelDeclaration {
     VarDeclarations { declarations: Vec<VarDeclaration> },
     TypeDeclarations { declarations: Vec<TypeDeclaration> },
     FunctionDeclaration {
         name: String,
-        parameters: Vec<Parameter>,
+        parameters: Vec<Field>,
         return_kind: Option<Box<AstKindNode>>,
         body: Vec<StatementNode>,
     },
