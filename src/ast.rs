@@ -218,6 +218,7 @@ pub struct TopLevelDeclarationNode {
     pub top_level_declaration: TopLevelDeclaration
 }
 
+#[repr(C)]
 #[derive(Debug)]
 pub struct Program {
     pub package_name: String,

@@ -1,9 +1,9 @@
-CC = gcc -fPIC
+CC = gcc -fPIC -g
 
 CFLAGS = -Wall
 
 libbisonparser.a: lex.yy.c bisonparser.c
-	$(CC) -c bisonparser.c -o bisonparser.o -lfl
+	$(CC) $(CFLAGS) -c bisonparser.c -o bisonparser.o -lfl
 	ar rcs libbisonparser.a bisonparser.o
 
 parser.tab.c parser.tab.h: parser.y

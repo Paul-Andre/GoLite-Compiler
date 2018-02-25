@@ -1,4 +1,3 @@
-// Identifier Type, No Initialization
 package main;
 
 var i int
@@ -10,8 +9,10 @@ var UU,VV,WW float64;
 var (
 )
 var (
-   kk int;
-   aa,bb float64;
+   //kk int;
+   //aa,bb,cc float64;
+   i int
+   j int
 )
 
 var i []int

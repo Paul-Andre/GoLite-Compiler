@@ -19,11 +19,11 @@ pub extern "C" fn make_string(string: *const c_char) -> *mut String {
 }
 
 
-pub unsafe fn from_raw_or_none<T>(t: *mut T) -> Option<Box<T>> {
+pub fn from_raw_or_none<T>(t: *mut T) -> Option<Box<T>> {
     if t.is_null() {
         None
     } else {
-        Some( Box::from_raw(t) )
+        Some( unsafe{Box::from_raw(t) })
     }
 }
 
@@ -58,8 +58,8 @@ create_vec_functions!(make_top_level_declaration_vec,
                       top_level_declaration_vec_push,
                       TopLevelDeclarationNode);
 
-create_vec_functions!(make_var_spec_vec, var_spec_vec_push, Field);
-create_vec_functions!(make_type_spec_vec, type_spec_vec_push, Field);
+create_vec_functions!(make_var_spec_vec, var_spec_vec_push, VarSpec);
+create_vec_functions!(make_type_spec_vec, type_spec_vec_push, TypeSpec);
 
 /*
 PROGRAM CONSTRUCTOR
