@@ -3,6 +3,8 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
 
+use std::process::exit;
+
 
 /// This function turns a C string into a Rust String
 /// If the C string isn't proper utf-8 (shouldn't be a problem for us), it panics
@@ -14,6 +16,15 @@ unsafe fn from_c_string(s: *const c_char) -> String {
 #[no_mangle]
 pub extern "C" fn make_string(string: *const c_char) -> *mut String {
     Box::into_raw(Box::new(unsafe { from_c_string(string) }))
+}
+
+
+unsafe fn from_raw_or_none<T>(t: *mut T) -> Option<Box<T>> {
+    if t.is_null() {
+        None
+    } else {
+        Some( Box::from_raw(t) )
+    }
 }
 
 /// This is a macros to generate functions that will be used to generate vectors in C.
@@ -33,6 +44,7 @@ macro_rules! create_vec_functions {
     }
 }
 
+
 // Generate the functions to be used in C
 create_vec_functions!(make_expression_vec, expression_vec_push, ExpressionNode);
 create_vec_functions!(make_string_vec, string_vec_push, String);
@@ -40,15 +52,18 @@ create_vec_functions!(make_string_vec, string_vec_push, String);
 //Statement vectors
 create_vec_functions!(make_statement_vec, statement_vec_push, StatementNode);
 
-create_vec_functions!(make_field_vec, field_vec_push, StatementNode);
-
+create_vec_functions!(make_field_vec, field_vec_push, Field);
+create_vec_functions!(make_case_clause_vec, case_clause_vec_push, CaseClause);
+create_vec_functions!(make_top_level_declaration_vec,
+                      top_level_declaration_vec_push,
+                      TopLevelDeclarationNode);
 
 /*
 PROGRAM CONSTRUCTOR
 =======================================
 */
 
-pub extern "C" fn make_program_ptr(pkg: *const c_char,
+pub extern "C" fn make_program(pkg: *const c_char,
                                    dcls: *mut Vec<TopLevelDeclaration>) -> *mut Program {
 
     Box::into_raw(Box::new(Program {
@@ -74,7 +89,7 @@ fn make_top_level_declaration_ptr(line: u32, dcl: TopLevelDeclaration) -> *mut T
 
 #[no_mangle]
 pub extern "C" fn make_var_top_level_declaration(line: u32,
-                                                 decls:  *mut Vec<VarDeclaration>) -> *mut TopLevelDeclarationNode {
+                                                 decls:  *mut Vec<VarSpec>) -> *mut TopLevelDeclarationNode {
     make_top_level_declaration_ptr(
         line,
         TopLevelDeclaration::VarDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
@@ -83,7 +98,7 @@ pub extern "C" fn make_var_top_level_declaration(line: u32,
 
 #[no_mangle]
 pub extern "C" fn make_type_top_level_declaration(line: u32,
-                                                 decls:  *mut Vec<TypeDeclaration>) -> *mut TopLevelDeclarationNode {
+                                                 decls:  *mut Vec<TypeSpec>) -> *mut TopLevelDeclarationNode {
     make_top_level_declaration_ptr(
         line,
         TopLevelDeclaration::TypeDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
@@ -101,7 +116,7 @@ pub extern "C" fn make_function_top_level_declaration(line: u32,
         TopLevelDeclaration::FunctionDeclaration{
             name: unsafe { from_c_string(name) },
             parameters: *unsafe { Box::from_raw(params) },
-            return_kind: Some(unsafe { Box::from_raw(return_kind) }),
+            return_kind: unsafe { from_raw_or_none(return_kind) },
             body: *unsafe { Box::from_raw(body) }
         }
     )
@@ -266,11 +281,19 @@ pub extern "C" fn make_expression_statement(line: u32, expr: *mut ExpressionNode
 #[no_mangle]
 pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionNode>,
                                             rhs: *mut Vec<ExpressionNode>) -> *mut StatementNode {
+
+    let lhs = *unsafe{Box::from_raw(lhs)};
+    let rhs = *unsafe{Box::from_raw(rhs)};
+    if (lhs.len() != rhs.len()) {
+        eprintln!("Error: line {}: lhs and rhs of assignment have a different amount of elements.", line);
+        exit(1);
+    }
+
     make_statement_ptr(
         line,
         Statement::Assignment {
-            lhs: *unsafe{Box::from_raw(lhs)},
-            rhs: *unsafe{Box::from_raw(rhs)}
+            lhs,
+            rhs
         }
     )
 }
@@ -291,7 +314,7 @@ pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut ExpressionNo
 
 #[no_mangle]
 pub extern "C" fn make_var_declaration_statement(line: u32,
-                                                 decls: *mut Vec<VarDeclaration>) -> *mut StatementNode {
+                                                 decls: *mut Vec<VarSpec>) -> *mut StatementNode {
     make_statement_ptr(
         line,
         Statement::VarDeclarations {
@@ -301,7 +324,7 @@ pub extern "C" fn make_var_declaration_statement(line: u32,
 }
 
 #[no_mangle]
-pub extern "C" fn make_type_declaration_statement(line: u32, decls: *mut Vec<TypeDeclaration>) -> *mut StatementNode {
+pub extern "C" fn make_type_declaration_statement(line: u32, decls: *mut Vec<TypeSpec>) -> *mut StatementNode {
     make_statement_ptr(
         line,
         Statement::TypeDeclarations {
@@ -313,11 +336,19 @@ pub extern "C" fn make_type_declaration_statement(line: u32, decls: *mut Vec<Typ
 #[no_mangle]
 pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<String>,
                                                        exprs: *mut Vec<ExpressionNode> ) -> *mut StatementNode {
+
+    let lhs = *unsafe{Box::from_raw(ids)};
+    let rhs = *unsafe{Box::from_raw(exprs)};
+    if (lhs.len() != rhs.len()) {
+        eprintln!("Error: line {}: lhs and rhs of short declaration have a different number of elements.",line);
+        exit(1);
+    }
+
     make_statement_ptr(
         line,
         Statement::ShortVariableDeclaration {
-            identifier_list: *unsafe{Box::from_raw(ids)},
-            expression_list: *unsafe{Box::from_raw(exprs)}
+            identifier_list: lhs,
+            expression_list: rhs,
         }
     )
 }
@@ -360,28 +391,15 @@ pub extern "C" fn make_if_statement(line: u32,
                                     cond: *mut ExpressionNode,
                                     if_branch: *mut Vec<StatementNode>,
                                     else_branch: *mut StatementNode ) -> *mut StatementNode {
-
-    if else_branch.is_null() {
-        make_statement_ptr(
-            line,
-            Statement::If {
-                init: unsafe{Box::from_raw(init)},
-                condition: unsafe{Box::from_raw(cond)},
-                if_branch: *unsafe{Box::from_raw(if_branch)},
-                else_branch: None
-            }
-        )
-    } else {
-        make_statement_ptr(
-            line,
-            Statement::If {
-                init: unsafe{Box::from_raw(init)},
-                condition: unsafe{Box::from_raw(cond)},
-                if_branch: *unsafe{Box::from_raw(if_branch)},
-                else_branch: Some(unsafe{Box::from_raw(else_branch)})
-            }
-        )
-    }
+    make_statement_ptr(
+        line,
+        Statement::If {
+            init: unsafe{Box::from_raw(init)},
+            condition: unsafe{Box::from_raw(cond)},
+            if_branch: *unsafe{Box::from_raw(if_branch)},
+            else_branch: unsafe{from_raw_or_none(else_branch)},
+        }
+    )
 }
 
 #[no_mangle]
@@ -428,26 +446,14 @@ pub extern "C" fn make_switch_statement(line: u32,
                                      init: *mut StatementNode,
                                      expr: *mut ExpressionNode,
                                      body: *mut Vec<CaseClause> ) -> *mut StatementNode {
-
-    if expr.is_null() {
-        make_statement_ptr(
-            line,
-            Statement::Switch {
-                init: unsafe{Box::from_raw(init)},
-                expr: None,
-                body: *unsafe{Box::from_raw(body)}
-            }
-        )
-    } else {
-        make_statement_ptr(
-            line,
-            Statement::Switch {
-                init: unsafe{Box::from_raw(init)},
-                expr: Some(unsafe{Box::from_raw(expr)}),
-                body: *unsafe{Box::from_raw(body)}
-            }
-        )
-    }
+    make_statement_ptr(
+        line,
+        Statement::Switch {
+            init: unsafe{Box::from_raw(init)},
+            expr: unsafe{from_raw_or_none(expr)},
+            body: *unsafe{Box::from_raw(body)}
+        }
+    )
 }
 
 #[no_mangle]
@@ -469,18 +475,10 @@ pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
 }
 
 pub extern "C" fn make_return_statement(line: u32, value: *mut ExpressionNode) -> *mut StatementNode{
-    if value.is_null() {
-        make_statement_ptr(
-            line,
-            Statement::Return(None)
-        )
-    } else {
-        make_statement_ptr(
-            line,
-            Statement::Return(Some(unsafe{Box::from_raw(value)}))
-        )
-    }
-    
+    make_statement_ptr(
+        line,
+        Statement::Return(unsafe{from_raw_or_none(value)})
+    )
 }
 
 
@@ -503,11 +501,50 @@ pub extern "C" fn make_case_clause(line: u32,
 
     Box::into_raw(Box::new(CaseClause {
         line_number: line,
-        tag,
+        switch_case: tag,
         statements: *unsafe{Box::from_raw(stmts)}
     }))
 }
 
+fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode, rhs: *mut Vec<ExpressionNode>) 
+    -> *mut VarSpec
+{
+    let names = *unsafe { Box::from_raw( names ) };
+    if !rhs.is_null() {
+        let rhs = *unsafe { Box::from_raw( rhs ) };
+        if (names.len() != rhs.len()) {
+            eprintln!("Error: line {}: different number of elements on the sides or the assignment", line);
+            exit(1);
+        }
+
+        Box::into_raw( Box::new(
+                VarSpec{
+                    line_number: line,
+                    names: names,
+                    kind: unsafe{ from_raw_or_none(kind) },
+                    rhs: Some(rhs),
+                }))
+    } else {
+        Box::into_raw( Box::new(
+                VarSpec{
+                    line_number: line,
+                    names: names,
+                    kind: unsafe{ from_raw_or_none(kind) },
+                    rhs: None,
+                }))
+    }
+}
+
+fn make_type_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode)
+    -> *mut TypeSpec
+{
+        Box::into_raw( Box::new(
+                TypeSpec{
+                    line_number: line,
+                    names: *unsafe{ Box::from_raw(names) },
+                    kind: unsafe{ Box::from_raw(kind) },
+                }))
+}
 
 
 

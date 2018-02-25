@@ -187,7 +187,6 @@ void yyerror(const char *s) {
 
 // Statements
 %type <stmt> Statement
-%type <stmt> SimpleStmt
 
 %type <stmt> Declaration
 %type <stmt> SimpleStmt
@@ -505,9 +504,9 @@ ExpressionStmt : Expression { $$ = make_expression_statement(yylineno, $1); }
 // TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
 Assignment: expression_list '=' expression_list   
                 { $$ = make_assignment_statement(yylineno, $1, $3) }
-            expression_list add_assign_op expression_list   
+            expression add_assign_op expression
                 { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
-            expression_list mul_assign_op expression_list   
+            expression mul_assign_op expression
                 { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
     ;
 
@@ -656,14 +655,14 @@ unary_op: '+'               { $$ = opPlus }
         ;
 
 Operand: Literal
-       | tIDENTIFIER        { $$ = expr_identifier(yylineno, $1); }
+       | tIDENTIFIER        { $$ = make_identifier_expression(yylineno, $1); }
        | '(' Expression ')'
        ;
 
-Literal: tINTVAL            {$$ = expr_literal(yylineno, $1, kInt);}
-       | tFLOATVAL          {$$ = expr_literal(yylineno, $1, kFloat);}
-       | tRUNEVAL           {$$ = expr_literal(yylineno, $1, kRune);}
-       | tSTRINGVAL         {$$ = expr_literal(yylineno, $1, kString);}
+Literal: tINTVAL            {$$ = make_literal_expression(yylineno, $1, kInt);}
+       | tFLOATVAL          {$$ = make_literal_expression(yylineno, $1, kFloat);}
+       | tRUNEVAL           {$$ = make_literal_expression(yylineno, $1, kRune);}
+       | tSTRINGVAL         {$$ = make_literal_expression(yylineno, $1, kString);}
        ;
 
 PrimaryExpr: Operand
