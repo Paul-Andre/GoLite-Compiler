@@ -26,7 +26,7 @@ typedef struct VarSpec VarSpec;
 DECLARE_VEC(var_spec, VarSpec);
 
 typedef struct TypeSpec TypeSpec;
-DECLARE_VEC(type_spec, VarTypeSpec);
+DECLARE_VEC(type_spec, TypeSpec);
 
 typedef struct String String;
 DECLARE_VEC(string, String);
@@ -36,6 +36,9 @@ String *make_string(char*);
 typedef struct StatementNode StatementNode;
 DECLARE_VEC(statement, StatementNode);
 
+typedef struct TopLevelDeclarationNode TopLevelDeclarationNode;
+DECLARE_VEC(top_level_declaration, TopLevelDeclarationNode);
+
 typedef struct AstKindNode AstKindNode;
 
 typedef struct Field Field;
@@ -43,6 +46,8 @@ DECLARE_VEC(field, Field);
 
 typedef struct CaseClause CaseClause;
 DECLARE_VEC(case_clause, CaseClause);
+
+typedef struct Program Program;
 
 enum BasicKind {
   kInt = 0,
@@ -103,7 +108,7 @@ StatementNode *make_empty_statement(uint32_t);
 StatementNode *make_block_statement(uint32_t, StatementNodeVec*);
 StatementNode *make_expression_statement(uint32_t, ExpressionNode*);
 StatementNode *make_assignment_statement(uint32_t, ExpressionNodeVec*, ExpressionNodeVec*);
-StatementNode *make_op_assignment_statement(uint32_t, ExpressionNode*, ExpressionNode*);
+StatementNode *make_op_assignment_statement(uint32_t, ExpressionNode*, ExpressionNode*, enum BinaryOperator);
 StatementNode *make_var_declaration_statement(uint32_t, VarSpecVec*);
 StatementNode *make_type_declaration_statement(uint32_t, TypeSpecVec*);
 StatementNode *make_short_var_declaration_statement(uint32_t, StringVec*, ExpressionNodeVec*);
