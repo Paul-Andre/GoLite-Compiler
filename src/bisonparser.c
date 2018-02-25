@@ -2,10 +2,7 @@
 #include "stdlib.h"
 #include "lex.yy.c" // eh?
 
-typedef struct Program Program;
-typedef struct ExpressionNode ExpressionNode;
-
-Program *root;
+extern Program *root;
 
 void say_hello() {
 	printf("hello\n");

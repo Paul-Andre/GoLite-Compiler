@@ -1,10 +1,11 @@
+#[derive(Debug)]
 pub enum Kind {
     Undefined,
     Basic(BasicKind),
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum BasicKind {
     Int = 0,
     Float = 1,
@@ -13,7 +14,7 @@ pub enum BasicKind {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum BinaryOperator {
     Or,
     And,
@@ -40,7 +41,7 @@ pub enum BinaryOperator {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum UnaryOperator {
     Plus,
     Neg,
@@ -48,6 +49,7 @@ pub enum UnaryOperator {
     Not,
 }
 
+#[derive(Debug)]
 pub enum AstKind {
     Identifier { name: String },
     Slice { base: Box<AstKindNode> },
@@ -55,6 +57,7 @@ pub enum AstKind {
     Struct { fields: Vec<Field> },
 }
 
+#[derive(Debug)]
 pub struct AstKindNode {
     pub line_number: u32,
     pub ast_kind: AstKind
@@ -62,12 +65,14 @@ pub struct AstKindNode {
 
 // This is either the field of a struct or a list of parameters declared with the same type for a
 // function
+#[derive(Debug)]
 pub struct Field {
     pub line_number: u32,
     pub identifiers: Vec<String>,
     pub kind: Box<AstKindNode>,
 }
 
+#[derive(Debug)]
 pub enum Expression {
     Identifier { name: String },
     RawLiteral { value: String },
@@ -100,12 +105,14 @@ pub enum Expression {
     TypeCast { expr: Box<ExpressionNode> },
 }
 
+#[derive(Debug)]
 pub struct ExpressionNode {
     pub line_number: u32,
     pub kind: Kind,
     pub expression: Expression,
 }
 
+#[derive(Debug)]
 pub struct VarSpec {
     pub line_number: u32,
     pub names: Vec<String>,
@@ -113,17 +120,20 @@ pub struct VarSpec {
     pub rhs: Option<Vec<ExpressionNode>>,
 }
 
+#[derive(Debug)]
 pub struct TypeSpec {
     pub line_number: u32,
     pub name: String,
     pub kind: Box<AstKindNode>,
 }
 
+#[derive(Debug)]
 pub enum SwitchCase {
     Default,
     Cases(Vec<ExpressionNode>),
 }
 
+#[derive(Debug)]
 pub struct CaseClause {
     pub line_number: u32,
     pub switch_case: SwitchCase,
@@ -131,6 +141,7 @@ pub struct CaseClause {
 }
 
 
+#[derive(Debug)]
 pub enum Statement {
     Empty,
     Block(Vec<StatementNode>),
@@ -183,11 +194,13 @@ pub enum Statement {
     Return(Option<Box<ExpressionNode>>)
 }
 
+#[derive(Debug)]
 pub struct StatementNode {
     pub line_number: u32,
     pub statement: Statement,
 }
 
+#[derive(Debug)]
 pub enum TopLevelDeclaration {
     VarDeclarations { declarations: Vec<VarSpec> },
     TypeDeclarations { declarations: Vec<TypeSpec> },
@@ -199,11 +212,13 @@ pub enum TopLevelDeclaration {
     },
 }
 
+#[derive(Debug)]
 pub struct TopLevelDeclarationNode {
     pub line_number: u32,
     pub top_level_declaration: TopLevelDeclaration
 }
 
+#[derive(Debug)]
 pub struct Program {
     pub package_name: String,
     pub declarations: Vec<TopLevelDeclarationNode>,

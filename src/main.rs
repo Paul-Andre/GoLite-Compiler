@@ -8,19 +8,7 @@ pub use ast_constructors::*;
 extern "C" {
     fn scan();
     fn print_tokens();
-    fn parse() -> Box<Program>;
-}
-
-#[derive(Debug)]
-pub enum Program {
-    One { a: i32 },
-    Two { a: i32, b: i32 },
-}
-
-
-#[no_mangle]
-pub extern "C" fn make_program(a: i32) -> Box<Program> {
-    Box::new(Program::One { a: a })
+    fn parse() -> *mut ast::Program;
 }
 
 
@@ -41,7 +29,8 @@ fn main() {
             print_tokens();
         }
     } else if &argv[1] == "parse" {
-        let ast: Box<Program> = unsafe { parse() };
+        let ast = unsafe { from_raw_or_none(parse()) };
+        //println!("{:?}",ast); 
         println!("OK");
     } else {
         eprintln!("Error: invalid mode");
