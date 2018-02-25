@@ -298,7 +298,7 @@ pub extern "C" fn make_assignment_statement(line: u32, lhs: *mut Vec<ExpressionN
 
     let lhs = *unsafe{Box::from_raw(lhs)};
     let rhs = *unsafe{Box::from_raw(rhs)};
-    if (lhs.len() != rhs.len()) {
+    if lhs.len() != rhs.len() {
         eprintln!("Error: line {}: lhs and rhs of assignment have a different amount of elements.", line);
         exit(1);
     }
@@ -353,7 +353,7 @@ pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<
 
     let lhs = *unsafe{Box::from_raw(ids)};
     let rhs = *unsafe{Box::from_raw(exprs)};
-    if (lhs.len() != rhs.len()) {
+    if lhs.len() != rhs.len() {
         eprintln!("Error: line {}: lhs and rhs of short declaration have a different number of elements.",line);
         exit(1);
     }
@@ -528,7 +528,7 @@ pub extern "C" fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut A
     let names = *unsafe { Box::from_raw( names ) };
     if !rhs.is_null() {
         let rhs = *unsafe { Box::from_raw( rhs ) };
-        if (names.len() != rhs.len()) {
+        if names.len() != rhs.len() {
             eprintln!("Error: line {}: different number of elements on the sides or the assignment", line);
             exit(1);
         }
