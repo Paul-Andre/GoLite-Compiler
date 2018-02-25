@@ -35,6 +35,7 @@ void yyerror(const char *s) {
  */
 %union {
     char *text;
+    AstKindNode *ast_kind;
     ExpressionNode *expr;
     ExpressionNodeVec *expression_vec;
     StringVec *string_vec;
@@ -44,10 +45,14 @@ void yyerror(const char *s) {
     enum UnaryOperator un_op;
     CaseClause *case_clause;
     CaseClauseVec *case_clause_vec; 
-    TopLevelDeclaration *top_level_decl;
+    TopLevelDeclarationNode *top_level_decl;
+    TopLevelDeclarationNodeVec *top_level_decl_vec;
     VariableSpec *var_spec;
     VariableSpecVec *var_spec_vec;    
     StringVec *string_vec;
+    Program *program;
+    Field *field;
+    FieldVec *field_vec;
 }
 
 /* Token directives define the token types to be returned by the scanner (excluding character
@@ -161,6 +166,7 @@ void yyerror(const char *s) {
 %type <bin_op> add_assign_op
 %type <bin_op> mul_assign_op
 %type <bin_op> rel_op
+%type <bin_op> mul_op
 %type <bin_op> add_op
 %type <un_op> unary_op
 
@@ -171,6 +177,19 @@ void yyerror(const char *s) {
 
 %type <string_vec> identifier_list
 
+%type <type_spec> TypeSpec
+%type <type_spec_vec> TypeSpecs
+%type <type_spec_vec> TypeDecl
+
+%type <ast_kind> Type
+%type <ast_kind> TypeLit
+%type <ast_kind> TypeName
+%type <ast_kind> SliceType
+%type <ast_kind> ArrayType
+%type <ast_kind> StructType
+
+%type <field_vec> FieldDecls
+%type <field> FieldDecl
 // Expressions
 %type <expr> Operand
 %type <expr> Expression
@@ -188,7 +207,6 @@ void yyerror(const char *s) {
 // Statements
 %type <stmt> Statement
 
-%type <stmt> Declaration
 %type <stmt> SimpleStmt
 %type <stmt> ReturnStmt
 %type <stmt> BreakStmt
@@ -214,6 +232,18 @@ void yyerror(const char *s) {
 %type <case_clause> CaseClause
 %type <case_clause_vec> CaseClauses
 
+%type <program> Program
+%type <text> PackageClause
+%type <top_level_decl> TopLevelDecl
+%type <top_level_decl_vec> TopLevelDecls
+
+// Function Declarations
+%type <top_level_decl> FunctionDecl
+%type <ast_kind> FuncResult
+%type <field_vec> FuncParameterList
+%type <field_vec> FuncParameters
+%type <field_vec> OptionalFuncParameterList
+%type <field> FuncParameterDecl
 
 
 %token UNARY_PREC
@@ -249,7 +279,7 @@ void yyerror(const char *s) {
 
 
 /* Start token (by default if this is missing it takes the first production */
-%start program
+%start Program
 
 /* Generate the yylloc structure used for storing line numbers with tokens */
 %locations
@@ -268,18 +298,22 @@ void yyerror(const char *s) {
 // FILE STRUCTURE
 // =============================
 
-program : PackageClause ';' TopLevelDecls { root = $1 }
+Program : PackageClause ';' TopLevelDecls { $$ = make_program($1, $3) }
     ;
 
 // PRIMARY PROGRAM STRUCTURE
 // =============================
 
 
-PackageClause : tPACKAGE tIDENTIFIER { }
+PackageClause : tPACKAGE tIDENTIFIER { $$ = $2 }
     ;
 
-TopLevelDecls : %empty                  { }
-    | TopLevelDecl ';' TopLevelDecls
+TopLevelDecls : %empty                  { $$ = make_top_level_declaration_vec() }
+    | TopLevelDecls TopLevelDecl ';' 
+        {
+        $$ = $1;
+        top_level_declaration_push($$, $2);
+        }
     ;
 
 
@@ -379,7 +413,7 @@ FunctionDecl : tFUNC tIDENTIFIER FuncParameters FuncResult Block
              { $$ = make_function_top_level_declaration(yylineno, $2, $3, $4, $5) }
     ;
 
-FuncParameters: '('  OptionalFuncParameterList  ')'
+FuncParameters: '('  OptionalFuncParameterList  ')' { $$ = $2 }
     ;
 
 FuncResult: %empty  { $$ = NULL }
@@ -408,7 +442,7 @@ FuncParameterDecl: identifier_list Type { $$ = make_field(yylineno, $1, $2) }
 
 Type : TypeName
     | TypeLit
-    | '(' Type ')'
+    | '(' Type ')'  { $$ = $2 }
     ;
 
 // Basic types are just identifiers
@@ -484,7 +518,7 @@ SimpleStmt : EmptyStmt
 EmptyStmt: %empty               { $$ = make_empty_statement(yylineno); }
     ;
 
-Block : '{' StatementList '}'   
+Block : '{' StatementList '}'   { $$ = $2 }
     ;
 
 StatementList: %empty                       { $$ = make_statement_vec() }
@@ -502,11 +536,11 @@ ExpressionStmt : Expression { $$ = make_expression_statement(yylineno, $1); }
 
 // TODO WEED: make sure number is same on both sides
 // TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
-Assignment: expression_list '=' expression_list   
+Assignment: expression_list '=' expression_list
                 { $$ = make_assignment_statement(yylineno, $1, $3) }
-            expression add_assign_op expression
+          | Expression add_assign_op Expression
                 { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
-            expression mul_assign_op expression
+          | Expression mul_assign_op Expression
                 { $$ = make_op_assignment_statement(yylineno, $1, $3, $2) }
     ;
 
@@ -544,8 +578,8 @@ PrintStmt: tPRINT '(' OptionalExpressionList ')' { $$ = make_print_statement(yyl
 PrintlnStmt: tPRINTLN '(' OptionalExpressionList ')' { $$ = make_println_statement(yylineno, $3) }
     ;
 
-ReturnStmt: tRETURN             
-          | tRETURN Expression
+ReturnStmt: tRETURN             { $$ = make_return_statement(yylineno, NULL); }
+          | tRETURN Expression  { $$ = make_return_statement(yylineno, $2); }
           ;
 
 
@@ -556,7 +590,7 @@ IfStmt: tIF SimpleStmt ';' Expression Block ElseStmt
       ;
 
 ElseStmt: %empty        { $$ = NULL }
-        | tELSE IfStmt
+        | tELSE IfStmt  { $$ = $2 }
         | tELSE Block   { $$ = make_block_statement(yylineno, $2) }
         ;
 
@@ -568,7 +602,7 @@ SwitchStmt: tSWITCH SimpleStmt ';' Expression '{' CaseClauses '}'
           | tSWITCH SimpleStmt ';' '{' CaseClauses '}'
                 { $$ = make_switch_statement(yylineno, $2, NULL, $5) }
           | tSWITCH '{' CaseClauses '}'
-                { $$ = make_switch_statement(yylineno, make_empty_statement(yylineno), NULL, $6) }
+                { $$ = make_switch_statement(yylineno, make_empty_statement(yylineno), NULL, $3) }
     ;
 
 CaseClauses: %empty                 { $$ = make_case_clause_vec() }
@@ -580,8 +614,8 @@ CaseClauses: %empty                 { $$ = make_case_clause_vec() }
            ;
 
 // TODO: decide if maybe to fuse to next two rules for easier AST building
-CaseClause: tCASE expression_list ':' StatementList    { $$ = make_case_clause(yylineno, $1, $3) }
-          | tDEFAULT ':' StatementList    { $$ = make_case_clause(yylineno, $1, $3) }
+CaseClause: tCASE expression_list ':' StatementList    { $$ = make_case_clause(yylineno, $2, $4) }
+          | tDEFAULT ':' StatementList    { $$ = make_case_clause(yylineno, NULL, $3) }
     ;
 
 
@@ -656,7 +690,7 @@ unary_op: '+'               { $$ = opPlus }
 
 Operand: Literal
        | tIDENTIFIER        { $$ = make_identifier_expression(yylineno, $1); }
-       | '(' Expression ')'
+       | '(' Expression ')' { $$ = $2 }
        ;
 
 Literal: tINTVAL            {$$ = make_literal_expression(yylineno, $1, kInt);}
@@ -673,13 +707,13 @@ PrimaryExpr: Operand
            ;
 
 // TODO WEED: must not be blank
-Selector: '.' tIDENTIFIER
+Selector: '.' tIDENTIFIER   { $$ = $2 }
         ;
 
-Index: '[' Expression ']'
+Index: '[' Expression ']'   { $$ = $2 }
      ;
 
-Arguments: '(' OptionalExpressionList ')'
+Arguments: '(' OptionalExpressionList ')' { $$ = $2 }
          ;
 
 AppendExpr: tAPPEND '(' Expression ',' Expression ')' 
