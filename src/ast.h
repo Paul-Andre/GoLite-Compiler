@@ -26,7 +26,7 @@ typedef struct VarSpec VarSpec;
 DECLARE_VEC(var_spec, VarSpec);
 
 typedef struct TypeSpec TypeSpec;
-DECLARE_VEC(type_spec, VarTypeSpec);
+DECLARE_VEC(type_spec, TypeSpec);
 
 typedef struct String String;
 DECLARE_VEC(string, String);
