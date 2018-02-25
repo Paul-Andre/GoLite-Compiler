@@ -1,5 +1,7 @@
 // Empty expressionList after case
 package ting;
-switch thing {
-case : return s;
+func main() {
+  switch thing {
+    case : return s;
+  }
 }
