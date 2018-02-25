@@ -19,11 +19,11 @@ pub extern "C" fn make_string(string: *const c_char) -> *mut String {
 }
 
 
-pub fn from_raw_or_none<T>(t: *mut T) -> Option<Box<T>> {
+pub unsafe fn from_raw_or_none<T>(t: *mut T) -> Option<Box<T>> {
     if t.is_null() {
         None
     } else {
-        Some( unsafe{Box::from_raw(t) })
+        Some( Box::from_raw(t))
     }
 }
 

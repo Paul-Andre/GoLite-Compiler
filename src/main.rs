@@ -30,8 +30,12 @@ fn main() {
         }
     } else if &argv[1] == "parse" {
         let ast = unsafe { from_raw_or_none(parse()) };
-        //println!("{:?}",ast); 
-        println!("OK");
+        if let Some(_) = ast {
+            println!("OK");
+        }
+    } else if &argv[1] == "print" {
+        let ast = unsafe { from_raw_or_none(parse()) };
+        println!("{:?}", ast);
     } else {
         eprintln!("Error: invalid mode");
         exit(1);

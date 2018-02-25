@@ -34,6 +34,23 @@ var k struct {
 	l [](struct {
 		b []T
 	})
-
-
 }
+
+
+var i = 3
+var i,j = 1,2
+
+var i = 3
+var i,j = 1,"strig"
+
+var i int= 3
+var i,j int = 1, 2
+
+var (
+  i = 3
+  i,j = 1,"strig"
+
+  i int= 3
+  i,j int = 1, 2
+)
+
