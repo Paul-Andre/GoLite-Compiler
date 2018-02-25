@@ -115,7 +115,7 @@ pub struct VarSpec {
 
 pub struct TypeSpec {
     pub line_number: u32,
-    pub names: Vec<String>,
+    pub name: String,
     pub kind: Box<AstKindNode>,
 }
 
@@ -206,5 +206,5 @@ pub struct TopLevelDeclarationNode {
 
 pub struct Program {
     pub package_name: String,
-    pub declarations: Vec<TopLevelDeclaration>,
+    pub declarations: Vec<TopLevelDeclarationNode>,
 }

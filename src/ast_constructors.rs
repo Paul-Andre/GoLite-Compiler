@@ -58,13 +58,16 @@ create_vec_functions!(make_top_level_declaration_vec,
                       top_level_declaration_vec_push,
                       TopLevelDeclarationNode);
 
+create_vec_functions!(make_var_spec_vec, var_spec_vec_push, Field);
+create_vec_functions!(make_type_spec_vec, type_spec_vec_push, Field);
+
 /*
 PROGRAM CONSTRUCTOR
 =======================================
 */
 
 pub extern "C" fn make_program(pkg: *const c_char,
-                                   dcls: *mut Vec<TopLevelDeclaration>) -> *mut Program {
+                                   dcls: *mut Vec<TopLevelDeclarationNode>) -> *mut Program {
 
     Box::into_raw(Box::new(Program {
         package_name: unsafe { from_c_string(pkg) } ,
@@ -177,6 +180,8 @@ pub extern "C" fn make_append_expression(
 }
 
 
+#[no_mangle]
+pub extern "C" 
 fn make_binary_operation_expression(
     line: u32,
     operator: BinaryOperator,
@@ -193,6 +198,8 @@ fn make_binary_operation_expression(
     )
 }
 
+#[no_mangle]
+pub extern "C" 
 fn make_unary_operation_expression(line: u32, operator: UnaryOperator, right: *mut ExpressionNode) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
@@ -203,6 +210,8 @@ fn make_unary_operation_expression(line: u32, operator: UnaryOperator, right: *m
     )
 }
 
+#[no_mangle]
+pub extern "C" 
 fn make_index_expression(line: u32, p: *mut ExpressionNode, i: *mut ExpressionNode) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
@@ -213,6 +222,8 @@ fn make_index_expression(line: u32, p: *mut ExpressionNode, i: *mut ExpressionNo
     )
 }
 
+#[no_mangle]
+pub extern "C" 
 fn make_selector_expression(line: u32, p: *mut ExpressionNode, str: *const c_char) -> *mut ExpressionNode {
     make_expr_ptr(
         line,
@@ -223,6 +234,8 @@ fn make_selector_expression(line: u32, p: *mut ExpressionNode, str: *const c_cha
     )
 }
 
+#[no_mangle]
+pub extern "C" 
 fn make_function_call_expression(
     line: u32,
     p: *mut ExpressionNode,
@@ -474,6 +487,7 @@ pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
     )
 }
 
+#[no_mangle]
 pub extern "C" fn make_return_statement(line: u32, value: *mut ExpressionNode) -> *mut StatementNode{
     make_statement_ptr(
         line,
@@ -486,7 +500,7 @@ pub extern "C" fn make_return_statement(line: u32, value: *mut ExpressionNode) -
 STATEMENT NODE HELPERS
 =======================================
 */
-
+#[no_mangle]
 pub extern "C" fn make_case_clause(line: u32,
                                    tags: *mut Vec<ExpressionNode>,
                                    stmts: *mut Vec<StatementNode>) -> *mut CaseClause {
@@ -506,7 +520,8 @@ pub extern "C" fn make_case_clause(line: u32,
     }))
 }
 
-fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode, rhs: *mut Vec<ExpressionNode>) 
+#[no_mangle]
+pub extern "C" fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode, rhs: *mut Vec<ExpressionNode>) 
     -> *mut VarSpec
 {
     let names = *unsafe { Box::from_raw( names ) };
@@ -535,13 +550,15 @@ fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode, rhs
     }
 }
 
-fn make_type_spec(line: u32, names: *mut Vec<String>, kind: *mut AstKindNode)
+#[no_mangle]
+pub extern "C" 
+fn make_type_spec(line: u32, name: *mut c_char, kind: *mut AstKindNode)
     -> *mut TypeSpec
 {
         Box::into_raw( Box::new(
                 TypeSpec{
                     line_number: line,
-                    names: *unsafe{ Box::from_raw(names) },
+                    name: unsafe{ from_c_string(name) },
                     kind: unsafe{ Box::from_raw(kind) },
                 }))
 }

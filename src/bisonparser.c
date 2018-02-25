@@ -7,10 +7,6 @@ typedef struct ExpressionNode ExpressionNode;
 
 Program *root;
 
-Program *make_program(int32_t a);
-
-
-
 void say_hello() {
 	printf("hello\n");
 }
@@ -41,6 +37,5 @@ void print_tokens() {
 
 Program *parse() {
 	yyparse();
-	return make_program(12);
-	//return root;
+	return root;
 }

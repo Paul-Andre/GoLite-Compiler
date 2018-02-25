@@ -88,7 +88,7 @@ enum UnaryOperator {
     opNot,
 };
 
-Program *make_program(char*, TopLevelDeclarationVec*);
+Program *make_program(char*, TopLevelDeclarationNodeVec*);
 
 TopLevelDeclarationNode *make_var_top_level_declaration(uint32_t, VarSpecVec*);
 TopLevelDeclarationNode *make_type_top_level_declaration(uint32_t, TypeSpecVec*);
@@ -133,5 +133,5 @@ Field *make_field(uint32_t, StringVec*, AstKindNode*);
 
 CaseClause *make_case_clause(uint32_t, ExpressionNodeVec*, StatementNodeVec*);
 VarSpec *make_var_spec(uint32_t, StringVec*, AstKindNode*, ExpressionNodeVec*);
-TypeSpec *make_type_spec(uint32_t, StringVec*, AstKindNode*);
+TypeSpec *make_type_spec(uint32_t, char*, AstKindNode*);
 
