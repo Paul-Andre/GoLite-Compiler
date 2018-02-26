@@ -58,115 +58,135 @@ do
 	MODE=${PHASE_NAME#*+}
 	PHASE_NAME="${PHASE_NAME^}"
 
-	for DIR_TYPE in $DIR_PHASE*/
+	for DIR_TYPE in $DIR_PHASE*
 	do
 		TYPE=$(basename $DIR_TYPE)
-		TYPE="${TYPE^}"
+    TYPE="${TYPE^}"
 
-		if [[ $TYPE == "Valid" ]]
-		then
-			CONF_STATUS=0
-			CONF_OUTPUT="OK"
-		else
-			CONF_STATUS=1
-			CONF_OUTPUT="Error: "
-		fi
+    if [[ ( $TYPE == "Valid" ) || ( $TYPE == "Invalid" ) ]] 
+    then
 
-		if [ "$(ls -A -I ".gitignore" $DIR_TYPE)" ]
-		then
-			echo -e "\033[93m"
-			echo "  $PHASE_NAME $TYPE"
-			echo "============================="
-			echo -e -n "\033[0m"
+      if [[ $TYPE == "Valid" ]]
+      then
+        CONF_STATUS=0
+        CONF_OUTPUT="OK"
+      else
+        CONF_STATUS=1
+        CONF_OUTPUT="Error: "
+      fi
 
-			COUNT=0
-			COUNT_PASSED=0
+      if [ "$(ls -A -I ".gitignore" $DIR_TYPE)" ]
+      then
+        echo -e "\033[93m"
+        echo "  $PHASE_NAME $TYPE"
+        echo "============================="
+        echo -e -n "\033[0m"
 
-			for TEST in `find $DIR_TYPE -name "*.go" `
-			do
-				((COUNT++))
+        COUNT=0
+        COUNT_PASSED=0
 
-				PREV_SUCCESS=1
+        for TEST in `find $DIR_TYPE -name "*.go" `
+        do
+          ((COUNT++))
 
-				if [[ $TYPE == 'Invalid' && ! -z $PREV_MODE ]]
-				then
-					OUTPUT=$(./run.sh $PREV_MODE $TEST 2>&1)
-					STATUS=${PIPESTATUS[0]}
-					OUTPUT=${OUTPUT#$TEST}
+          PREV_SUCCESS=1
 
-					if [[ $OUTPUT == *"java.lang.NullPointerException"* ]]
-					then
-						STATUS=-1
-					fi
+          if [[ $TYPE == 'Invalid' && ! -z $PREV_MODE ]]
+          then
+            OUTPUT=$(./run.sh $PREV_MODE $TEST 2>&1)
+            STATUS=${PIPESTATUS[0]}
+            OUTPUT=${OUTPUT#$TEST}
 
-					if [[ $OUTPUT != "OK" || $STATUS != 0 ]]
-					then
-						PREV_SUCCESS=0
-					fi
-				fi
+            if [[ $OUTPUT == *"java.lang.NullPointerException"* ]]
+            then
+              STATUS=-1
+            fi
 
-				if [[ $PREV_SUCCESS == 1 ]]
-				then
-					OUTPUT=$(./run.sh $MODE $TEST 2>&1)
-					STATUS=${PIPESTATUS[0]}
-					OUTPUT=${OUTPUT#$TEST}
+            if [[ $OUTPUT != "OK" || $STATUS != 0 ]]
+            then
+              PREV_SUCCESS=0
+            fi
+          fi
 
-					if [[ $OUTPUT == *"java.lang.NullPointerException"* ]]
-					then
-						STATUS=-1
-					fi
-					if [[ $OUTPUT == $CONF_OUTPUT* && $STATUS == $CONF_STATUS ]]
-					then
-						((COUNT_PASSED++))
-						if [[ $VERBOSE == 1 ]]
-						then
-							STATUS_TEXT="pass"
-							STATUS_COLOUR="32"
-						else
-							STATUS_TEXT=""
-						fi
-					else
-						STATUS_TEXT="fail"
-						STATUS_COLOUR="31"
-					fi
-				else
-					STATUS_TEXT="failed previous"
-					STATUS_COLOUR="31"
-				fi
+          if [[ $PREV_SUCCESS == 1 ]]
+          then
+            OUTPUT=$(./run.sh $MODE $TEST 2>&1)
+            STATUS=${PIPESTATUS[0]}
+            OUTPUT=${OUTPUT#$TEST}
 
-				if [ ! -z "$STATUS_TEXT" ]
-				then
-					echo
-					echo "$TEST: $OUTPUT" | tr -d '\n'
-					echo -n -e " \033[0;${STATUS_COLOUR}m[$STATUS_TEXT]\033[0m"
-					if [ $LOG -eq 1 ]
-					then
-						echo "$TEST: $OUTPUT [$STATUS_TEXT]" >> ${PHASE_NAME}_${TYPE}.log
-					fi
-				fi
-			done                                 
-			if [ $VERBOSE -eq 1 ]
-			then
-				if [ $COUNT -gt 0 ]
-				then
-					echo
-				fi
-			else
-				if [ $COUNT -ne $COUNT_PASSED ]
-				then
-					echo
-				fi
-			fi
-			echo
-			if [ $COUNT -eq $COUNT_PASSED ]
-			then
-				STATUS_COLOUR="42"
-			else
-				STATUS_COLOUR="41"
-			fi
+            if [[ $OUTPUT == *"java.lang.NullPointerException"* ]]
+            then
+              STATUS=-1
+            fi
+            if [[ $OUTPUT == $CONF_OUTPUT* && $STATUS == $CONF_STATUS ]]
+            then
+              ((COUNT_PASSED++))
+              if [[ $VERBOSE == 1 ]]
+              then
+                STATUS_TEXT="pass"
+                STATUS_COLOUR="32"
+              else
+                STATUS_TEXT=""
+              fi
+            else
+              STATUS_TEXT="fail"
+              STATUS_COLOUR="31"
+            fi
+          else
+            STATUS_TEXT="failed previous"
+            STATUS_COLOUR="31"
+          fi
 
-			echo -e "\e[${STATUS_COLOUR}m# ${PHASE_NAME} ${TYPE}: ${COUNT_PASSED}/${COUNT}\e[49m"
-			RESULTS+=("\e[${STATUS_COLOUR}m# ${PHASE_NAME} ${TYPE}: ${COUNT_PASSED}/${COUNT}\e[49m")
+          if [ ! -z "$STATUS_TEXT" ]
+          then
+            echo
+            echo "$TEST: $OUTPUT" | tr -d '\n'
+            echo -n -e " \033[0;${STATUS_COLOUR}m[$STATUS_TEXT]\033[0m"
+            if [ $LOG -eq 1 ]
+            then
+              echo "$TEST: $OUTPUT [$STATUS_TEXT]" >> ${PHASE_NAME}_${TYPE}.log
+            fi
+          fi
+        done                                 
+        if [ $VERBOSE -eq 1 ]
+        then
+          if [ $COUNT -gt 0 ]
+          then
+            echo
+          fi
+        else
+          if [ $COUNT -ne $COUNT_PASSED ]
+          then
+            echo
+          fi
+        fi
+        echo
+        if [ $COUNT -eq $COUNT_PASSED ]
+        then
+          STATUS_COLOUR="42"
+        else
+          STATUS_COLOUR="41"
+        fi
+
+        echo -e "\e[${STATUS_COLOUR}m# ${PHASE_NAME} ${TYPE}: ${COUNT_PASSED}/${COUNT}\e[49m"
+        RESULTS+=("\e[${STATUS_COLOUR}m# ${PHASE_NAME} ${TYPE}: ${COUNT_PASSED}/${COUNT}\e[49m")
+        fi
+
+      else # it's not Valid or Invalid
+
+        if [[ -x $DIR_TYPE ]]
+        then
+
+          echo -e "\033[93m"
+          echo "  $DIR_TYPE"
+          echo "============================="
+          echo -e -n "\033[0m"
+
+          OUTPUT=$(./$DIR_TYPE)
+          TO_ECHO=${OUTPUT%RESULTS:*}
+          RESULTS+="${OUTPUT##*RESULTS:}"
+          echo "$TO_ECHO"
+      fi
 		fi
 	done
 done
@@ -177,5 +197,5 @@ echo "============================="
 echo -e "\033[0m"
 
 for i in ${!RESULTS[*]}; do
-	echo -e ${RESULTS[$i]}
+	echo -e "${RESULTS[$i]}"
 done
