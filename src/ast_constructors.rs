@@ -27,6 +27,16 @@ pub unsafe fn from_raw_or_none<T>(t: *mut T) -> Option<Box<T>> {
     }
 }
 
+/// This macro allows pattern matching with enums
+macro_rules! matches {
+    ($e:expr, $p:pat) => (
+        match $e {
+            $p => true,
+            _ => false
+        }
+    )
+}
+
 /// This is a macros to generate functions that will be used to generate vectors in C.
 /// It assumes that the type that is used will be passed as an opaque pointer in C.
 macro_rules! create_vec_functions {
@@ -460,6 +470,9 @@ pub extern "C" fn make_switch_statement(line: u32,
                                      init: *mut StatementNode,
                                      expr: *mut ExpressionNode,
                                      body: *mut Vec<CaseClause> ) -> *mut StatementNode {
+
+    verify_only_one_default(line, body);
+
     make_statement_ptr(
         line,
         Statement::Switch {
@@ -536,7 +549,7 @@ pub extern "C" fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut A
         Box::into_raw( Box::new(
                 VarSpec{
                     line_number: line,
-                    names: names,
+                    names,
                     kind: unsafe{ from_raw_or_none(kind) },
                     rhs: Some(rhs),
                 }))
@@ -544,7 +557,7 @@ pub extern "C" fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut A
         Box::into_raw( Box::new(
                 VarSpec{
                     line_number: line,
-                    names: names,
+                    names,
                     kind: unsafe{ from_raw_or_none(kind) },
                     rhs: None,
                 }))
@@ -564,7 +577,21 @@ fn make_type_spec(line: u32, name: *mut c_char, kind: *mut AstKindNode)
                 }))
 }
 
+/// Verify that only one default exists in any switch clause
+fn verify_only_one_default(line: u32, body: *mut Vec<CaseClause>) {
+    let mut default_exists: bool = false;
 
+    let vector = *unsafe{Box::from_raw(body)};
+
+    for case in vector.iter() {
+        if matches!(case.switch_case, SwitchCase::Default) && !default_exists {
+            default_exists = true;
+        } else {
+            eprintln!("Error: line {}: declared more than one default switch case.",line);
+            exit(1);
+        }
+    }
+}
 
 /*
 AST KIND NODE CONSTRUCTORS
