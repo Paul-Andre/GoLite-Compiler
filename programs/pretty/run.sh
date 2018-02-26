@@ -14,7 +14,7 @@ do
   ((COUNT++))
 
   if ( ./run.sh pretty $PROGRAM > tmp1 2>/dev/null &&
-  ./run.sh pretty $PROGRAM 2>/dev/null | ./run.sh pretty $PROGRAM > tmp2 &&
+  ./run.sh pretty tmp1 > tmp2 &&
   diff tmp1 tmp2 )
   then
     ((COUNT_PASSED++))
@@ -56,7 +56,7 @@ then
     ((COUNT++))
 
     if ( ./run.sh pretty $PROGRAM > tmp1 2>/dev/null &&
-      ~cs520/golitec parse < tmp1 ) then
+      ~cs520/golitec parse < tmp1 >/dev/null) then
     ((COUNT_PASSED++))
     else
       STATUS_COLOUR="31"
