@@ -3,7 +3,9 @@ use std::process::exit;
 
 mod ast;
 mod ast_constructors;
+mod weed;
 pub use ast_constructors::*;
+pub use weed::*;
 
 extern "C" {
     fn scan();
@@ -31,7 +33,13 @@ fn main() {
     } else if &argv[1] == "parse" {
         let ast = unsafe { from_raw_or_none(parse()) };
         if let Some(_) = ast {
-            println!("OK");
+            match ast {
+                Some(ast) => {
+                    weed::weed_ast(&ast);
+                    println!("OK");
+                },
+                None =>  eprintln!("Error: AST error")
+            }
         }
     } else if &argv[1] == "print" {
         let ast = unsafe { from_raw_or_none(parse()) };

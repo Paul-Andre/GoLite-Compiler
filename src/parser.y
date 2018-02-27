@@ -333,8 +333,6 @@ TopLevelDecl : TypeDecl     { $$ = make_type_top_level_declaration(yylineno, $1)
 // VARIABLE DECLARATION
 // ===========================
 
-// TODO WEED: check that the numbers on each side are the same
-
 VarDecl : tVAR VarSpec         
         { 
         $$ = make_var_spec_vec();
@@ -535,13 +533,10 @@ StatementList: %empty                       { $$ = make_statement_vec(); }
              }
              ;
 
-// TODO WEED: not all expressions are valid; need to weed
 ExpressionStmt : Expression { $$ = make_expression_statement(yylineno, $1); }
     ;
 
 
-// TODO WEED: make sure number is same on both sides
-// TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
 Assignment: expression_list '=' expression_list
                 { $$ = make_assignment_statement(yylineno, $1, $3); }
           | Expression add_assign_op Expression
@@ -569,7 +564,6 @@ mul_assign_op : tTIMESASSIGN      { $$ = opMul; }
 
 // declaration statements are just Declarations; they were done earlier
 
-// TODO WEED: same number on both sides. Also check for the correct use of _
 ShortVarDecl : identifier_list tDEFINE expression_list
              { $$ = make_short_var_declaration_statement(yylineno, $1, $3); }
     ;
@@ -712,7 +706,6 @@ PrimaryExpr: Operand
            | PrimaryExpr Arguments  { $$ = make_function_call_expression(yylineno, $1, $2) ; }
            ;
 
-// TODO WEED: must not be blank
 Selector: '.' tIDENTIFIER   { $$ = $2 ; }
         ;
 
