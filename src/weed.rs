@@ -13,7 +13,7 @@ pub fn weed_ast(root: &Program){
 
                 check_blank_func_decl(name, parameters,  body, node.line_number)
             },
-            TopLevelDeclaration::VarDeclaration { ref declarations } => {
+            TopLevelDeclaration::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
                     check_blank_var_decl(&decl)
                 }
@@ -67,12 +67,12 @@ BLANK IDENTIFIER USAGE WEED FUNCTIONS
 /// Checks if any blanks exist on rhs of variable declaration
 fn check_blank_var_decl(var_spec: &VarSpec){
     match var_spec.rhs {
-        &Some(ref rhs) => {
-            for exp in rhs {
+        Some(ref vec) => {
+            for exp in vec {
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        &None => return
+        None => return
     }
 }
 
@@ -115,14 +115,14 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
             }
         },
         Statement::Expression(ref exp) => {
-            traverse_exp_for_invalid_blank(*exp)
+            traverse_exp_for_invalid_blank(&*exp)
         },
         Statement::Assignment {ref lhs, ref rhs} => {
             for exp in rhs.iter(){
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        Statement::OpAssignment { ref lhs, ref rhs, ref op } => {
+        Statement::OpAssignment { ref lhs, ref rhs, ref operator } => {
             traverse_exp_for_invalid_blank(&*rhs)
         },
         Statement::VarDeclarations { ref declarations } => {
@@ -137,6 +137,29 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
         },
         Statement::IncDec { ref is_dec, ref expr } => {
             traverse_exp_for_invalid_blank(&*expr)
+        },
+        Statement::Print { ref exprs } => {
+            for exp in exprs.iter(){
+                traverse_exp_for_invalid_blank(exp)
+            }
+        },
+        Statement::Println { ref exprs } => {
+            for exp in exprs.iter(){
+                traverse_exp_for_invalid_blank(exp)
+            }
+        },
+        Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
+            traverse_stmt_for_invalid_blank(&*init);
+            traverse_exp_for_invalid_blank(&*condition);
+
+            for stmt in if_branch.iter() {
+                traverse_stmt_for_invalid_blank(stmt)
+            }
+
+            match else_branch {
+                &Some(ref else_branch) => traverse_stmt_for_invalid_blank(&*else_branch),
+                &None => return,
+            }
         },
         Statement::Loop { ref body } => {
             for stmt in body.iter() {
@@ -164,7 +187,7 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
 
             match expr {
                 &Some(ref expr) => traverse_exp_for_invalid_blank(&*expr),
-                &None => break
+                &None => ()
             }
 
             for case_clause in body.iter() {
@@ -174,9 +197,10 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
         Statement::Return( ref expr) => {
             match expr {
                 &Some( ref expr ) => traverse_exp_for_invalid_blank(&*expr),
-                &None => break
+                &None => ()
             }
-        }
+        },
+        _ => return
     }
 }
 
@@ -236,12 +260,12 @@ fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
 /// Traverses through the statements and expressions that make up a case clause to detect any invalid blank id usage
 fn traverse_case_clause_for_invalid_blank(case_clause: &CaseClause){
     match case_clause.switch_case {
-        SwitchCase::Cases(vec) => {
+        SwitchCase::Cases(ref vec) => {
             for expr in vec.iter() {
                 traverse_exp_for_invalid_blank(expr)
             }
         },
-        SwitchCase::Default => break
+        _ => ()
     }
 
     for stmt in case_clause.statements.iter() {
