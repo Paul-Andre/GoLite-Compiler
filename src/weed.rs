@@ -3,14 +3,15 @@ use std::process::exit;
 
 /// Weeds the tree for incorrect break, continue, and blank identifier usage
 pub fn weed_ast(root: &Program){
-
-    println!("Starting weed");
-
+    if (&root.package_name == "_") {
+        eprintln!("Error: package name cannot be `_`");
+        exit(1);
+    }
     for node in root.declarations.iter() {
         match node.top_level_declaration {
             TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
                 for stmt in body.iter() {
-                    check_for_correct_break_and_continue_usage(stmt);
+                    check_for_correct_break_and_continue_usage(stmt, false);
                     traverse_stmt_for_invalid_blank(stmt);
                 }
 
@@ -31,32 +32,42 @@ pub fn weed_ast(root: &Program){
 BREAK/CONTINUE USAGE WEED FUNCTIONS
 ========================================= */
 
-/// Checks for instances where break and/or continue are not used within a loop context
-fn check_for_correct_break_and_continue_usage(stmt: &StatementNode){
+/// Checks for correct usage of break and continue
+/// Note that `continue` is only valid for loops whereas `break` is balid for loops and switch
+fn check_for_correct_break_and_continue_usage(stmt: &StatementNode, can_break: bool){
     match stmt.statement {
         Statement::Block(ref v) => {
             for x in v {
-                check_for_correct_break_and_continue_usage(&x)
+                check_for_correct_break_and_continue_usage(&x, can_break);
             }
         },
-        Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
-            check_for_correct_break_and_continue_usage(&*init);
+        Statement::If { ref if_branch, ref else_branch, .. } => {
 
             for x in if_branch {
-                check_for_correct_break_and_continue_usage(&x);
+                check_for_correct_break_and_continue_usage(&x, can_break);
             }
 
             match else_branch {
-                &Some(ref else_branch) => check_for_correct_break_and_continue_usage(&*else_branch),
+                &Some(ref else_branch) => check_for_correct_break_and_continue_usage(&*else_branch, can_break),
                 &None => return,
             }
         },
-        Statement::For{ref init, ref condition, ref post, ref body} => {
-            check_for_correct_break_and_continue_usage(&*init);
-            check_for_correct_break_and_continue_usage(&*post);
+        Statement::Switch { ref body, .. } => {
+
+            for case_clause in body {
+                for stmt in &case_clause.statements {
+                    check_for_correct_break_and_continue_usage(&stmt, true);
+                }
+            }
         },
-        Statement::Break | Statement::Continue =>  {
-            eprintln!("Error: line {}: misused break or continue statement. Must be used within a loop statement.", stmt.line_number);
+        Statement::Break => {
+            if (!can_break) {
+                eprintln!("Error: line {}: break outside loop or switch.", stmt.line_number);
+                exit(1);
+            }
+        },
+        Statement::Continue => {
+            eprintln!("Error: line {}: continue outside loop.", stmt.line_number);
             exit(1);
         },
         _ => return
@@ -69,51 +80,44 @@ BLANK IDENTIFIER USAGE WEED FUNCTIONS
 
 /// Checks if any blanks exist on rhs of variable declaration
 fn check_blank_var_decl(var_spec: &VarSpec){
-    match var_spec.rhs {
-        Some(ref vec) => {
+    if let Some(ref vec) = var_spec.rhs {
             for exp in vec {
                 traverse_exp_for_invalid_blank(exp);
             }
-        },
-        None => return
-    }
-    match var_spec.kind {
-        Some(ref kind) => check_blank_type(kind),
-        None => return
+        }
+    if let Some(ref kind) = var_spec.kind {
+        check_blank_type(kind);
     }
 }
 
+/// Checks if any blanks exist on rhs of type declarations
+fn check_blank_type_decl(spec: &TypeSpec){
+    check_blank_type(&*spec.kind);
+}
+
 /// Checks a functions name, params and body for any invalid blank identifier usage
-fn check_blank_func_decl(name: &String,
+fn check_blank_func_decl(_name: &String,
                          params: &Vec<Field>,
                          return_kind: &Option<Box<AstKindNode>>,
                          body: &Vec<StatementNode>,
-                         line: u32){
-/*
-    if name == "_" {
-        eprintln!("Error: line {}: Invalid naming of function. Cannot be blank identifier.", line);
-        exit(1);
-    }
+                         _line: u32){
 
     for field in params.iter(){
         check_blank_field(field);
     }
-*/
 
     match return_kind {
         &Some(ref return_kind) => check_blank_type(return_kind),
         &None => return
     }
 
-    /*
     for stmt in body.iter(){
         traverse_stmt_for_invalid_blank(stmt)
     }
-    */
 }
 
 /// Checks a type for blank identifier usage
-fn check_blank_type(kind: &Box<AstKindNode>) {
+fn check_blank_type(kind: &AstKindNode) {
     match kind.ast_kind {
         AstKind::Identifier { ref name } => {
             if name == "_" {
@@ -121,20 +125,20 @@ fn check_blank_type(kind: &Box<AstKindNode>) {
                 exit(1);
             }
         }
-        AstKind::Slice { ref base } => return,
-        AstKind::Array { ref base, ref size } => return,
-        AstKind::Struct { ref fields } => return
+        AstKind::Slice { ref base } => check_blank_type(&** base),
+        AstKind::Array { ref base, .. } => check_blank_type(&** base),
+        AstKind::Struct { ref fields } => {
+            for field in fields {
+                check_blank_field(field);
+            }
+        }
     }
 }
 
-/// Checks if any of the field identifiers are the blank identifier
+/// Checks if any of the field have blank type
+/// (In no situation should blank identifiers be rejected
 fn check_blank_field(field: &Field){
-    for id in field.identifiers.iter(){
-        if id == "_" {
-            eprintln!("Error: line {}: Invalid parameter. Cannot be blank identifier.", field.line_number);
-            exit(1);
-        }
-    }
+    check_blank_type(&*field.kind)
 }
 
 /// Recursively traverses statements to detect any invalid blank id usage
@@ -148,12 +152,13 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
         Statement::Expression(ref exp) => {
             traverse_exp_for_invalid_blank(&*exp)
         },
-        Statement::Assignment {ref lhs, ref rhs} => {
+        Statement::Assignment {ref rhs, ..} => {
             for exp in rhs.iter(){
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        Statement::OpAssignment { ref lhs, ref rhs, ref operator } => {
+        Statement::OpAssignment { ref lhs, ref rhs, .. } => {
+            traverse_exp_for_invalid_blank(&*lhs);
             traverse_exp_for_invalid_blank(&*rhs)
         },
         Statement::VarDeclarations { ref declarations } => {
@@ -161,12 +166,12 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
                 check_blank_var_decl(decl)
             }
         },
-        Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
+        Statement::ShortVariableDeclaration { ref expression_list, .. } => {
             for exp in expression_list.iter(){
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        Statement::IncDec { ref is_dec, ref expr } => {
+        Statement::IncDec { ref expr, .. } => {
             traverse_exp_for_invalid_blank(&*expr)
         },
         Statement::Print { ref exprs } => {
@@ -230,10 +235,16 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
                 &Some( ref expr ) => traverse_exp_for_invalid_blank(&*expr),
                 &None => ()
             }
-        },
-        _ => return
+        }
+        Statement::TypeDeclarations{ ref declarations } => {
+            for spec in declarations {
+                check_blank_type_decl(spec)
+            }
+        }
+        Statement::Empty | Statement::Break | Statement::Continue => {}
     }
 }
+
 
 
 /// Recursively traverses expression in order to detect any invalid blank id usage
@@ -251,12 +262,12 @@ fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
                 exit(1);
             }
         },
-        Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
+        Expression::BinaryOperation { ref lhs, ref rhs, .. } => {
             traverse_exp_for_invalid_blank(&*lhs);
             traverse_exp_for_invalid_blank(&*rhs);
 
         },
-        Expression::UnaryOperation { ref op, ref rhs } => {
+        Expression::UnaryOperation { ref rhs, .. } => {
             traverse_exp_for_invalid_blank( &*rhs);
         }
         Expression::Index { ref primary, ref index } => {
@@ -279,6 +290,7 @@ fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
             }
         }
         Expression::Append { ref lhs, ref rhs } => {
+            traverse_exp_for_invalid_blank( &*lhs);
             traverse_exp_for_invalid_blank( &*rhs);
         }
         Expression::TypeCast { ref expr } => {
