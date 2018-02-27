@@ -64,6 +64,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec){
     match var_spec.rhs {
         Some(ref v) => {
             for expr in v.iter(){
+                print!(" = ");
                 pretty_print_expression(expr)
             }
         },
