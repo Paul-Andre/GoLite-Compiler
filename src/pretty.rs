@@ -4,7 +4,7 @@ use ast::*;
 PROGRAM PRETTY PRINTING
 ========================================= */
 pub fn pretty_print_program(root: &Program){
-    println!("{}", root.package_name);
+    println!("package {}", root.package_name);
 
     for node in root.declarations.iter(){
         pretty_print_top_level_declaration(node);
@@ -85,11 +85,22 @@ fn pretty_print_function_declaration(name: &String,
                                      return_kind: &Option<Box<AstKindNode>>,
                                      body: &Vec<StatementNode>){
 
-    print!("{} ", name);
+    print!("func {} (", name);
+
+    let len = parameters.len();
+    let mut count = 0;
 
     for p in parameters.iter(){
-        pretty_print_field(p)
+        pretty_print_field(p);
+
+        if count < len - 1 {
+            print!(", ")
+        }
+
+        count = count + 1;
     }
+
+    print!(")");
 
     match return_kind {
         &Some(ref k) => {
@@ -98,9 +109,13 @@ fn pretty_print_function_declaration(name: &String,
         &None =>()
     }
 
+    println!("{{");
+
     for stmt in body.iter() {
         pretty_print_statement(stmt)
     }
+
+    print!("}}");
 
 }
 
@@ -244,18 +259,22 @@ fn pretty_print_statement(stmt: &StatementNode) {
             }
         },
         Statement::Print { ref exprs } => {
-            print!("print ");
+            print!("print( ");
 
             for expr in exprs.iter() {
                 pretty_print_expression(expr)
             }
+
+            println!(")")
         },
         Statement::Println { ref exprs } => {
-            print!("println ");
+            print!("println( ");
 
             for expr in exprs.iter() {
                 pretty_print_expression(expr)
             }
+
+            println!(")")
         },
         Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
             print!("if ");

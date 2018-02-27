@@ -53,7 +53,7 @@ fn main() {
             match ast {
                 Some(ast) => {
                     weed::weed_ast(&ast);
-
+                    pretty::pretty_print_program(&ast)
                 },
                 None =>  eprintln!("Error: AST error")
             }
