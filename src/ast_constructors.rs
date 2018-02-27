@@ -471,14 +471,16 @@ pub extern "C" fn make_switch_statement(line: u32,
                                      expr: *mut ExpressionNode,
                                      body: *mut Vec<CaseClause> ) -> *mut StatementNode {
 
-    verify_only_one_default(line, body);
+    let body = *unsafe{Box::from_raw(body)};
+
+    verify_only_one_default(line, &body);
 
     make_statement_ptr(
         line,
         Statement::Switch {
             init: unsafe{Box::from_raw(init)},
             expr: unsafe{from_raw_or_none(expr)},
-            body: *unsafe{Box::from_raw(body)}
+            body: body
         }
     )
 }
@@ -578,15 +580,14 @@ fn make_type_spec(line: u32, name: *mut c_char, kind: *mut AstKindNode)
 }
 
 /// Verify that only one default exists in any switch clause
-fn verify_only_one_default(line: u32, body: *mut Vec<CaseClause>) {
+fn verify_only_one_default(line: u32, body: &Vec<CaseClause>) {
     let mut default_exists: bool = false;
 
-    let vector = *unsafe{Box::from_raw(body)};
-
-    for case in vector.iter() {
+    for case in body.iter() {
         if matches!(case.switch_case, SwitchCase::Default) && !default_exists {
             default_exists = true;
-        } else {
+            //eprintln!("one exists");
+        } else if matches!(case.switch_case, SwitchCase::Default) {
             eprintln!("Error: line {}: declared more than one default switch case.",line);
             exit(1);
         }

@@ -14,11 +14,11 @@ pub fn weed_ast(root: &Program){
                     traverse_stmt_for_invalid_blank(stmt);
                 }
 
-                check_blank_func_decl(name, parameters,  body, node.line_number)
+                check_blank_func_decl(name, parameters, return_kind, body, node.line_number)
             },
             TopLevelDeclaration::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
-                    check_blank_var_decl(&decl)
+                    check_blank_var_decl(&decl);
                 }
             },
             _ => continue
@@ -72,9 +72,13 @@ fn check_blank_var_decl(var_spec: &VarSpec){
     match var_spec.rhs {
         Some(ref vec) => {
             for exp in vec {
-                traverse_exp_for_invalid_blank(exp)
+                traverse_exp_for_invalid_blank(exp);
             }
         },
+        None => return
+    }
+    match var_spec.kind {
+        Some(ref kind) => check_blank_type(kind),
         None => return
     }
 }
@@ -82,9 +86,10 @@ fn check_blank_var_decl(var_spec: &VarSpec){
 /// Checks a functions name, params and body for any invalid blank identifier usage
 fn check_blank_func_decl(name: &String,
                          params: &Vec<Field>,
+                         return_kind: &Option<Box<AstKindNode>>,
                          body: &Vec<StatementNode>,
                          line: u32){
-
+/*
     if name == "_" {
         eprintln!("Error: line {}: Invalid naming of function. Cannot be blank identifier.", line);
         exit(1);
@@ -93,9 +98,32 @@ fn check_blank_func_decl(name: &String,
     for field in params.iter(){
         check_blank_field(field);
     }
+*/
 
+    match return_kind {
+        &Some(ref return_kind) => check_blank_type(return_kind),
+        &None => return
+    }
+
+    /*
     for stmt in body.iter(){
         traverse_stmt_for_invalid_blank(stmt)
+    }
+    */
+}
+
+/// Checks a type for blank identifier usage
+fn check_blank_type(kind: &Box<AstKindNode>) {
+    match kind.ast_kind {
+        AstKind::Identifier { ref name } => {
+            if name == "_" {
+                eprintln!("Error: line {}: Invalid type name. Cannot be blank identifier.", kind.line_number);
+                exit(1);
+            }
+        }
+        AstKind::Slice { ref base } => return,
+        AstKind::Array { ref base, ref size } => return,
+        AstKind::Struct { ref fields } => return
     }
 }
 
