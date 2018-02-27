@@ -613,7 +613,6 @@ CaseClauses: /*empty*/                 { $$ = make_case_clause_vec(); }
                 }
            ;
 
-// TODO: decide if maybe to fuse to next two rules for easier AST building
 CaseClause: tCASE expression_list ':' StatementList    { $$ = make_case_clause(yylineno, $2, $4); }
           | tDEFAULT ':' StatementList    { $$ = make_case_clause(yylineno, NULL, $3); }
     ;
@@ -625,7 +624,6 @@ ForStmt: tFOR Block                         { $$ = make_loop_statement(yylineno,
         { $$ = make_for_statement(yylineno, $2, $4, $6, $7); }
     ;
 
-// TODO WEED: make sure the last SimpleStmt is not a short variable declaration
 // SimpleStmt can be empty, so not explicitly making them optional should be fine
 
 BreakStmt: tBREAK           { $$ = make_break_statement(yylineno); }
