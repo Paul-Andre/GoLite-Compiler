@@ -51,7 +51,9 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
+2018_group04.iml
 
 # Actually relevent stuff:
 target
-2018_group04.iml
+tmp1
+tmp2
