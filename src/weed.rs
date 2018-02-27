@@ -3,6 +3,9 @@ use std::process::exit;
 
 /// Weeds the tree for incorrect break, continue, and blank identifier usage
 pub fn weed_ast(root: &Program){
+
+    println!("Starting weed");
+
     for node in root.declarations.iter() {
         match node.top_level_declaration {
             TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
