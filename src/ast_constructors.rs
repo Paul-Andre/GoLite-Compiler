@@ -296,10 +296,19 @@ pub extern "C" fn make_block_statement(line: u32, stmts: *mut Vec<StatementNode>
 
 #[no_mangle]
 pub extern "C" fn make_expression_statement(line: u32, expr: *mut ExpressionNode) -> *mut StatementNode {
-    make_statement_ptr(
-        line,
-        Statement::Expression(unsafe {Box::from_raw(expr)})
-    )
+    let expr  = unsafe {Box::from_raw(expr)};
+    match expr.expression {
+        Expression::FunctionCall{..} => {
+            make_statement_ptr(
+                line,
+                Statement::Expression(expr)
+                )
+        }
+        _ => {
+            eprintln!("Error: line {}: expression statements can only be function calls", line);
+            exit(1)
+        }
+    }
 }
 
 #[no_mangle]
@@ -453,15 +462,22 @@ pub extern "C" fn make_for_statement(line: u32,
                                      cond: *mut ExpressionNode,
                                      post: *mut StatementNode,
                                      body: *mut Vec<StatementNode> ) -> *mut StatementNode {
-    make_statement_ptr(
-        line,
-        Statement::For {
-            init: unsafe{Box::from_raw(init)},
-            condition: unsafe{Box::from_raw(cond)},
-            post: unsafe{Box::from_raw(post)},
-            body: *unsafe{Box::from_raw(body)}
-        }
-    )
+    let post = unsafe{Box::from_raw(post)};
+    if let Statement::ShortVariableDeclaration{..} =  post.statement {
+        eprintln!("Error: line {}: cannot have short variable declaration in the post condition of loop", line);
+        exit(1)
+    }
+    else {
+        make_statement_ptr(
+            line,
+            Statement::For {
+                init: unsafe{Box::from_raw(init)},
+                condition: unsafe{Box::from_raw(cond)},
+                post: post,
+                body: *unsafe{Box::from_raw(body)}
+            }
+        )
+    }
 }
 
 
