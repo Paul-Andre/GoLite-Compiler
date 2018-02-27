@@ -540,8 +540,6 @@ ExpressionStmt : Expression { $$ = make_expression_statement(yylineno, $1); }
     ;
 
 
-// TODO WEED: make sure number is same on both sides
-// TODO: perhaps split this into to seperate rules, one for "=" and one for the rest
 Assignment: expression_list '=' expression_list
                 { $$ = make_assignment_statement(yylineno, $1, $3); }
           | Expression add_assign_op Expression
