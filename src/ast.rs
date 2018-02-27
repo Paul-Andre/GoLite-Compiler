@@ -101,7 +101,6 @@ pub enum Expression {
         lhs: Box<ExpressionNode>,
         rhs: Box<ExpressionNode>,
     },
-
     TypeCast { expr: Box<ExpressionNode> },
 }
 
@@ -171,6 +170,7 @@ pub enum Statement {
         init: Box<StatementNode>,
         condition: Box<ExpressionNode>,
         if_branch: Vec<StatementNode>,
+//        TODO: SHOULD THIS BE VECTOR???
         else_branch: Option<Box<StatementNode>>,
     },
     Loop { body: Vec<StatementNode> },
