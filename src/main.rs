@@ -4,8 +4,11 @@ use std::process::exit;
 mod ast;
 mod ast_constructors;
 mod weed;
+mod pretty;
+
 pub use ast_constructors::*;
 pub use weed::*;
+pub use pretty::*;
 
 extern "C" {
     fn scan();
@@ -44,7 +47,19 @@ fn main() {
     } else if &argv[1] == "print" {
         let ast = unsafe { from_raw_or_none(parse()) };
         println!("{:?}", ast);
-    } else {
+    } else if &argv[1] == "pretty" {
+        let ast = unsafe { from_raw_or_none(parse()) };
+        if let Some(_) = ast {
+            match ast {
+                Some(ast) => {
+                    weed::weed_ast(&ast);
+                    pretty::pretty_print_program(&ast)
+                },
+                None =>  eprintln!("Error: AST error")
+            }
+        }
+
+    }else {
         eprintln!("Error: invalid mode");
         exit(1);
     }

@@ -310,7 +310,7 @@ Program : PackageClause ';' TopLevelDecls { $$ = make_program($1, $3); root = $$
 PackageClause : tPACKAGE tIDENTIFIER { $$ = $2; }
     ;
 
-TopLevelDecls : %empty                  { $$ = make_top_level_declaration_vec(); }
+TopLevelDecls : /*empty*/                  { $$ = make_top_level_declaration_vec(); }
     | TopLevelDecls TopLevelDecl ';' 
         {
         $$ = $1;
@@ -342,7 +342,7 @@ VarDecl : tVAR VarSpec
         { $$ = $3; }
     ;
 
-VarSpecs : %empty
+VarSpecs : /*empty*/
         { $$ = make_var_spec_vec(); }
     | VarSpecs VarSpec ';'
         {
@@ -392,7 +392,7 @@ TypeDecl : tTYPE TypeSpec
         { $$ = $3; }
     ;
 
-TypeSpecs : %empty
+TypeSpecs : /*empty*/
         { $$ = make_type_spec_vec(); }
     | TypeSpecs TypeSpec ';'
         {
@@ -416,7 +416,7 @@ FunctionDecl : tFUNC tIDENTIFIER FuncParameters FuncResult Block
 FuncParameters: '('  OptionalFuncParameterList  ')' { $$ = $2; }
     ;
 
-FuncResult: %empty  { $$ = NULL; }
+FuncResult: /*empty*/  { $$ = NULL; }
     | Type
     ;
 
@@ -432,7 +432,7 @@ FuncParameterList: FuncParameterDecl
                  }
     ;
 
-OptionalFuncParameterList: %empty { $$ = make_field_vec();}
+OptionalFuncParameterList: /*empty*/ { $$ = make_field_vec();}
     | FuncParameterList
     ;
 
@@ -476,7 +476,7 @@ ArrayType : '[' tINTVAL ']' Type            { $$ = make_array_kind(yylineno, $4,
 StructType : tSTRUCT '{'  FieldDecls '}'    { $$ = make_struct_kind(yylineno, $3); }
     ;
 
-FieldDecls : %empty                         { $$ = make_field_vec(); }
+FieldDecls : /*empty*/                         { $$ = make_field_vec(); }
            | FieldDecls FieldDecl ';'      
                 {
                 $$ = $1;
@@ -519,13 +519,13 @@ SimpleStmt : EmptyStmt
 // ============================
 
 
-EmptyStmt: %empty               { $$ = make_empty_statement(yylineno); }
+EmptyStmt: /*empty*/               { $$ = make_empty_statement(yylineno); }
     ;
 
 Block : '{' StatementList '}'   { $$ = $2; }
     ;
 
-StatementList: %empty                       { $$ = make_statement_vec(); }
+StatementList: /*empty*/                       { $$ = make_statement_vec(); }
              | StatementList Statement ';'  
              { 
                 $$ = $1;
@@ -589,7 +589,7 @@ IfStmt: tIF SimpleStmt ';' Expression Block ElseStmt
             { $$ = make_if_statement(yylineno, make_empty_statement(yylineno), $2, $3, $4); }
       ;
 
-ElseStmt: %empty        { $$ = NULL; }
+ElseStmt: /*empty*/        { $$ = NULL; }
         | tELSE IfStmt  { $$ = $2; }
         | tELSE Block   { $$ = make_block_statement(yylineno, $2); }
         ;
@@ -605,7 +605,7 @@ SwitchStmt: tSWITCH SimpleStmt ';' Expression '{' CaseClauses '}'
                 { $$ = make_switch_statement(yylineno, make_empty_statement(yylineno), NULL, $3); }
     ;
 
-CaseClauses: %empty                 { $$ = make_case_clause_vec(); }
+CaseClauses: /*empty*/                 { $$ = make_case_clause_vec(); }
            | CaseClauses CaseClause 
                 { 
                 $$ = $1;
@@ -613,7 +613,6 @@ CaseClauses: %empty                 { $$ = make_case_clause_vec(); }
                 }
            ;
 
-// TODO: decide if maybe to fuse to next two rules for easier AST building
 CaseClause: tCASE expression_list ':' StatementList    { $$ = make_case_clause(yylineno, $2, $4); }
           | tDEFAULT ':' StatementList    { $$ = make_case_clause(yylineno, NULL, $3); }
     ;
@@ -625,7 +624,6 @@ ForStmt: tFOR Block                         { $$ = make_loop_statement(yylineno,
         { $$ = make_for_statement(yylineno, $2, $4, $6, $7); }
     ;
 
-// TODO WEED: make sure the last SimpleStmt is not a short variable declaration
 // SimpleStmt can be empty, so not explicitly making them optional should be fine
 
 BreakStmt: tBREAK           { $$ = make_break_statement(yylineno); }
@@ -727,7 +725,7 @@ AppendExpr: tAPPEND '(' Expression ',' Expression ')'
 // ============================
 
 
-OptionalExpressionList: %empty          { $$ = make_expression_vec(); }
+OptionalExpressionList: /*empty*/          { $$ = make_expression_vec(); }
                       | expression_list
                       ;
 
