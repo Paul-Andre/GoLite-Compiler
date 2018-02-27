@@ -376,9 +376,11 @@ fn pretty_print_expression(expr: &ExpressionNode){
         Expression::Identifier { ref name } => print!("{}", name),
         Expression::RawLiteral { ref value } => print!("{}", value),
         Expression::BinaryOperation { op, ref lhs, ref rhs} => {
+            print!("( ")
             pretty_print_expression(&*lhs);
             pretty_print_binary_operator(op);
             pretty_print_expression(&*rhs);
+            print!(" )")
         },
         Expression::UnaryOperation { op, ref rhs } => {
             pretty_print_unary_operator(op);
@@ -411,16 +413,17 @@ fn pretty_print_expression(expr: &ExpressionNode){
                 count = count + 1;
             }
 
-            print!(" ) ");
+            print!(" )");
         },
         Expression::Append { ref lhs, ref rhs } => {
             print!("append( ");
             pretty_print_expression(&*lhs);
             print!(" , ");
             pretty_print_expression(&*rhs);
+            print!(" )");
         },
         Expression::TypeCast { ref expr } => {
-            //TODO
+            panic!("There should not be type casts in the AST at this point.")
         }
     }
 }
