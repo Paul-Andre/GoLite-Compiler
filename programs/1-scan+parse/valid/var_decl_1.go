@@ -32,7 +32,9 @@ var k struct {
 		b [123]float32
 	}
 	l [](struct {
-		b []T
+		b [] struct {
+      a int
+    }
 	})
 }
 
