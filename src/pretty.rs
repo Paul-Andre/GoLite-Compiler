@@ -47,7 +47,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec){
     let mut count = 0;
 
     for name in var_spec.names.iter() {
-        print!("{} ", name);
+        print!("{}", name);
 
         if count < len - 1 {
             print!(", ")
@@ -74,7 +74,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec){
 
 /// Pretty print type declarations
 fn pretty_print_type_declaration(type_spec: &TypeSpec){
-    print!("{} ", &type_spec.name);
+    print!("type {} ", &type_spec.name);
     pretty_print_ast_kind(&type_spec.kind.ast_kind)
 }
 
@@ -130,11 +130,14 @@ fn pretty_print_ast_kind(kind: &AstKind){
         &AstKind::Array { ref base, ref size} => {
             print!("[{}]", &size);
             pretty_print_ast_kind(&base.ast_kind)
-        }
+        },
         &AstKind::Struct { ref fields } => {
+            println!("struct {{");
             for f in fields.iter(){
-                pretty_print_field(f)
+                pretty_print_field(f);
+                println!(";")
             }
+            println!("}}");
         }
     }
 }
@@ -161,16 +164,17 @@ fn pretty_print_field(field: &Field){
     let mut count = 0;
 
     for id in field.identifiers.iter() {
-        print!("{} ", id);
+        print!("{}", id);
 
         if count < len - 1 {
-            print!(", ")
+            print!(", ");
         }
 
         count = count + 1;
     }
+    print!(" ");
 
-    pretty_print_ast_kind(&field.kind.ast_kind)
+    pretty_print_ast_kind(&field.kind.ast_kind);
 }
 
 
@@ -458,4 +462,5 @@ fn pretty_print_unary_operator(un: UnaryOperator){
         UnaryOperator::BwCompl => print!("~"),
         UnaryOperator::Not => print!("!"),
     }
+
 }
