@@ -294,12 +294,14 @@ fn pretty_print_statement(stmt: &StatementNode) {
             }
         },
         Statement::Loop { ref body} => {
+            println!("for {{ ");
             for stmt in body.iter(){
                 pretty_print_statement(stmt)
             }
+            println!("}}");
         },
         Statement::While { ref condition, ref body } => {
-            print!("while ");
+            print!("for ");
             pretty_print_expression(&*condition);
             println!(" {{ ");
 
@@ -307,7 +309,7 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 pretty_print_statement(stmt)
             }
 
-            println!(" }} ");
+            println!("}}");
         },
         Statement::For {ref init, ref condition, ref post, ref body } => {
             print!("for ");
