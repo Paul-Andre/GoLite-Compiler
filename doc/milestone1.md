@@ -2,17 +2,27 @@
 
 ## Implementation
 
-We decided to used flex+bison for parsing and Rust for all phases afterwards.
+We decided to use flex+bison for parsing and Rust for all phases afterwards.
 
 We used structs and Rust enums (tagged unions) to represent our AST.
 
-We wrote out the flex scanner as usual. In the the bison file we called Rust functions to build the AST.
+We wrote out the flex scanner as usual. In the the bison file we called the Rust functions declared in the ast header file to build the AST.
 
 We decided to pass around opaque pointers in the parser actions, including opaque pointers to Rust vectors.
 
+We performed weeding at two levels. First, when constructing the AST we check the following things:
+* Unicity of default case in switch statements 
+* Assignments need to have the same number of elements on each side
+* The post simple statement of a ForClause cannot be an assignment
+* Expression statements can only be functions
+
+We then do a recursive pass through the AST and check the following things:
+* Incorrect break and continue usage
+* Incorrect blank identifier usage
+
 ### Rationale
 
-We used Flex and Bison because they were tool we knew how to use. We decided to use Rust for the ability to pattern match and manipulate trees in a memory-safe manner.
+We used Flex and Bison because they were tools we knew how to use. We decided to use Rust for the ability to pattern match and manipulate trees in a memory-safe manner. And because Paul wanted to.
 
 
 ## Team Organization
