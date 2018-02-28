@@ -29,7 +29,6 @@ func f() {
 
     x = x&&y
     x = x||y
-    x = x<-y
     x++
     x--
 
@@ -38,8 +37,8 @@ func f() {
     x = x>y
     x = !y
     x = x!=y
-    x <= x +y
-    x >= x +y
+    x = x <= y
+    x = x >= y
     x := x +y
     x = (x+y)*x
 }
