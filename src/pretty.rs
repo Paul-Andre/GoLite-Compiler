@@ -185,7 +185,7 @@ fn pretty_print_statement(stmt: &StatementNode) {
             println!("{{");
 
             for s in v.iter(){
-                pretty_print_statement(s)
+                pretty_print_statement(s);
             }
 
             println!("}}");
@@ -288,9 +288,14 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 pretty_print_statement(stmt)
             }
 
+            print!("}}");
+
             match else_branch{
-                &Some(ref stmt) => pretty_print_statement(&*stmt),
-                &None => ()
+                &Some(ref stmt) => {
+                    print!(" else ");
+                    pretty_print_statement(&*stmt)
+                },
+                &None => println!()
             }
         },
         Statement::Loop { ref body} => {
@@ -314,9 +319,11 @@ fn pretty_print_statement(stmt: &StatementNode) {
         Statement::For {ref init, ref condition, ref post, ref body } => {
             print!("for ");
             pretty_print_statement(&*init);
+            print!("; ");
             pretty_print_expression(&*condition);
+            print!("; ");
             pretty_print_statement(&*post);
-            println!(" {{ ");
+            println!("{{");
 
             for stmt in body.iter(){
                 pretty_print_statement(stmt)
@@ -344,6 +351,8 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 &Some(ref e) => pretty_print_expression(&*e),
                 &None => ()
             }
+
+            println!()
         }
     }
 }
