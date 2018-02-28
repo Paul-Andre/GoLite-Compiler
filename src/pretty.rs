@@ -19,18 +19,15 @@ fn pretty_print_top_level_declaration(node: &TopLevelDeclarationNode){
         TopLevelDeclaration::VarDeclarations { ref declarations } => {
             for var_spec in declarations.iter(){
                 pretty_print_var_declaration(var_spec);
-                println!()
             }
         },
         TopLevelDeclaration::TypeDeclarations { ref declarations } => {
             for type_spec in declarations.iter(){
                 pretty_print_type_declaration(type_spec);
-                println!()
             }
         },
         TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body} =>  {
             pretty_print_function_declaration(&name, &parameters, &return_kind, &body);
-            println!()
         }
     }
 }
@@ -178,6 +175,7 @@ fn pretty_print_field(field: &Field){
 /*
 STATEMENT PRETTY PRINTING
 ========================================= */
+/// The convention is that statements do not put an newline after themselves
 fn pretty_print_statement(stmt: &StatementNode) {
     match stmt.statement {
         Statement::Empty => (),
@@ -186,9 +184,10 @@ fn pretty_print_statement(stmt: &StatementNode) {
 
             for s in v.iter(){
                 pretty_print_statement(s);
+                println!()
             }
 
-            println!("}}");
+            print!("}}");
         },
         Statement::Expression(ref expr) => {
             pretty_print_expression(&*expr)
@@ -211,8 +210,8 @@ fn pretty_print_statement(stmt: &StatementNode) {
         },
         Statement::VarDeclarations { ref declarations } => {
             for decl in declarations.iter() {
-                pretty_print_var_declaration(decl)
-
+                pretty_print_var_declaration(decl);
+                println();
             }
         },
         Statement::TypeDeclarations { ref declarations } => {
@@ -234,7 +233,7 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 count = count + 1;
             }
 
-            print!(" = ");
+            print!(" := ");
 
             let len = expression_list.len();
             count = 0;
@@ -266,7 +265,7 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 pretty_print_expression(expr)
             }
 
-            println!(")")
+            print!(")")
         },
         Statement::Println { ref exprs } => {
             print!("println( ");
@@ -275,14 +274,14 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 pretty_print_expression(expr)
             }
 
-            println!(")")
+            print!(")")
         },
         Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
             print!("if ");
             pretty_print_statement(&*init);
             print!("; ");
             pretty_print_expression(&*condition);
-            println!(" {{ ");
+            print!(" {{ ");
 
             for stmt in if_branch.iter(){
                 pretty_print_statement(stmt)
@@ -299,22 +298,22 @@ fn pretty_print_statement(stmt: &StatementNode) {
             }
         },
         Statement::Loop { ref body} => {
-            println!("for {{ ");
+            println!("for {{");
             for stmt in body.iter(){
                 pretty_print_statement(stmt)
             }
-            println!("}}");
+            print!("}}");
         },
         Statement::While { ref condition, ref body } => {
             print!("for ");
             pretty_print_expression(&*condition);
-            println!(" {{ ");
+            println!(" {{");
 
             for stmt in body.iter(){
                 pretty_print_statement(stmt)
             }
 
-            println!("}}");
+            print!("}}");
         },
         Statement::For {ref init, ref condition, ref post, ref body } => {
             print!("for ");
@@ -323,21 +322,31 @@ fn pretty_print_statement(stmt: &StatementNode) {
             pretty_print_expression(&*condition);
             print!("; ");
             pretty_print_statement(&*post);
-            println!("{{");
+            println!(" {{");
 
             for stmt in body.iter(){
                 pretty_print_statement(stmt)
             }
+
+            print!("}}");
         },
         Statement::Switch { ref init, ref expr, ref body } => {
             print!("switch ");
+
+            match init {
+                &Some(ref e) => {
+                    pretty_print_statement(&*e);
+                    print!("; ");
+                }
+                &None => ()
+            }
 
             match expr {
                 &Some(ref e) => pretty_print_expression(&*e),
                 &None => ()
             }
 
-            println!(" {{ ");
+            println!(" {{");
 
             for case_clause in body.iter(){
                 pretty_print_case_clause(case_clause)
@@ -352,7 +361,6 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 &None => ()
             }
 
-            println!()
         }
     }
 }
