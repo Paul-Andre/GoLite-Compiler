@@ -1,10 +1,9 @@
 use ast::*;
 
 
-fn indent_print(text: String, indent: i32) {
-    while indent > 0 {
+fn indent_print(text: &str, indent: i32) {
+    for _ in 0..indent {
         print!("    ");
-        indent++;
     }
     print!("{}", text);
 }
@@ -16,7 +15,7 @@ pub fn pretty_print_program(root: &Program){
     println!("package {}", root.package_name);
 
     for node in root.declarations.iter(){
-        pretty_print_top_level_declaration(node, 0);
+        pretty_print_top_level_declaration(node);
         println!()
     }
 }
@@ -24,12 +23,12 @@ pub fn pretty_print_program(root: &Program){
 /*
 TOP LEVEL DECLARATION PRETTY PRINTING
 ========================================= */
-fn pretty_print_top_level_declaration(node: &TopLevelDeclarationNode, indent: i32){
+fn pretty_print_top_level_declaration(node: &TopLevelDeclarationNode){
     match node.top_level_declaration {
         TopLevelDeclaration::VarDeclarations { ref declarations } => {
             println!("var (");
             for var_spec in declarations.iter(){
-                pretty_print_var_declaration(var_spec, indent+1);
+                pretty_print_var_declaration(var_spec, 1);
                 println!()
             }
             print!(")");
@@ -37,7 +36,7 @@ fn pretty_print_top_level_declaration(node: &TopLevelDeclarationNode, indent: i3
         TopLevelDeclaration::TypeDeclarations { ref declarations } => {
             println!("type (");
             for type_spec in declarations.iter(){
-                pretty_print_type_declaration(type_spec, indent+1);
+                pretty_print_type_declaration(type_spec, 1);
                 println!()
             }
             print!(")");
@@ -58,8 +57,10 @@ fn pretty_print_var_declaration(var_spec: &VarSpec, indent: i32){
     let len = var_spec.names.len();
     let mut count = 0;
 
+    indent_print("", indent);
+
     for name in var_spec.names.iter() {
-        indent_print(name, indent);
+        print!("{}",name);
 
         if count < len - 1 {
             print!(", ")
@@ -71,7 +72,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec, indent: i32){
     match var_spec.kind {
         Some(ref k) => {
             print!(" ");
-            pretty_print_ast_kind(&k.ast_kind);
+            pretty_print_ast_kind(&k.ast_kind, indent + 1);
         }
         None => ()
     }
@@ -96,7 +97,8 @@ fn pretty_print_var_declaration(var_spec: &VarSpec, indent: i32){
 /// Pretty print type declarations
 fn pretty_print_type_declaration(type_spec: &TypeSpec, indent: i32){
     indent_print(&type_spec.name, indent);
-    pretty_print_ast_kind(&type_spec.kind.ast_kind)
+    print!(" ");
+    pretty_print_ast_kind(&type_spec.kind.ast_kind, indent)
 }
 
 
@@ -104,10 +106,8 @@ fn pretty_print_type_declaration(type_spec: &TypeSpec, indent: i32){
 fn pretty_print_function_declaration(name: &String,
                                      parameters: &Vec<Field>,
                                      return_kind: &Option<Box<AstKindNode>>,
-                                     body: &Vec<StatementNode>, 
-                                     indent: i32){
+                                     body: &Vec<StatementNode> ) {
 
-    indent_print("", indent);
     print!("func {} (", name);
 
     let len = parameters.len();
@@ -127,40 +127,36 @@ fn pretty_print_function_declaration(name: &String,
 
     match return_kind {
         &Some(ref k) => {
-            pretty_print_ast_kind(&k.ast_kind)
+            pretty_print_ast_kind(&k.ast_kind, 1)
         },
         &None =>()
     }
 
     println!("{{");
 
-    for stmt in body.iter() {
-        pretty_print_statement(stmt, indent+1);
-        println!();
-
-    }
+    pretty_print_statement_vector(body, 1);
 
     print!("}}");
 
 }
 
 /// Pretty prints ast kinds such as identifier, slices, arrays, and structs
-fn pretty_print_ast_kind(kind: &AstKind){
+fn pretty_print_ast_kind(kind: &AstKind, indent: i32){
     match kind {
-        &AstKind::Identifier { ref name} => print!("{}", &name),
+        &AstKind::Identifier { ref name } => print!("{}", &name),
         &AstKind::Slice { ref base } => {
             print!("[]");
-            pretty_print_ast_kind(&base.ast_kind)
+            pretty_print_ast_kind(&base.ast_kind, indent)
         },
         &AstKind::Array { ref base, ref size} => {
             print!("[{}]", &size);
-            pretty_print_ast_kind(&base.ast_kind)
+            pretty_print_ast_kind(&base.ast_kind, indent)
         },
         &AstKind::Struct { ref fields } => {
             println!("struct {{");
             for f in fields.iter(){
-                pretty_print_field(f, indent+1);
-                println!(";")
+                pretty_print_field(f, indent + 1);
+                println!("")
             }
             print!("}}");
         }
@@ -183,13 +179,15 @@ fn pretty_print_kind(kind: Kind){
 }
 
 /// Pretty prints fields
+/// A field does not indent itself
+/// Indent is passed so that the if we print a Struct it's printed correcty
 fn pretty_print_field(field: &Field, indent: i32){
 
     let len = field.identifiers.len();
     let mut count = 0;
-
+    
     for id in field.identifiers.iter() {
-        print_indent(id, indent);
+        print!("{}",id);
 
         if count < len - 1 {
             print!(", ");
@@ -199,33 +197,35 @@ fn pretty_print_field(field: &Field, indent: i32){
     }
     print!(" ");
 
-    pretty_print_ast_kind(&field.kind.ast_kind);
+    pretty_print_ast_kind(&field.kind.ast_kind, indent);
+}
+
+fn pretty_print_statement_vector(v: &Vec<StatementNode>, indent: i32) {
+    for statement in v {
+        indent_print("", indent);
+        pretty_print_statement(statement, indent);
+        println!();
+    }
 }
 
 
 /*
 STATEMENT PRETTY PRINTING
 ========================================= */
-/// The convention is that statements do not put an newline after themselves
+/// The convention is that statements do not put an newline after themselves and don't indent
+/// They don't indent their first line but DO indent all following lines
 fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
     match stmt.statement {
-        Statement::Empty => print!(";"),
+        Statement::Empty => indent_print(";", indent),
         Statement::Block(ref v) => {
-            print_indent("", indent);
             println!("{{");
-
-            for s in v.iter(){
-                pretty_print_statement(s, indent+1);
-                println!()
-            }
-
-            print_indent("}}", indent);
+            pretty_print_statement_vector(v, indent+1);
+            indent_print("}", indent);
         },
         Statement::Expression(ref expr) => {
             pretty_print_expression(&*expr)
         },
         Statement::Assignment { ref lhs, ref rhs} => {
-            print_indent("", indent);
             let mut count = 0;
             let len = lhs.len();
             for expr in lhs.iter() {
@@ -259,28 +259,25 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             pretty_print_expression(&*rhs);
         },
         Statement::VarDeclarations { ref declarations } => {
-            print_indent("", indent);
             println!("var (");
             for decl in declarations.iter() {
                 pretty_print_var_declaration(decl, indent+1);
                 println!();
             }
-            print_indent(")", indent);
+            indent_print(")", indent);
         },
         Statement::TypeDeclarations { ref declarations } => {
-            print_indent("", indent);
             println!("type (");
             for decl in declarations.iter() {
                 pretty_print_type_declaration(decl, indent+1);
                 println!();
             }
-            print_indent(")", indent);
+            indent_print(")", indent);
         },
         Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
             let len = identifier_list.len();
             let mut count = 0;
 
-            print_indent("", indent);
             for id in identifier_list.iter() {
                 print!("{}", id);
 
@@ -307,7 +304,6 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             }
         },
         Statement::IncDec { is_dec, ref expr } => {
-            print_indent("", indent);
             pretty_print_expression(&*expr);
 
             if is_dec {
@@ -318,7 +314,6 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             }
         },
         Statement::Print { ref exprs } => {
-            print_indent("", indent);
             print!("print( ");
 
             for expr in exprs.iter() {
@@ -328,7 +323,6 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             print!(")")
         },
         Statement::Println { ref exprs } => {
-            print_indent("", indent);
             print!("println( ");
 
             for expr in exprs.iter() {
@@ -338,7 +332,6 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             print!(")")
         },
         Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
-            print_indent("", indent);
             print!("if ");
             if let Statement::Empty = init.statement {
             } else {
@@ -348,48 +341,37 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             pretty_print_expression(&*condition);
             println!(" {{");
 
-            for stmt in if_branch.iter(){
-                pretty_print_statement(stmt, indent+1);
-                println!();
-            }
+            pretty_print_statement_vector(if_branch, indent+1);
 
-            print_indent("", indent);
+            indent_print("", indent);
             print!("}}");
 
             match else_branch{
                 &Some(ref stmt) => {
                     print!(" else ");
-                    pretty_print_statement(&*stmt, indent+1)
+                    pretty_print_statement(&*stmt, indent)
                 },
                 &None => println!()
             }
         },
         Statement::Loop { ref body} => {
-            print_indent("", indent);
             println!("for {{");
-            for stmt in body.iter(){
-                pretty_print_statement(stmt, indent+1);
-                println!();
-            }
-            print_indent("", indent);
+            pretty_print_statement_vector(body, indent+1);
+            indent_print("", indent);
             print!("}}");
         },
         Statement::While { ref condition, ref body } => {
-            print_indent("", indent);
+            indent_print("", indent);
             print!("for ");
             pretty_print_expression(&*condition);
             println!(" {{");
 
-            for stmt in body.iter(){
-                pretty_print_statement(stmt, indent+1);
-                println!();
-            }
+            pretty_print_statement_vector(body, indent+1);
 
-            print_indent("", indent);
+            indent_print("", indent);
             print!("}}");
         },
         Statement::For {ref init, ref condition, ref post, ref body } => {
-            print_indent("", indent);
             print!("for ");
             if let Statement::Empty = init.statement {
             } else {
@@ -404,16 +386,12 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             }
             println!(" {{");
 
-            for stmt in body.iter(){
-                pretty_print_statement(stmt. indent+1);
-                println!();
-            }
+            pretty_print_statement_vector(body, indent+1);
 
-            print_indent("", indent);
+            indent_print("", indent);
             print!("}}");
         },
         Statement::Switch { ref init, ref expr, ref body } => {
-            print_indent("", indent);
             print!("switch ");
 
             if let Statement::Empty = init.statement {
@@ -433,15 +411,18 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
                 pretty_print_case_clause(case_clause, indent+1);
             }
 
-            print_indent("", indent);
+            indent_print("", indent);
             print!("}}");
         },
-        Statement::Break => print_indent("break;", indent),
-        Statement::Continue => print_indent("continue;", indent),
+        Statement::Break => print!("break"),
+        Statement::Continue => print!("continue"),
         Statement::Return(ref expr) => {
-            print_indent("return ", indent);
+            print!("return");
             match expr {
-                &Some(ref e) => pretty_print_expression(&*e),
+                &Some(ref e) => {
+                    print!(" ");
+                    pretty_print_expression(&*e);
+                }
                 &None => ()
             }
         }
@@ -453,15 +434,12 @@ fn pretty_print_case_clause(case_clause: &CaseClause, indent: i32){
     pretty_print_switch_case(&case_clause.switch_case, indent);
     println!();
 
-    for stmt in case_clause.statements.iter(){
-        pretty_print_statement(stmt, indent+1);
-        println!();
-    }
+    pretty_print_statement_vector(&case_clause.statements, indent+1);
 
 }
 
 
-fn comma_separated_expressions(v: &Vec<ExpressionNode>, indent: i32) {
+fn comma_separated_expressions(v: &Vec<ExpressionNode>) {
     for (count, expr) in v.iter().enumerate() {
         pretty_print_expression(expr);
         if count < v.len() - 1 {
@@ -472,7 +450,7 @@ fn comma_separated_expressions(v: &Vec<ExpressionNode>, indent: i32) {
 
 /// Pretty prints switch case
 fn pretty_print_switch_case(switch_case: &SwitchCase, indent: i32){
-    print_indent("", indent);
+    indent_print("", indent);
     match switch_case {
         &SwitchCase::Default => println!("default: "),
         &SwitchCase::Cases(ref v) => {
