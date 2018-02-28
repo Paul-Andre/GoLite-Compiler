@@ -163,21 +163,6 @@ fn pretty_print_ast_kind(kind: &AstKind, indent: i32){
     }
 }
 
-/// Pretty prints basic types
-fn pretty_print_kind(kind: Kind){
-    match kind {
-        Kind::Undefined => print!("undefined"),
-        Kind::Basic(basic) => {
-            match basic {
-                BasicKind::Int => print!("int"),
-                BasicKind::Float => print!("float64"),
-                BasicKind::Rune => print!("rune"),
-                BasicKind::String => print!("string")
-            }
-        }
-    }
-}
-
 /// Pretty prints fields
 /// A field does not indent itself
 /// Indent is passed so that the if we print a Struct it's printed correcty
@@ -518,7 +503,7 @@ fn pretty_print_expression(expr: &ExpressionNode){
             pretty_print_expression(&*rhs);
             print!(" )");
         },
-        Expression::TypeCast { ref expr } => {
+        Expression::TypeCast {..} => {
             panic!("There should not be type casts in the AST at this point.")
         }
     }
