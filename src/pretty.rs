@@ -199,7 +199,7 @@ STATEMENT PRETTY PRINTING
 /// The convention is that statements do not put an newline after themselves
 fn pretty_print_statement(stmt: &StatementNode) {
     match stmt.statement {
-        Statement::Empty => (),
+        Statement::Empty => print!(";"),
         Statement::Block(ref v) => {
             println!("{{");
 
@@ -321,8 +321,11 @@ fn pretty_print_statement(stmt: &StatementNode) {
         },
         Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
             print!("if ");
-            pretty_print_statement(&*init);
-            print!("; ");
+            if let Statement::Empty = init.statement {
+            } else {
+                pretty_print_statement(&*init);
+                print!("; ");
+            }
             pretty_print_expression(&*condition);
             println!(" {{");
 
@@ -363,11 +366,17 @@ fn pretty_print_statement(stmt: &StatementNode) {
         },
         Statement::For {ref init, ref condition, ref post, ref body } => {
             print!("for ");
-            pretty_print_statement(&*init);
+            if let Statement::Empty = init.statement {
+            } else {
+                pretty_print_statement(&*init);
+            }
             print!("; ");
             pretty_print_expression(&*condition);
             print!("; ");
-            pretty_print_statement(&*post);
+            if let Statement::Empty = post.statement {
+            } else {
+                pretty_print_statement(&*post);
+            }
             println!(" {{");
 
             for stmt in body.iter(){
@@ -380,8 +389,11 @@ fn pretty_print_statement(stmt: &StatementNode) {
         Statement::Switch { ref init, ref expr, ref body } => {
             print!("switch ");
 
-            pretty_print_statement(&*init);
-            print!("; ");
+            if let Statement::Empty = init.statement {
+            } else {
+                pretty_print_statement(&*init);
+                print!("; ");
+            }
 
             match expr {
                 &Some(ref e) => pretty_print_expression(&*e),
@@ -534,7 +546,7 @@ fn pretty_print_unary_operator(un: UnaryOperator){
     match un {
         UnaryOperator::Plus => print!("+"),
         UnaryOperator::Neg => print!("-"),
-        UnaryOperator::BwCompl => print!("~"),
+        UnaryOperator::BwCompl => print!("^"),
         UnaryOperator::Not => print!("!"),
     }
 }
