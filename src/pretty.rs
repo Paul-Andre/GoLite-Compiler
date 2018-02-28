@@ -452,7 +452,7 @@ fn comma_separated_expressions(v: &Vec<ExpressionNode>) {
 fn pretty_print_switch_case(switch_case: &SwitchCase, indent: i32){
     indent_print("", indent);
     match switch_case {
-        &SwitchCase::Default => println!("default: "),
+        &SwitchCase::Default => print!("default: "),
         &SwitchCase::Cases(ref v) => {
             print!("case ");
             comma_separated_expressions(v);
