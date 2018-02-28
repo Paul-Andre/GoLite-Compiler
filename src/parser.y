@@ -682,8 +682,8 @@ mul_op: '*'                 { $$ = opMul ; }
 
 unary_op: '+'               { $$ = opPlus ; }
         | '-'               { $$ = opNeg ; }
-        | '!'               { $$ = opBwCompl ; }
-        | '^'               { $$ = opNot ; }
+        | '^'               { $$ = opBwCompl ; }
+        | '!'               { $$ = opNot ; }
         ;
 
 Operand: Literal

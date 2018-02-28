@@ -29,5 +29,5 @@ fi
 # You MUST replace the following command with the command for invoking your compiler
 
 #cargo run --quiet "$1" < "$2"
-#./target/debug/golite "$1" < "$2"
-~cs520/golitec "$1" < "$2"
+./target/debug/golite "$1" < "$2"
+#~cs520/golitec "$1" < "$2"
