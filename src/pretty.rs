@@ -64,6 +64,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec){
     match var_spec.rhs {
         Some(ref v) => {
             for expr in v.iter(){
+                print!(" = ");
                 pretty_print_expression(expr)
             }
         },
@@ -188,7 +189,7 @@ fn pretty_print_statement(stmt: &StatementNode) {
             println!("{{");
 
             for s in v.iter(){
-                pretty_print_statement(s)
+                pretty_print_statement(s);
             }
 
             println!("}}");
@@ -291,18 +292,25 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 pretty_print_statement(stmt)
             }
 
+            print!("}}");
+
             match else_branch{
-                &Some(ref stmt) => pretty_print_statement(&*stmt),
-                &None => ()
+                &Some(ref stmt) => {
+                    print!(" else ");
+                    pretty_print_statement(&*stmt)
+                },
+                &None => println!()
             }
         },
         Statement::Loop { ref body} => {
+            println!("for {{ ");
             for stmt in body.iter(){
                 pretty_print_statement(stmt)
             }
+            println!("}}");
         },
         Statement::While { ref condition, ref body } => {
-            print!("while ");
+            print!("for ");
             pretty_print_expression(&*condition);
             println!(" {{ ");
 
@@ -310,14 +318,16 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 pretty_print_statement(stmt)
             }
 
-            println!(" }} ");
+            println!("}}");
         },
         Statement::For {ref init, ref condition, ref post, ref body } => {
             print!("for ");
             pretty_print_statement(&*init);
+            print!("; ");
             pretty_print_expression(&*condition);
+            print!("; ");
             pretty_print_statement(&*post);
-            println!(" {{ ");
+            println!("{{");
 
             for stmt in body.iter(){
                 pretty_print_statement(stmt)
@@ -345,6 +355,8 @@ fn pretty_print_statement(stmt: &StatementNode) {
                 &Some(ref e) => pretty_print_expression(&*e),
                 &None => ()
             }
+
+            println!()
         }
     }
 }
