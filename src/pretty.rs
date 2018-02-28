@@ -377,11 +377,11 @@ fn pretty_print_expression(expr: &ExpressionNode){
         Expression::Identifier { ref name } => print!("{}", name),
         Expression::RawLiteral { ref value } => print!("{}", value),
         Expression::BinaryOperation { op, ref lhs, ref rhs} => {
-            print!("( ")
+            print!("( ");
             pretty_print_expression(&*lhs);
             pretty_print_binary_operator(op);
             pretty_print_expression(&*rhs);
-            print!(" )")
+            print!(" )");
         },
         Expression::UnaryOperation { op, ref rhs } => {
             pretty_print_unary_operator(op);
