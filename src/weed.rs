@@ -3,7 +3,7 @@ use std::process::exit;
 
 /// Weeds the tree for incorrect break, continue, and blank identifier usage
 pub fn weed_ast(root: &Program){
-    if (&root.package_name == "_") {
+    if &root.package_name == "_" {
         eprintln!("Error: package name cannot be `_`");
         exit(1);
     }
@@ -61,7 +61,7 @@ fn check_for_correct_break_and_continue_usage(stmt: &StatementNode, can_break: b
             }
         },
         Statement::Break => {
-            if (!can_break) {
+            if !can_break {
                 eprintln!("Error: line {}: break outside loop or switch.", stmt.line_number);
                 exit(1);
             }

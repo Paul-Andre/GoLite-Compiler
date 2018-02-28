@@ -72,7 +72,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec, indent: i32){
     match var_spec.kind {
         Some(ref k) => {
             print!(" ");
-            pretty_print_ast_kind(&k.ast_kind, indent + 1);
+            pretty_print_ast_kind(&k.ast_kind, indent);
         }
         None => ()
     }
@@ -114,7 +114,7 @@ fn pretty_print_function_declaration(name: &String,
     let mut count = 0;
 
     for p in parameters.iter(){
-        pretty_print_field(p, 0);
+        pretty_print_field(p, 1);
 
         if count < len - 1 {
             print!(", ")
@@ -123,7 +123,7 @@ fn pretty_print_function_declaration(name: &String,
         count = count + 1;
     }
 
-    print!(")");
+    print!(") ");
 
     match return_kind {
         &Some(ref k) => {
@@ -132,7 +132,7 @@ fn pretty_print_function_declaration(name: &String,
         &None =>()
     }
 
-    println!("{{");
+    println!(" {{");
 
     pretty_print_statement_vector(body, 1);
 
@@ -155,25 +155,12 @@ fn pretty_print_ast_kind(kind: &AstKind, indent: i32){
         &AstKind::Struct { ref fields } => {
             println!("struct {{");
             for f in fields.iter(){
+                indent_print("", indent + 1);
                 pretty_print_field(f, indent + 1);
                 println!("")
             }
+            indent_print("", indent);
             print!("}}");
-        }
-    }
-}
-
-/// Pretty prints basic types
-fn pretty_print_kind(kind: Kind){
-    match kind {
-        Kind::Undefined => print!("undefined"),
-        Kind::Basic(basic) => {
-            match basic {
-                BasicKind::Int => print!("int"),
-                BasicKind::Float => print!("float64"),
-                BasicKind::Rune => print!("rune"),
-                BasicKind::String => print!("string")
-            }
         }
     }
 }
@@ -452,7 +439,7 @@ fn comma_separated_expressions(v: &Vec<ExpressionNode>) {
 fn pretty_print_switch_case(switch_case: &SwitchCase, indent: i32){
     indent_print("", indent);
     match switch_case {
-        &SwitchCase::Default => println!("default: "),
+        &SwitchCase::Default => print!("default: "),
         &SwitchCase::Cases(ref v) => {
             print!("case ");
             comma_separated_expressions(v);
@@ -518,7 +505,7 @@ fn pretty_print_expression(expr: &ExpressionNode){
             pretty_print_expression(&*rhs);
             print!(" )");
         },
-        Expression::TypeCast { ref expr } => {
+        Expression::TypeCast {..} => {
             panic!("There should not be type casts in the AST at this point.")
         }
     }
