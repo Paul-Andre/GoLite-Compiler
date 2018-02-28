@@ -138,7 +138,7 @@ fn pretty_print_ast_kind(kind: &AstKind){
                 pretty_print_field(f);
                 println!(";")
             }
-            println!("}}");
+            print!("}}");
         }
     }
 }
