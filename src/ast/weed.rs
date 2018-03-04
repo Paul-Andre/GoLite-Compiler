@@ -1,4 +1,4 @@
-use ast::*;
+use ast::ast::*;
 use std::process::exit;
 
 /// Weeds the tree for incorrect break, continue, and blank identifier usage
@@ -28,7 +28,7 @@ pub fn weed_ast(root: &Program){
 }
 
 
-/*
+/*a
 BREAK/CONTINUE USAGE WEED FUNCTIONS
 ========================================= */
 
