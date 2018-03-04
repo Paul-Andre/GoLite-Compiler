@@ -152,10 +152,7 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
         Statement::Expression(ref exp) => {
             traverse_exp_for_invalid_blank(&*exp)
         },
-        Statement::Assignment {ref lhs, ref rhs, ..} => {
-            for exp in lhs.iter(){
-                traverse_assignable_exp_for_invalid_blank(exp)
-            }
+        Statement::Assignment {ref rhs, ..} => {
             for exp in rhs.iter(){
                 traverse_exp_for_invalid_blank(exp)
             }
@@ -251,41 +248,6 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
     }
 }
 
-fn traverse_assignable_exp_for_invalid_blank(exp: &ExpressionNode) {
-    match exp.expression {
-        Expression::Identifier { ref name } => return,
-        Expression::RawLiteral { ref value } => {
-            eprintln!("Error: line {}: cannot assign to RawLiteral.", exp.line_number);
-            exit(1);
-        }
-        Expression::BinaryOperation { ref lhs, ref rhs, .. } => {
-            eprintln!("Error: line {}: cannot assign to Binary expression.", exp.line_number);
-            exit(1);
-        }
-        Expression::UnaryOperation { ref rhs, .. } => {
-            eprintln!("Error: line {}: cannot assign to Unary expression.", exp.line_number);
-            exit(1);
-        }
-        Expression::Index { ref primary, ref index } => {
-            traverse_exp_for_invalid_blank(exp);
-        }
-        Expression::Selector { ref primary, ref name } => {
-            traverse_exp_for_invalid_blank(exp);
-        }
-        Expression::FunctionCall {ref primary, ref arguments } => {
-            eprintln!("Error: line {}: cannot assign to function call.", exp.line_number);
-            exit(1);
-        }
-        Expression::Append { ref lhs, ref rhs } => {
-            eprintln!("Error: line {}: cannot assign to append expression.", exp.line_number);
-            exit(1);
-        }
-        Expression::TypeCast { ref expr } => {
-            eprintln!("Error: line {}: cannot assign to type cast.", exp.line_number);
-            exit(1);
-        }
-    }
-}
 
 
 /// Recursively traverses expression in order to detect any invalid blank id usage
