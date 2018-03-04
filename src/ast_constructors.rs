@@ -472,7 +472,7 @@ pub extern "C" fn make_for_statement(line: u32,
             line,
             Statement::For {
                 init: unsafe{Box::from_raw(init)},
-                condition: unsafe{Box::from_raw(cond)},
+                condition: unsafe{from_raw_or_none(cond)},
                 post: post,
                 body: *unsafe{Box::from_raw(body)}
             }

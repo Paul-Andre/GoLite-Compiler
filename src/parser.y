@@ -622,6 +622,8 @@ ForStmt: tFOR Block                         { $$ = make_loop_statement(yylineno,
     | tFOR Expression Block                 { $$ = make_while_statement(yylineno, $2, $3); }
     | tFOR SimpleStmt ';' Expression ';' SimpleStmt Block
         { $$ = make_for_statement(yylineno, $2, $4, $6, $7); }
+    | tFOR SimpleStmt ';' ';' SimpleStmt Block
+        { $$ = make_for_statement(yylineno, $2, NULL, $5, $6); }
     ;
 
 // SimpleStmt can be empty, so not explicitly making them optional should be fine

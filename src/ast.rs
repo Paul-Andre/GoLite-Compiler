@@ -180,7 +180,7 @@ pub enum Statement {
     },
     For {
         init: Box<StatementNode>,
-        condition: Box<ExpressionNode>,
+        condition: Option<Box<ExpressionNode>>,
         post: Box<StatementNode>,
         body: Vec<StatementNode>,
     },

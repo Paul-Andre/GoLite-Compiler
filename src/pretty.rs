@@ -365,7 +365,10 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
                 pretty_print_statement(&*init, 0);
             }
             print!("; ");
-            pretty_print_expression(&*condition);
+            match condition {
+                &Some(ref condition) => pretty_print_expression(&*condition),
+                &None => return,
+            }
             print!("; ");
             if let Statement::Empty = post.statement {
             } else {
