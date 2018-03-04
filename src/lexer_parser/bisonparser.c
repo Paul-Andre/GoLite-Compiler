@@ -1,6 +1,6 @@
 #include "stdio.h"
 #include "stdlib.h"
-#include "../lex.yy.c" // eh?
+#include "lex.yy.c" // eh?
 
 extern Program *root;
 
