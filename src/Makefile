@@ -2,15 +2,15 @@ CC = gcc -fPIC -g
 
 CFLAGS = -Wall
 
-libbisonparser.a: parser+lexer/lex.yy.c parser/bisonparser.c
-	$(CC) $(CFLAGS) -c parser/bisonparser.c -o bisonparser.o -lfl
+libbisonparser.a: lexer_parser/lex.yy.c lexer_parser/bisonparser.c
+	$(CC) $(CFLAGS) -c lexer_parser/bisonparser.c -o bisonparser.o -lfl
 	ar rcs libbisonparser.a bisonparser.o
 
-parser.tab.c parser.tab.h: parser.y
-	bison -v --output=parser.tab.h parser.y
+parser.tab.c parser.tab.h: lexer_parser/parser.y
+	bison -v --output=parser.tab.h lexer_parser/parser.y
 
-lex.yy.c: scanner.l parser.tab.h
-	flex parser+lexer/scanner.l
+lex.yy.c: lexer_parser/scanner.l parser.tab.h
+	flex lexer_parser/scanner.l
 
 clean:
 	-rm parser.tab.* lex.yy.*;
