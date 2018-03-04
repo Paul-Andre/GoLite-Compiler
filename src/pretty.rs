@@ -1,4 +1,5 @@
-use ast::ast::*;
+use ast::*;
+
 
 fn indent_print(text: &str, indent: i32) {
     for _ in 0..indent {

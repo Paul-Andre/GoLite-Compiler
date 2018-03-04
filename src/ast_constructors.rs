@@ -1,4 +1,4 @@
-use ast::ast::*;
+use ast::*;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
