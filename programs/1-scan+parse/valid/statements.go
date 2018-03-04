@@ -25,6 +25,7 @@ func main() {
   } // some random blocks
 
   // Some random assignments
+  (_) = a
   _ = a
   _,_,_,_ = 1,1,1,1
   a,b,c = b,a,c
