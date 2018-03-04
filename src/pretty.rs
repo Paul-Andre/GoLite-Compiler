@@ -213,30 +213,9 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             pretty_print_expression(&*expr)
         },
         Statement::Assignment { ref lhs, ref rhs} => {
-            let mut count = 0;
-            let len = lhs.len();
-            for expr in lhs.iter() {
-                pretty_print_expression(expr);
-
-                if count < len - 1 {
-                    print!(", ");
-                }
-
-                count = count + 1;
-            }
-
+            pretty_print_expression_list(lhs);
             print!(" = ");
-
-            let mut count = 0;
-            let len = rhs.len();
-            for expr in rhs.iter() {
-                pretty_print_expression(expr);
-                if count < len - 1 {
-                    print!(", ");
-                }
-
-                count = count + 1;
-            }
+            pretty_print_expression_list(rhs);
         },
         Statement::OpAssignment { ref lhs, ref rhs, operator } => {
             pretty_print_expression(&*lhs);
@@ -271,24 +250,10 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
                 if count < len - 1 {
                     print!(", ")
                 }
-
                 count = count + 1;
             }
-
             print!(" := ");
-
-            let len = expression_list.len();
-            count = 0;
-
-            for expr in expression_list.iter() {
-                pretty_print_expression(expr);
-
-                if count < len - 1 {
-                    print!(", ")
-                }
-
-                count = count + 1;
-            }
+            pretty_print_expression_list(expression_list);
         },
         Statement::IncDec { is_dec, ref expr } => {
             pretty_print_expression(&*expr);
@@ -297,25 +262,16 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
                 print!("--")
             } else {
                 print!("++")
-
             }
         },
         Statement::Print { ref exprs } => {
             print!("print( ");
-
-            for expr in exprs.iter() {
-                pretty_print_expression(expr)
-            }
-
-            print!(")")
+            pretty_print_expression_list(exprs);
+            print!(")");
         },
         Statement::Println { ref exprs } => {
             print!("println( ");
-
-            for expr in exprs.iter() {
-                pretty_print_expression(expr)
-            }
-
+            pretty_print_expression_list(exprs);
             print!(")")
         },
         Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
@@ -367,7 +323,7 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             print!("; ");
             match condition {
                 &Some(ref condition) => pretty_print_expression(&*condition),
-                &None => return,
+                &None => print!(" "),
             }
             print!("; ");
             if let Statement::Empty = post.statement {
@@ -454,6 +410,20 @@ fn pretty_print_switch_case(switch_case: &SwitchCase, indent: i32){
 /*
 EXPRESSION PRETTY PRINTING
 ========================================= */
+fn pretty_print_expression_list(exprs: &Vec<ExpressionNode>) {
+    let len = exprs.len();
+    let mut count = 0;
+
+    for expr in exprs.iter() {
+        pretty_print_expression(expr);
+
+        if count < len - 1 {
+            print!(", ")
+        }
+
+        count = count + 1;
+    }
+}
 
 fn pretty_print_expression(expr: &ExpressionNode){
     match expr.expression {
@@ -470,7 +440,14 @@ fn pretty_print_expression(expr: &ExpressionNode){
         },
         Expression::UnaryOperation { op, ref rhs } => {
             pretty_print_unary_operator(op);
-            pretty_print_expression(&*rhs);
+            match rhs.expression {
+                Expression::Identifier { .. } => pretty_print_expression(&*rhs),
+                _ => {
+                    print!("(");
+                    pretty_print_expression(&*rhs);
+                    print!(")");
+                }
+            }
         },
         Expression::Index { ref primary, ref index } => {
             pretty_print_expression(&*primary);
