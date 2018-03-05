@@ -8,8 +8,12 @@ pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
     let mut root_scope: SymbolTable = Box::new(SymbolTable {
         parent_scope: None,
         children_scopes: Vec::new(),
-        symbols: HashMap::new()
+        symbols: HashMap::new(),
+        types: HashMap::new(),
+        return_type: None
     });
+
+    populate_root_scope_with_defaults(&root_scope);
 
     for decl in &root.declarations {
         evaluate_top_level_declaration(decl, &mut *root_scope.SymbolTable);
@@ -17,27 +21,37 @@ pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
 }
 
 fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
-
-
+    add_variable_symbol("true", Type::Base(BaseType::Bool), root_scope);
+    add_variable_symbol("false", Type::Base(BaseType::Bool), root_scope);
+    add_type_symbol("int", Type::Base(BaseType::Int), root_scope);
+    add_type_symbol("float64", Type::Base(BaseType::Float), root_scope);
+    add_type_symbol("rune", Type::Base(BaseType::Rune), root_scope);
+    add_type_symbol("bool", Type::Base(BaseType::Bool), root_scope);
+    add_type_symbol("string", Type::Base(BaseType::String), root_scope);
 }
 
-// Looks up identifier in context. Returns type if identifier is in scope
-fn find_type(identifier: String, scope: &SymbolTable) -> Option(Type) {
+// Looks up identifier in context. Returns type if identifier is in current or parent
+fn find_type_in_symbol_table(identifier: String, scope: &SymbolTable) -> Option(Type) {
 
 }
 
 // Checks equality of two types
-fn type_are_equal(a: Type, b: Type) -> bool {
+fn types_are_equal(a: Type, b: Type) -> bool {
 
 }
 
 // Adds symbol to symbol table. We need to check duplicates at this point.
-fn add_symbol(identifier: String, kind: Type, scope: &SymbolTable) {
+fn add_variable_symbol(identifier: String, definition: Definition::Variable(Type), scope: &SymbolTable) {
+
+}
+
+// Adds symbol to symbol table. We need to check duplicates at this point.
+fn add_type_symbol(identifier: String, definition: Definition::Type(Type), scope: &SymbolTable) {
 
 }
 
 // Creates new scope
-fn make_new_symbol_table(return_type: Type, scope: &SymbolTable) -> &SymbolTable {
+fn add_new_scope(return_type: Type, scope: &SymbolTable) -> &SymbolTable {
 
 }
 
@@ -69,13 +83,13 @@ fn evaluate_function_declaration(name: &String,
     let mut p_vec = Vec::new();
 
     for p in params.iter() {
-        p_vec.push(Definition::Variable(get_type(*p.kind)))
+        p_vec.push(Definition::Variable(evaluate_type(*p.kind)))
     }
 
     let mut t: Type;
 
     match return_kind {
-        &Some(ref k) => t = get_type(&*k),
+        &Some(ref k) => t = evaluate_type(&*k),
         &None => t = Type::Void
     }
 
@@ -151,7 +165,7 @@ fn add_var_declaration_to_table(var_spec: &VarSpec, table: &SymbolTable){
 
     match var_spec.kind {
         &Some(ref k) => {
-            t = get_type(k)
+            t = evaluate_type(k)
         },
         &None => {
             // TODO: determine if we want to evaluate RHS or put temporary void type until typechecking
@@ -169,7 +183,7 @@ fn add_var_declaration_to_table(var_spec: &VarSpec, table: &SymbolTable){
     }
 }
 
-fn get_type(ast_kind_node: &AstKindNode) -> Type{
+fn evaluate_type(ast_kind_node: &AstKindNode) -> Type{
     match *ast_kind_node.ast_kind {
         AstKind::Identifier { ref name } => {
             match name {
@@ -182,11 +196,11 @@ fn get_type(ast_kind_node: &AstKindNode) -> Type{
             }
         },
         AstKind::Slice { ref base } => {
-            let t = get_type(*base.ast_kind);
+            let t = evaluate_type(*base.ast_kind);
             return Type::DataStructure(StructureType::Slice(t))
         },
         AstKind::Array { ref base, ref size } => {
-            let t = get_type(*base.ast_kind);
+            let t = evaluate_type(*base.ast_kind);
             return Type::DataStructure(StructureType::Array(t))
         },
         AstKind::Struct { ref fields } => {
@@ -194,7 +208,7 @@ fn get_type(ast_kind_node: &AstKindNode) -> Type{
             let mut vec = Vec::new();
 
             for f in fields.iter() {
-                let t = get_type(*f.ast_kind);
+                let t = evaluate_type(*f.ast_kind);
 
                 for id in f.identifiers.iter() {
                     let field = symbol_table::Field{
