@@ -3,12 +3,17 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
+/*
+ SYMBOL TABLE CONSTRUCTOR
+ ========================================= */
+
+/// Main method for constructing a symbol table from an inputted AST
 pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
 
     let mut root_scope: SymbolTable = Box::new(SymbolTable {
         parent_scope: None,
         children_scopes: Vec::new(),
-        symbols: HashMap::new(),
+        variables: HashMap::new(),
         types: HashMap::new(),
         return_type: None
     });
@@ -20,72 +25,22 @@ pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
     }
 }
 
+/// Populates the symbol table with the Go defaul variables and types
 fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
-    add_variable_symbol("true", Type::Base(BaseType::Bool), root_scope);
-    add_variable_symbol("false", Type::Base(BaseType::Bool), root_scope);
-    add_type_symbol("int", Type::Base(BaseType::Int), root_scope);
-    add_type_symbol("float64", Type::Base(BaseType::Float), root_scope);
-    add_type_symbol("rune", Type::Base(BaseType::Rune), root_scope);
-    add_type_symbol("bool", Type::Base(BaseType::Bool), root_scope);
-    add_type_symbol("string", Type::Base(BaseType::String), root_scope);
+    symbol_table::add_variable_symbol("true", Type::Base(BaseType::Bool), root_scope);
+    symbol_table::add_variable_symbol("false", Type::Base(BaseType::Bool), root_scope);
+    symbol_table::add_type_symbol("int", Type::Base(BaseType::Int), root_scope);
+    symbol_table::add_type_symbol("float64", Type::Base(BaseType::Float), root_scope);
+    symbol_table::add_type_symbol("rune", Type::Base(BaseType::Rune), root_scope);
+    symbol_table::add_type_symbol("bool", Type::Base(BaseType::Bool), root_scope);
+    symbol_table::add_type_symbol("string", Type::Base(BaseType::String), root_scope);
 }
 
-// Looks up identifier in context. Returns type if identifier is in current or parent
-fn find_type_in_symbol_table(identifier: String, scope: &SymbolTable) -> Option(Type) {
+/*
+ EVALUATION METHODS
+ ========================================= */
 
-}
-
-// Checks equality of two types
-fn types_are_equal(a: Type, b: Type) -> bool {
-
-}
-
-// Adds symbol to symbol table. We need to check duplicates at this point.
-fn add_variable_symbol(identifier: String, definition: Definition::Variable(Type), scope: &SymbolTable) {
-
-    let temp = scope.symbols.get(identifier);
-
-    match temp {
-        &Some(ref var) => {
-            if var.identifier == identifier {
-                // TODO: error message with line number
-            } else {
-                let sym = Symbol { line_number: 0, identifier, definition };
-                scope.symbols.insert(identifier, sym)
-            }
-        },
-        &None => {
-            let sym = Symbol { line_number: 0, identifier, definition };
-            scope.symbols.insert(identifier, sym)
-        }
-    }
-}
-
-// Adds symbol to symbol table. We need to check duplicates at this point.
-fn add_type_symbol(identifier: String, definition: Definition::Type(Type), scope: &SymbolTable) {
-    let temp = scope.types.get(identifier);
-
-    match temp {
-        &Some(ref var) => {
-            if var.identifier == identifier {
-                // TODO: error message with line number
-            } else {
-                let sym = Symbol { line_number: 0, identifier, definition };
-                scope.types.insert(identifier, sym)
-            }
-        },
-        &None => {
-            let sym = Symbol { line_number: 0, identifier, definition };
-            scope.types.insert(identifier, sym)
-        }
-    }
-}
-
-// Creates new scope
-fn add_new_scope(return_type: Type, table: &SymbolTable) -> &SymbolTable {
-
-}
-
+/// Evaluates a top level declaration in order to add the definition to the symbol table
 fn evaluate_top_level_declaration(decl: &TopLevelDeclarationNode, scope: &SymbolTable){
     match decl {
         TopLevelDeclaration::VarDeclarations { ref declarations } => {
@@ -104,6 +59,8 @@ fn evaluate_top_level_declaration(decl: &TopLevelDeclarationNode, scope: &Symbol
     }
 }
 
+/// Evaluates a function declaration by adding the identifier + params + return kind to
+/// function table and then evaluating the inner scope
 fn evaluate_function_declaration(name: &String,
                                  params: &Vec<Field>,
                                  return_kind: &Option<Box<AstKindNode>>,
@@ -204,13 +161,7 @@ fn add_var_declaration_to_table(var_spec: &VarSpec, table: &SymbolTable){
     }
 
     for var in var_spec.names.iter(){
-        let sym = Symbol {
-            line_number: var_spec.line_number,
-            identifier: var,
-            definition: Definition::Variable(t)
-        };
-
-        // TODO: Add symbol to symbol table
+        symbol_table::add_variable_symbol(var, Definition::Variable(t), &table)
     }
 }
 
@@ -222,7 +173,10 @@ fn evaluate_type(ast_kind_node: &AstKindNode) -> Type{
                 "float64" => return Type::Base(BaseType::Float),
                 "rune" => return Type::Base(BaseType::Rune),
                 "string" => return Type::Base(BaseType::String),
-                "bool" => return Type::Base(BaseType::Bool)
+                "bool" => return Type::Base(BaseType::Bool),
+                _ => {
+
+                }
                 //TODO see if the type exists in current defined types
             }
         },
