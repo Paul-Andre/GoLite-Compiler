@@ -21,6 +21,26 @@ fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
 
 }
 
+// Looks up identifier in context. Returns type if identifier is in scope
+fn find_type(identifier: String, scope: &SymbolTable) -> Option(Type) {
+
+}
+
+// Checks equality of two types
+fn type_are_equal(a: Type, b: Type) -> bool {
+
+}
+
+// Adds symbol to symbol table. We need to check duplicates at this point.
+fn add_symbol(identifier: String, kind: Type, scope: &SymbolTable) {
+
+}
+
+// Creates new scope
+fn make_new_symbol_table(return_type: Type, scope: &SymbolTable) -> &SymbolTable {
+
+}
+
 fn evaluate_top_level_declaration(decl: &TopLevelDeclarationNode, table: &SymbolTable){
     match decl {
         TopLevelDeclaration::VarDeclarations { ref declarations } => {
