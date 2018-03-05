@@ -32,7 +32,6 @@ fn evaluate_top_level_declaration(decl: &TopLevelDeclarationNode, table: &Symbol
             for type_spec in declarations.iter() {
                 add_type_declaration_to_table(type_spec)
             }
-
         },
         TopLevelDeclaration::FunctionDeclarations { ref name, ref parameters, ref return_kind, ref body } => {
             evaluate_function_declaration(&name, &parameters, &return_kind, &body, &decl.line_number, &table)
@@ -46,8 +45,7 @@ fn evaluate_function_declaration(name: &String,
                                  body: &Vec<StatementNode>,
                                  line: &int,
                                  table: &SymbolTable){
-
-
+    
     let mut p_vec = Vec::new();
 
     for p in params.iter() {
@@ -61,7 +59,7 @@ fn evaluate_function_declaration(name: &String,
         &None => t = Type::Void
     }
 
-    // TODO: evaluate function body
+    iterate_through_statements(&body, &table);
 
     // TODO: swap out scope for symbol table
     let fun_sym = Symbol {
@@ -70,6 +68,60 @@ fn evaluate_function_declaration(name: &String,
         definition: Definition::Function {params: p_vec, scope: None, return_type: t}
     };
     
+}
+
+fn evaluate_statement(stmt: &StatementNode, table: &SymbolTable) {
+    match stmt.Statement {
+        Statement::Block( ref vec ) => iterate_through_statements(&vec, &table),
+        Statement::VarDeclarations { ref declarations } => {
+            for decl in declarations.iter(){
+                add_var_declaration_to_table(decl, &table)
+            }
+        },
+        Statement::TypeDeclarations { ref declarations } => {
+            for decl in declarations.iter(){
+                add_type_declaration_to_table(decl, &table)
+            }
+        },
+        Statement:: ShortVariableDeclaration { ref identifer_list, ref expression_list } => {
+            // TODO: For short variable declarations need decide if we want to determine type now or in typecheck
+            return
+        },
+        Statement::If { ref init, ref condition, ref if_branch, ref else_branch } {
+            evaluate_statement(&*init, &table);
+
+           iterate_through_statements(if_branch, &table);
+
+            match else_branch {
+                &Some( ref s ) => evaluate_statement(&*s, &table),
+                &None => return
+            }
+        },
+        Statement::Loop { ref body } => iterate_through_statements(body, &table),
+        Statement::While { ref condition, ref body } => iterate_through_statements(&body, &table),
+        Statement::For { ref init, ref condition, ref post, ref body } => {
+            evaluate_statement(&*init, &table);
+            evaluate_statement(&*post, &table);
+            iterate_through_statements(&body, &table);
+        },
+        Statement::Switch {ref init, ref expr, ref body} => {
+            evaluate_statement(&*init, &table);
+            evaluate_case_clause(&body, &table);
+        },
+        _ => return
+    }
+}
+
+fn evaluate_case_clause(clauses: &Vec<CaseClause>, table: &table){
+    for clause in clauses.iter(){
+        iterate_through_statements(&clause.statements, &table)
+    }
+}
+
+fn iterate_through_statements(stmts: &Vec<StatementNode>, table: &SymbolTable) {
+    for s in stmts.iter() {
+        evaluate_statement(s, &table)
+    }
 }
 
 
