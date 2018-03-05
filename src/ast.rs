@@ -139,7 +139,6 @@ pub struct CaseClause {
     pub statements: Vec<StatementNode>,
 }
 
-
 #[derive(Debug)]
 pub enum Statement {
     Empty,
