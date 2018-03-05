@@ -43,19 +43,50 @@ fn types_are_equal(a: Type, b: Type) -> bool {
 // Adds symbol to symbol table. We need to check duplicates at this point.
 fn add_variable_symbol(identifier: String, definition: Definition::Variable(Type), scope: &SymbolTable) {
 
+    let temp = scope.symbols.get(identifier);
+
+    match temp {
+        &Some(ref var) => {
+            if var.identifier == identifier {
+                // TODO: error message with line number
+            } else {
+                let sym = Symbol { line_number: 0, identifier, definition };
+                scope.symbols.insert(identifier, sym)
+            }
+        },
+        &None => {
+            let sym = Symbol { line_number: 0, identifier, definition };
+            scope.symbols.insert(identifier, sym)
+        }
+    }
 }
 
 // Adds symbol to symbol table. We need to check duplicates at this point.
 fn add_type_symbol(identifier: String, definition: Definition::Type(Type), scope: &SymbolTable) {
+    let temp = scope.types.get(identifier);
 
+    match temp {
+        &Some(ref var) => {
+            if var.identifier == identifier {
+                // TODO: error message with line number
+            } else {
+                let sym = Symbol { line_number: 0, identifier, definition };
+                scope.types.insert(identifier, sym)
+            }
+        },
+        &None => {
+            let sym = Symbol { line_number: 0, identifier, definition };
+            scope.types.insert(identifier, sym)
+        }
+    }
 }
 
 // Creates new scope
-fn add_new_scope(return_type: Type, scope: &SymbolTable) -> &SymbolTable {
+fn add_new_scope(return_type: Type, table: &SymbolTable) -> &SymbolTable {
 
 }
 
-fn evaluate_top_level_declaration(decl: &TopLevelDeclarationNode, table: &SymbolTable){
+fn evaluate_top_level_declaration(decl: &TopLevelDeclarationNode, scope: &SymbolTable){
     match decl {
         TopLevelDeclaration::VarDeclarations { ref declarations } => {
             for var_spec in declarations.iter() {
@@ -121,7 +152,7 @@ fn evaluate_statement(stmt: &StatementNode, table: &SymbolTable) {
             // TODO: For short variable declarations need decide if we want to determine type now or in typecheck
             return
         },
-        Statement::If { ref init, ref condition, ref if_branch, ref else_branch } {
+        Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
             evaluate_statement(&*init, &table);
 
            iterate_through_statements(if_branch, &table);
