@@ -31,8 +31,49 @@ fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
 }
 
 // Looks up identifier in context. Returns type if identifier is in current or parent
-fn find_type_in_symbol_table(identifier: String, scope: &SymbolTable) -> Option(Type) {
+fn get_var_type_in_symbol_table(identifier: String, scope: &SymbolTable) -> Option(Definition::Variable(Type)) {
+    let mut current_scope: SymbolTable = scope;
 
+    while current_scope != None {
+        let temp = current_scope.symbols.get(identifier);
+
+        match temp {
+            &Some(ref sym ) => {
+                if sym.identifier == identifier {
+                    match sym.definition {
+                        Definition::Variable( ref t) => return Some(t)
+                    }
+                } else {
+                    current_scope = current_scope.parent_scope
+                }
+            },
+            &None => current_scope.parent_scope
+        }
+    }
+
+    return None
+}
+
+fn find_type_in_symbol_table(identifier: String, scope: &SymbolTable) -> Option(Symbol){
+
+    let mut current_scope: SymbolTable = scope;
+
+    while current_scope != None {
+        let temp = current_scope.types.get(identifier);
+
+        match temp {
+            &Some(ref sym ) => {
+                if sym.identifier == identifier {
+                    return Some(sym)
+                } else {
+                    current_scope = current_scope.parent_scope
+                }
+            },
+            &None => current_scope.parent_scope
+        }
+    }
+
+    return None
 }
 
 // Checks equality of two types
@@ -204,13 +245,7 @@ fn add_var_declaration_to_table(var_spec: &VarSpec, table: &SymbolTable){
     }
 
     for var in var_spec.names.iter(){
-        let sym = Symbol {
-            line_number: var_spec.line_number,
-            identifier: var,
-            definition: Definition::Variable(t)
-        };
-
-        // TODO: Add symbol to symbol table
+        add_variable_symbol(var, Definition::Variable(t), &table)
     }
 }
 
@@ -223,6 +258,9 @@ fn evaluate_type(ast_kind_node: &AstKindNode) -> Type{
                 "rune" => return Type::Base(BaseType::Rune),
                 "string" => return Type::Base(BaseType::String),
                 "bool" => return Type::Base(BaseType::Bool)
+                _ => {
+
+                }
                 //TODO see if the type exists in current defined types
             }
         },
