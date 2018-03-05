@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct SymbolTable {
-    pub parent_scope: Box<SymbolTable>,
-    pub children_scopes: Vec<SymbolTable>,
+    pub parent_scope: Option<Box<SymbolTable>>,
+    pub children_scopes: <Vec<SymbolTable>,
     pub symbols: HashMap<String, Symbol>,
 
     // TODO: On initial creation of symbol table need, to populate global space with predefined declarations (refer to page 3 of specs)
@@ -19,7 +19,7 @@ pub struct Symbol {
 pub enum Definition {
     Variable(Type),
     Type(Type),
-    Function{params: Vec<Definition>, scope: SymbolTable, return_type: Definition}
+    Function{params: Vec<Definition>, scope: SymbolTable, return_type: Type}
 }
 
 pub enum BaseType {
@@ -48,5 +48,7 @@ pub enum Type {
     // NOTE: name and base cannot be the same!!!
     // Type equality only happens if bases are the same
     DefinedType{ name: String, base: BaseType},
+    DataStructure(StructureType),
+    Void
 }
 
