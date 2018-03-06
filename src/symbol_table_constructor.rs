@@ -4,7 +4,6 @@ use std::process::exit;
 use std::collections::HashMap;
 
 pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
-
     let mut root_scope: SymbolTable = Box::new(SymbolTable {
         parent_scope: None,
         children_scopes: Vec::new(),
@@ -16,28 +15,27 @@ pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
     }
 }
 
-fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
-
+pub fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
 
 }
 
 // Looks up identifier in context. Returns type if identifier is in scope
-fn find_type(identifier: String, scope: &SymbolTable) -> Option(Type) {
+pub fn find_type(identifier: String, scope: &SymbolTable) -> Option(Type) {
 
 }
 
 // Checks equality of two types
-fn type_are_equal(a: Type, b: Type) -> bool {
+pub fn type_are_equal(a: Type, b: Type) -> bool {
 
 }
 
 // Adds symbol to symbol table. We need to check duplicates at this point.
-fn add_symbol(identifier: String, kind: Type, scope: &SymbolTable) {
+pub fn add_symbol(identifier: String, kind: Type, scope: &SymbolTable) {
 
 }
 
 // Creates new scope
-fn make_new_symbol_table(return_type: Type, scope: &SymbolTable) -> &SymbolTable {
+pub fn make_new_symbol_table(return_type: Type, scope: &SymbolTable) -> &SymbolTable {
 
 }
 

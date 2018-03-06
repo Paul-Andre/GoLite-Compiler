@@ -11,6 +11,8 @@ mod symbol_table_constructor;
 pub use ast_constructors::*;
 pub use weed::*;
 pub use pretty::*;
+pub use symbol_table::*;
+pub use typecheck::*;
 
 extern "C" {
     fn scan();

@@ -3,22 +3,75 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
-pub fn typecheck(root: &Program, symbol_table: &SymbolTable) {
+pub fn typecheck(root: &Program) {
+    let symbol_table = construct_program_symbol_table(root);
+    populate_root_scope_with_defaults(root);
 
+    for decl in &root.declarations {
+        typecheck_top_level_declaration(decl, &mut *root_scope.SymbolTable);
+    }
 }
 
 pub fn typecheck_top_level_declaration(decl: &TopLevelDeclarationNode, symbol_table: &SymbolTable) {
     match decl.top_level_declaration {
-        TopLevelDeclaration::VarDeclarations => {
-
+        TopLevelDeclaration::VarDeclarations { ref declarations } => {
+            typecheck_variable_declarations(declarations, &symbol_table);
         }
-        TopLevelDeclaration::TypeDeclarations => {
-
+        TopLevelDeclaration::TypeDeclarations { ref declarations } => {
+            typecheck_type_declarations(declarations, &symbol_table);
         }
-        TopLevelDeclaration::FunctionDeclaration => {
-
+        TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
+            typecheck_function_declaration(name, params, return_kind, body, line, table);
         }
     }
+}
+
+pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table: &SymbolTable) {
+    for spec in declarations {
+        let kinds = typecheck_expression_vec(spec.rhs, symbol_table); // 1
+
+        match spec.kind {
+            &Some(assigned_type) => {
+                for id in spec.names {
+                    add_symbol(id, assigned_type, symbol_table);
+                }
+            }
+            &None => return;
+        }
+
+        for it in identifier_list.iter().zip(kinds.iter()) {
+            let (id, exp_kind) = it;
+            let id_kind = get_type(id, symbol_table);
+            match id_kind {
+                &Some(id_kind) => {
+                    if !type_are_equal(id_kind, exp_kind) { // 3
+                        println!("Error: line {}: invalid type of expression assigned to {}.", 
+                                 stmt.line_number,
+                                 id);
+                        exit(1);
+                    }
+                }
+                &None => {
+                    add_symbol(id, exp_kind, symbol_table);
+                }
+            }
+        }
+    }
+}
+
+pub fn typecheck_type_declarations(declarations: &Vec<TypeSpec>, symbol_table: &SymbolTable) {
+    for spec in declarations {
+
+    }
+}
+
+pub fn typecheck_function_declaration((name: &String,
+                                       params: &Vec<Field>,
+                                       return_kind: &Option<Box<AstKindNode>>,
+                                       body: &Vec<StatementNode>,
+                                       line: &int,
+                                       table: &SymbolTable) {
+
 }
 
 pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
@@ -91,37 +144,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
         }
 
         Statement::VarDeclaration { ref declarations } => {
-            for spec in declarations {
-                let kinds = typecheck_expression_vec(spec.rhs, symbol_table); // 1
-
-                match spec.kind {
-                    &Some(assigned_type) => {
-                        for id in spec.names {
-                            add_symbol(id, assigned_type, symbol_table);
-                        }
-                    }
-                    &None => return;
-                }
-
-                for it in identifier_list.iter().zip(kinds.iter()) {
-                    let (id, exp_kind) = it;
-                    let id_kind = get_type(id, symbol_table);
-                    match id_kind {
-                        &Some(id_kind) => {
-                            if !type_are_equal(id_kind, exp_kind) { // 3
-                                println!("Error: line {}: invalid type of expression assigned to {}.", 
-                                         stmt.line_number,
-                                         id);
-                                exit(1);
-                            }
-                        }
-                        &None => {
-                            add_symbol(id, exp_kind, symbol_table);
-                        }
-                    }
-                }
-            }
-
+            typecheck_variable_declarations(declarations, symbol_table);
         }
 
         Statement::Assignment { ref lhs, ref rhs } => {
@@ -263,7 +286,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
             }
         }
 
-        Statement::Switch { ref init, ref expr, ref body } => {
+        Statement::Switch { ref init, ref expr, ref body } => { // DO WE START A NEW SCOPE?
             let init_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(expr, init_scope);
@@ -272,7 +295,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
             for cc in body {
                 match cc.switch_case {
                     SwitchCase::Cases(exp) => {
-                        let cc_type = typecheck_expression(exp, symbol_table);
+                        let cc_type = typecheck_expression(exp, init_scope);
                         if !type_are_equal(cc_type, exp_type) {
                             println!("Error: line {}: mismatched case type.", 
                                      cc.line_number);
@@ -288,8 +311,10 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
             }
 
         }
-        Statement::IncDec { .. } => {
+        Statement::IncDec { ref is_dec, ref expr } => {
+            let exp_type = typecheck_expression(expr);
 
+            // Resolve base type or something
         }
     }
 }
@@ -297,10 +322,10 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
 pub fn typecheck_expression(exp: &ExpressionNode, symbol_table: &SymbolTable) -> Type {
     match exp.expression {
         Expression::RawLiteral => {
-
+            // Resolve base type
         }
         Expression::Identifier => {
-
+            
         }
         Expression::UnaryOperation => {
 
