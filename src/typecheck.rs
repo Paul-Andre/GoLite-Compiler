@@ -61,7 +61,7 @@ pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table
 
 pub fn typecheck_type_declarations(declarations: &Vec<TypeSpec>, symbol_table: &SymbolTable) {
     for spec in declarations {
-
+        add_symbol(spec.name, );
     }
 }
 

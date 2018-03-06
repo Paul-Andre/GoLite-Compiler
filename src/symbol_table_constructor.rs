@@ -16,12 +16,6 @@ pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
         types: HashMap::new(),
         return_type: None
     });
-
-    populate_root_scope_with_defaults(&root_scope);
-
-    for decl in &root.declarations {
-        evaluate_top_level_declaration(decl, &mut *root_scope.SymbolTable);
-    }
 }
 
 
@@ -46,7 +40,7 @@ pub fn make_new_symbol_table(return_type: Type, scope: &SymbolTable) -> &SymbolT
 }
 
 /// Populates the symbol table with the Go defaul variables and types
-fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
+pub fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
     symbol_table::add_variable_symbol("true", Type::Base(BaseType::Bool), root_scope);
     symbol_table::add_variable_symbol("false", Type::Base(BaseType::Bool), root_scope);
     symbol_table::add_type_symbol("int", Type::Base(BaseType::Int), root_scope);
