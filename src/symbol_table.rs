@@ -5,7 +5,6 @@ pub struct SymbolTable {
     pub parent_scope: Option<Box<SymbolTable>>,
     pub children_scopes: <Vec<SymbolTable>,
     pub variables: HashMap<String, Symbol>,
-    pub types: HashMap<String, Type>,
     pub return_type: Option<Type>
 
     // TODO: On initial creation of symbol table need, to populate global space with predefined declarations (refer to page 3 of specs)
