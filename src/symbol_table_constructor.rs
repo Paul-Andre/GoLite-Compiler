@@ -1,6 +1,7 @@
+use symbol_table;
+use ast;
 use ast::*;
 use symbol_table::*;
-use std::process::exit;
 use std::collections::HashMap;
 
 /*
@@ -8,46 +9,28 @@ use std::collections::HashMap;
  ========================================= */
 
 /// Main method for constructing a symbol table from an inputted AST
-pub fn construct_program_symbol_table(root: &Program) -> *mut SymbolTable {
-    let mut root_scope: SymbolTable = Box::new(SymbolTable {
+pub fn construct_program_symbol_table(root: &Program) -> Box<SymbolTable> {
+    let mut root_scope: SymbolTable = SymbolTable {
         parent_scope: None,
-        children_scopes: Vec::new(),
         variables: HashMap::new(),
         types: HashMap::new(),
         return_type: None
-    });
-}
+    };
 
+    populate_root_scope_with_defaults(&mut root_scope);
 
-// Looks up identifier in context. Returns type if identifier is in scope
-pub fn find_type(identifier: String, scope: &SymbolTable) -> Option(Type) {
-
-}
-
-// Checks equality of two types
-pub fn type_are_equal(a: Type, b: Type) -> bool {
-
-}
-
-// Adds symbol to symbol table. We need to check duplicates at this point.
-pub fn add_symbol(identifier: String, kind: Type, scope: &SymbolTable) {
-
-}
-
-// Creates new scope
-pub fn make_new_symbol_table(return_type: Type, scope: &SymbolTable) -> &SymbolTable {
-
+    return Box::new(root_scope)
 }
 
 /// Populates the symbol table with the Go defaul variables and types
-pub fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
-    symbol_table::add_variable_symbol("true", Type::Base(BaseType::Bool), root_scope);
-    symbol_table::add_variable_symbol("false", Type::Base(BaseType::Bool), root_scope);
-    symbol_table::add_type_symbol("int", Type::Base(BaseType::Int), root_scope);
-    symbol_table::add_type_symbol("float64", Type::Base(BaseType::Float), root_scope);
-    symbol_table::add_type_symbol("rune", Type::Base(BaseType::Rune), root_scope);
-    symbol_table::add_type_symbol("bool", Type::Base(BaseType::Bool), root_scope);
-    symbol_table::add_type_symbol("string", Type::Base(BaseType::String), root_scope);
+pub fn populate_root_scope_with_defaults<'a>(root_scope: & mut SymbolTable<'a>){
+    symbol_table::add_variable_symbol(String::from("true"), Definition::Variable(Type::Base(BaseType::Bool)), root_scope);
+    symbol_table::add_variable_symbol(String::from("false"), Definition::Variable(Type::Base(BaseType::Bool)), root_scope);
+    symbol_table::add_type_symbol(String::from("int"), Definition::Type(Type::Base(BaseType::Int)), root_scope);
+    symbol_table::add_type_symbol(String::from("float64"), Definition::Type(Type::Base(BaseType::Float)), root_scope);
+    symbol_table::add_type_symbol(String::from("rune"), Definition::Type(Type::Base(BaseType::Rune)), root_scope);
+    symbol_table::add_type_symbol(String::from("bool"), Definition::Type(Type::Base(BaseType::Bool)), root_scope);
+    symbol_table::add_type_symbol(String::from("string"), Definition::Type(Type::Base(BaseType::String)), root_scope);
 }
 
 /*
@@ -55,169 +38,168 @@ pub fn populate_root_scope_with_defaults(root_scope: &SymbolTable){
  ========================================= */
 
 /// Evaluates a top level declaration in order to add the definition to the symbol table
-fn evaluate_top_level_declaration(decl: &TopLevelDeclarationNode, scope: &SymbolTable){
-    match decl {
+fn evaluate_top_level_declaration<'a>(decl: &TopLevelDeclarationNode, table: &'a mut SymbolTable<'a>){
+    match decl.top_level_declaration {
         TopLevelDeclaration::VarDeclarations { ref declarations } => {
             for var_spec in declarations.iter() {
-                add_var_declaration_to_table(var_spec, &table)
+                add_var_declaration_to_table(var_spec, table)
             }
         },
         TopLevelDeclaration::TypeDeclarations { ref declarations } => {
             for type_spec in declarations.iter() {
-                add_type_declaration_to_table(type_spec)
+                add_type_declaration_to_table(type_spec, &table)
             }
         },
-        TopLevelDeclaration::FunctionDeclarations { ref name, ref parameters, ref return_kind, ref body } => {
-            evaluate_function_declaration(&name, &parameters, &return_kind, &body, &decl.line_number, &table)
+        TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
+            evaluate_function_declaration(&name, &parameters, &return_kind, &body, &decl.line_number, table)
         }
     }
 }
 
 /// Evaluates a function declaration by adding the identifier + params + return kind to
 /// function table and then evaluating the inner scope
-fn evaluate_function_declaration(name: &String,
-                                 params: &Vec<Field>,
+fn evaluate_function_declaration<'a>(name: &String,
+                                 params: &Vec<ast::Field>,
                                  return_kind: &Option<Box<AstKindNode>>,
                                  body: &Vec<StatementNode>,
-                                 line: &int,
-                                 table: &SymbolTable){
+                                 line: &u32,
+                                 table: &'a mut SymbolTable<'a>){
     
     let mut p_vec = Vec::new();
 
     for p in params.iter() {
-        p_vec.push(Definition::Variable(evaluate_type(*p.kind)))
+        p_vec.push(Definition::Variable(evaluate_type(&*p.kind)))
     }
 
-    let mut t: Type;
+    let t: Type;
 
     match return_kind {
         &Some(ref k) => t = evaluate_type(&*k),
         &None => t = Type::Void
     }
 
-    iterate_through_statements(&body, &table);
+    iterate_through_statements(&body, table);
 
     // TODO: swap out scope for symbol table
-    let fun_sym = Symbol {
-        line_number: line,
-        identifier: name,
-        definition: Definition::Function {params: p_vec, scope: None, return_type: t}
-    };
+//    let fun_sym = Symbol {
+//        line_number: line,
+//        identifier: name,
+//        definition: Definition::Function {params: p_vec, scope: None, return_type: t}
+//    };
+
+    // TODO: add symbol to symbol table
     
 }
 
-fn evaluate_statement(stmt: &StatementNode, table: &SymbolTable) {
-    match stmt.Statement {
-        Statement::Block( ref vec ) => iterate_through_statements(&vec, &table),
+fn evaluate_statement<'a>(stmt: &StatementNode, table: & mut SymbolTable<'a>) {
+    match stmt.statement {
+        Statement::Block( ref vec ) => iterate_through_statements(&vec, table),
         Statement::VarDeclarations { ref declarations } => {
             for decl in declarations.iter(){
-                add_var_declaration_to_table(decl, &table)
+                add_var_declaration_to_table(decl, table)
             }
         },
         Statement::TypeDeclarations { ref declarations } => {
             for decl in declarations.iter(){
-                add_type_declaration_to_table(decl, &table)
+                add_type_declaration_to_table(decl, table)
             }
         },
-        Statement:: ShortVariableDeclaration { ref identifer_list, ref expression_list } => {
+        Statement:: ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
             // TODO: For short variable declarations need decide if we want to determine type now or in typecheck
             return
         },
         Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
-            evaluate_statement(&*init, &table);
+            evaluate_statement(&*init, table);
 
-           iterate_through_statements(if_branch, &table);
+            iterate_through_statements(if_branch, table);
 
             match else_branch {
-                &Some( ref s ) => evaluate_statement(&*s, &table),
+                &Some( ref s ) => evaluate_statement(&*s, table),
                 &None => return
             }
         },
-        Statement::Loop { ref body } => iterate_through_statements(body, &table),
-        Statement::While { ref condition, ref body } => iterate_through_statements(&body, &table),
+        Statement::Loop { ref body } => iterate_through_statements(body, table),
+        Statement::While { ref condition, ref body } => iterate_through_statements(&body, table),
         Statement::For { ref init, ref condition, ref post, ref body } => {
-            evaluate_statement(&*init, &table);
-            evaluate_statement(&*post, &table);
-            iterate_through_statements(&body, &table);
+            evaluate_statement(&*init, table);
+            evaluate_statement(&*post, table);
+            iterate_through_statements(&body, table);
         },
         Statement::Switch {ref init, ref expr, ref body} => {
-            evaluate_statement(&*init, &table);
-            evaluate_case_clause(&body, &table);
+            evaluate_statement(&*init, table);
+            evaluate_case_clause(&body, table);
         },
         _ => return
     }
 }
 
-fn evaluate_case_clause(clauses: &Vec<CaseClause>, table: &table){
+fn evaluate_case_clause<'a>(clauses: &Vec<CaseClause>, table: & mut SymbolTable<'a>){
     for clause in clauses.iter(){
-        iterate_through_statements(&clause.statements, &table)
+        iterate_through_statements(&clause.statements, table)
     }
 }
 
-fn iterate_through_statements(stmts: &Vec<StatementNode>, table: &SymbolTable) {
+fn iterate_through_statements<'a>(stmts: &Vec<StatementNode>, table: & mut SymbolTable<'a>) {
     for s in stmts.iter() {
-        evaluate_statement(s, &table)
+        evaluate_statement(s, table)
     }
 }
 
 
-fn add_var_declaration_to_table(var_spec: &VarSpec, table: &SymbolTable){
+fn add_var_declaration_to_table<'a>(var_spec: &VarSpec, table: & mut SymbolTable<'a>){
 
     let t: Type;
 
     match var_spec.kind {
-        &Some(ref k) => {
+        Some(ref k) => {
             t = evaluate_type(k)
         },
-        &None => {
+        None => {
             // TODO: determine if we want to evaluate RHS or put temporary void type until typechecking
+//            t = evaluate_type(k)
+            return
         }
     }
 
     for var in var_spec.names.iter(){
-        symbol_table::add_variable_symbol(var, Definition::Variable(t), &table)
+        symbol_table::add_variable_symbol(var.clone(), Definition::Variable(t.clone()), table)
     }
 }
 
-fn evaluate_type(ast_kind_node: &AstKindNode) -> Type{
-    match *ast_kind_node.ast_kind {
-        AstKind::Identifier { ref name } => {
-            match name {
-                "int" => return Type::Base(BaseType::Int),
-                "float64" => return Type::Base(BaseType::Float),
-                "rune" => return Type::Base(BaseType::Rune),
-                "string" => return Type::Base(BaseType::String),
-                "bool" => return Type::Base(BaseType::Bool),
-                _ => {
+fn add_type_declaration_to_table(type_sepc: &TypeSpec, table: &SymbolTable){
 
-                }
-                //TODO see if the type exists in current defined types
-            }
+}
+
+fn evaluate_type(ast_kind_node: &AstKindNode) -> Type{
+    match ast_kind_node.ast_kind {
+        AstKind::Identifier { ref name } => {
+            // TODO: add look up and replace the following
+            return Type::DataStructure(Box::new(StructureType::Slice(Type::Base(BaseType::Bool))))
         },
         AstKind::Slice { ref base } => {
-            let t = evaluate_type(*base.ast_kind);
-            return Type::DataStructure(StructureType::Slice(t))
+            let t = evaluate_type(&base);
+            return Type::DataStructure(Box::new(StructureType::Slice(t)))
         },
         AstKind::Array { ref base, ref size } => {
-            let t = evaluate_type(*base.ast_kind);
-            return Type::DataStructure(StructureType::Array(t))
+            let t = evaluate_type(&base);
+            return Type::DataStructure(Box::new(StructureType::Array(t)))
         },
         AstKind::Struct { ref fields } => {
 
-            let mut vec = Vec::new();
+            let mut vec: Vec<symbol_table::Field> = Vec::new();
 
             for f in fields.iter() {
-                let t = evaluate_type(*f.ast_kind);
+                let t = evaluate_type(&*f.kind);
 
                 for id in f.identifiers.iter() {
                     let field = symbol_table::Field{
-                        name: id,
-                        _type: t
+                        name: id.clone(),
+                        _type: t.clone()
                     };
-                    vec.push(&field)
+                    vec.push(field)
                 }
             }
-            return Type::DataStructure(StructureType::Struct(vec))
+            return Type::DataStructure(Box::new(StructureType::Struct(vec)))
         }
     }
 }

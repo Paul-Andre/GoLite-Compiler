@@ -12,7 +12,7 @@ pub use ast_constructors::*;
 pub use weed::*;
 pub use pretty::*;
 pub use symbol_table::*;
-pub use typecheck::*;
+//pub use typecheck::*;
 
 extern "C" {
     fn scan();

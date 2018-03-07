@@ -5,7 +5,6 @@ use std::collections::HashMap;
 
 pub fn typecheck(root: &Program) {
     let symbol_table = construct_program_symbol_table(root);
-    populate_root_scope_with_defaults(root);
 
     for decl in &root.declarations {
         typecheck_top_level_declaration(decl, &mut *root_scope.SymbolTable);
@@ -65,7 +64,7 @@ pub fn typecheck_type_declarations(declarations: &Vec<TypeSpec>, symbol_table: &
     }
 }
 
-pub fn typecheck_function_declaration((name: &String,
+pub fn typecheck_function_declaration(name: &String,
                                        params: &Vec<Field>,
                                        return_kind: &Option<Box<AstKindNode>>,
                                        body: &Vec<StatementNode>,
