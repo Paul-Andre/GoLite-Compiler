@@ -49,7 +49,8 @@ impl<'a> SymbolTable<'a>{
 pub struct Symbol {
     pub line_number: u32,
     pub identifier: String,
-    pub declaration: Declaration
+    pub declaration: Declaration,
+    pub is_constant: bool
 }
 
 
