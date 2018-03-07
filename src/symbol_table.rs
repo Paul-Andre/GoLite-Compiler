@@ -3,7 +3,7 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub struct SymbolTable {
     pub parent_scope: Option<Box<SymbolTable>>,
-    pub children_scopes: <Vec<SymbolTable>,
+    pub children_scopes: <Vec<SymbolTable>>,
     pub variables: HashMap<String, Symbol>,
     pub return_type: Option<Type>
 

@@ -22,6 +22,7 @@ pub fn typecheck_top_level_declaration(decl: &TopLevelDeclarationNode, symbol_ta
         }
         TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
             typecheck_function_declaration(name, params, return_kind, body, line, table);
+
         }
     }
 }
