@@ -116,8 +116,6 @@ StatementNode *make_inc_dec_statement(uint32_t, int, ExpressionNode*);
 StatementNode *make_print_statement(uint32_t, ExpressionNodeVec*);
 StatementNode *make_println_statement(uint32_t, ExpressionNodeVec*);
 StatementNode *make_if_statement(uint32_t, StatementNode*, ExpressionNode*, StatementNodeVec*, StatementNode*);
-StatementNode *make_loop_statement(uint32_t, StatementNodeVec*);
-StatementNode *make_while_statement(uint32_t, ExpressionNode*, StatementNodeVec*);
 StatementNode *make_for_statement(uint32_t, StatementNode*, ExpressionNode*, StatementNode*, StatementNodeVec*);
 StatementNode *make_switch_statement(uint32_t, StatementNode*, ExpressionNode*, CaseClauseVec*);
 StatementNode *make_break_statement(uint32_t);

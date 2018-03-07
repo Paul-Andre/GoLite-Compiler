@@ -618,8 +618,12 @@ CaseClause: tCASE expression_list ':' StatementList    { $$ = make_case_clause(y
     ;
 
 
-ForStmt: tFOR Block                         { $$ = make_loop_statement(yylineno, $2); }
-    | tFOR Expression Block                 { $$ = make_while_statement(yylineno, $2, $3); }
+ForStmt: tFOR Block                         {
+       $$ = make_for_statement(yylineno,make_empty_statement(yylineno),NULL,make_empty_statement(yylineno), $2);
+       }
+    | tFOR Expression Block                 {
+       $$ = make_for_statement(yylineno,make_empty_statement(yylineno),$2,make_empty_statement(yylineno), $3);
+        }
     | tFOR SimpleStmt ';' Expression ';' SimpleStmt Block
         { $$ = make_for_statement(yylineno, $2, $4, $6, $7); }
     | tFOR SimpleStmt ';' ';' SimpleStmt Block

@@ -336,18 +336,6 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
                 &None => return,
             }
         },
-        Statement::Loop { ref body } => {
-            for stmt in body.iter() {
-                traverse_stmt_for_invalid_blank(stmt)
-            }
-        },
-        Statement::While { ref condition, ref body } => {
-            traverse_exp_for_invalid_blank(&*condition);
-
-            for stmt in body.iter() {
-                traverse_stmt_for_invalid_blank(stmt)
-            }
-        },
         Statement::For { ref init, ref condition, ref post, ref body } => {
             traverse_stmt_for_invalid_blank(&*init);
             match condition {
