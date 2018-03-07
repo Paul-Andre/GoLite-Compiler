@@ -1,4 +1,3 @@
-
 pub type DefinitionId = usize;
 
 
@@ -14,6 +13,7 @@ pub enum BaseKind {
 
 #[derive(Debug,Clone)]
 pub enum Kind {
+    Undefined,
     Base(BaseKind),
     Defined(DefinitionId),
     Array(Box<Kind>,u32),
