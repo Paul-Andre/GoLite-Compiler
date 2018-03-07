@@ -1,65 +1,40 @@
 use std::collections::HashMap;
 use std::process::exit;
+use kind::Kind;
 
 pub struct SymbolTable<'a> {
     pub parent_scope: Option<&'a SymbolTable<'a>>,
-    pub variables: HashMap<String, Symbol>,
-    pub types: HashMap<String, Symbol>,
-    pub return_type: Option<Type>
+    pub symbols: HashMap<String, Symbol>,
+    pub return_type: Option<Type>,
+    pub in_function: bool
 }
 
 impl struct SymbolTable<'a>{
-    
+    fn get_symbol<'b>(&'b Self, s: &str) -> Option<&'b Symbol>{
+
+    }
+    fn is_in_current_scope<'b>(&'b Self, s: &str) -> bool {
+
+    }
+    fn new_scope<'b>(&'b Self) -> &'a SymbolTable<'b> {
+
+    }
 }
 
 
 pub struct Symbol {
     pub line_number: u32,
     pub identifier: String,
-    pub definition: Definition
+    pub declaration: Declaration
 }
 
 
-#[derive(Clone)]
-pub enum Definition {
-    Variable(Type),
-    Type(Type),
-    Function{params: Vec<Definition>, return_type: Type}
+pub enum Declaration {
+    Variable(Kind),
+    Type(Kind),
+    Function{params: Vec<Kind>, return_type: Option<Kind>}
 }
 
-#[derive(Clone)]
-pub enum BaseType {
-    Int = 0,
-    Float = 1,
-    Rune = 2,
-    String = 3,
-    Bool = 4
-}
-
-#[derive(Clone)]
-pub enum StructureType {
-    Array(Type),
-    Struct(Vec<Field>),
-    Slice(Type),
-}
-
-#[derive(Clone)]
-pub struct Field {
-    pub name: String,
-    pub _type: Type
-}
-
-#[derive(Clone)]
-pub enum Type {
-    Base(BaseType),
-
-    // TODO: When evaluating base type, will have to traverse table if referencing another defined type
-    // NOTE: name and base cannot be the same!!!
-    // Type equality only happens if bases are the same
-    DefinedType{ name: String, base: BaseType},
-    DataStructure(Box<StructureType>),
-    Void
-}
 
 fn find_variable_definition<'a>(identifier: String, scope: &'a SymbolTable<'a>) -> Option<&'a Symbol>{
 
