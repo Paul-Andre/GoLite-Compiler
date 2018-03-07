@@ -19,6 +19,7 @@ pub enum Kind {
     Array(Box<Kind>,u32),
     Slice(Box<Kind>),
     Struct(Vec<Field>),
+    Func{params: Vec<Kind>, return_kind: Box<Kind>}
 }
 
 #[derive(Debug,Clone)]
@@ -52,6 +53,9 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
                         are_identical(&a_field.kind,&b_field.kind)
                 })
         },
+        (&Func{..}, &Func{..}) => {
+            panic!("Cannot check if function types are identical; Should not happen.");
+        }
         _ => false
     }
 }

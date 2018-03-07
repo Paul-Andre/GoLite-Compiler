@@ -56,5 +56,4 @@ pub struct Symbol {
 pub enum Declaration {
     Variable(Kind),
     Type(Kind),
-    Function{params: Vec<Kind>, return_type: Option<Kind>}
 }
