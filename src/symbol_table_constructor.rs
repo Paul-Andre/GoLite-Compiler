@@ -9,18 +9,6 @@ use std::collections::HashMap;
  ========================================= */
 
 /// Main method for constructing a symbol table from an inputted AST
-pub fn construct_program_symbol_table(root: &Program) -> Box<SymbolTable> {
-    let mut root_scope: SymbolTable = SymbolTable {
-        parent_scope: None,
-        variables: HashMap::new(),
-        types: HashMap::new(),
-        return_type: None
-    };
-
-    populate_root_scope_with_defaults(&mut root_scope);
-
-    return Box::new(root_scope)
-}
 
 /// Populates the symbol table with the Go defaul variables and types
 pub fn populate_root_scope_with_defaults<'a>(root_scope: & mut SymbolTable<'a>){

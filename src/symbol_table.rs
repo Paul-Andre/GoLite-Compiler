@@ -43,6 +43,9 @@ impl<'a> SymbolTable<'a>{
             in_function: self.in_function
         }
     }
+    fn add_symbol(&'b self, id: String, kind: Kind) {
+
+    }
 }
 
 

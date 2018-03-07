@@ -1,4 +1,5 @@
 use ast::*;
+use kind::*;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
@@ -165,7 +166,7 @@ pub extern "C" fn make_identifier_expression(line: u32, string: *const c_char) -
 pub extern "C" fn make_literal_expression(
     line: u32,
     string: *const c_char,
-    kind: BasicKind,
+    kind: BaseKind,
 ) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
         line_number: line,

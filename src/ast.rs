@@ -1,17 +1,4 @@
-#[derive(Debug)]
-pub enum Kind {
-    Undefined,
-    Basic(BasicKind),
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum BasicKind {
-    Int = 0,
-    Float = 1,
-    Rune = 2,
-    String = 3,
-}
+use kind::*;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

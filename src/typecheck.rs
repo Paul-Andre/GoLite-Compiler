@@ -3,40 +3,55 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
+// Imported from symbol_table_constructors
+pub fn construct_program_symbol_table(root: &Program) -> Box<SymbolTable> {
+    let mut root_scope: SymbolTable = SymbolTable {
+        parent_scope: None,
+        variables: HashMap::new(),
+        types: HashMap::new(),
+        return_type: None
+    };
+
+    //populate_root_scope_with_defaults(&mut root_scope);
+
+    return Box::new(root_scope)
+}
+// ----
+
 pub fn typecheck(root: &Program) {
-    let symbol_table = construct_program_symbol_table(root);
+    let mut symbol_table = construct_program_symbol_table(root);
 
     for decl in &root.declarations {
-        typecheck_top_level_declaration(decl, &mut *root_scope.SymbolTable);
+        typecheck_top_level_declaration(decl, symbol_table);
     }
 }
 
-pub fn typecheck_top_level_declaration(decl: &TopLevelDeclarationNode, symbol_table: &SymbolTable) {
+pub fn typecheck_top_level_declaration(decl: &TopLevelDeclarationNode, symbol_table: &mut SymbolTable) {
     match decl.top_level_declaration {
         TopLevelDeclaration::VarDeclarations { ref declarations } => {
             typecheck_variable_declarations(declarations, &symbol_table);
         }
-        TopLevelDeclaration::TypeDeclarations { ref declarations } => {
+        TopLevelDeclaration::KindDeclarations { ref declarations } => {
             typecheck_type_declarations(declarations, &symbol_table);
         }
         TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
-            typecheck_function_declaration(name, params, return_kind, body, line, table);
+            typecheck_function_declaration(name, parameters, return_kind, body, decl.line_number, symbol_table);
 
         }
     }
 }
 
-pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table: &SymbolTable) {
+pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table: &mut SymbolTable) {
     for spec in declarations {
         let kinds = typecheck_expression_vec(spec.rhs, symbol_table); // 1
 
         match spec.kind {
             &Some(assigned_type) => {
                 for id in spec.names {
-                    add_symbol(id, assigned_type, symbol_table);
+                    symbol_table.add_symbol(id, assigned_type);
                 }
             }
-            &None => return;
+            &None => {},
         }
 
         for it in identifier_list.iter().zip(kinds.iter()) {
@@ -59,7 +74,7 @@ pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table
     }
 }
 
-pub fn typecheck_type_declarations(declarations: &Vec<TypeSpec>, symbol_table: &SymbolTable) {
+pub fn typecheck_type_declarations(declarations: &Vec<KindSpec>, symbol_table: &mut SymbolTable) {
     for spec in declarations {
         add_symbol(spec.name, );
     }
@@ -70,15 +85,15 @@ pub fn typecheck_function_declaration(name: &String,
                                        return_kind: &Option<Box<AstKindNode>>,
                                        body: &Vec<StatementNode>,
                                        line: &int,
-                                       table: &SymbolTable) {
+                                       table: &mut SymbolTable) {
 
 }
 
-pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
+pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &mut SymbolTable) {
     match stmt.statement {
-        Statement::Empty => return;
-        Statement::Break => return;
-        Statement::Continue => return;
+        Statement::Empty => {},
+        Statement::Break => {},
+        Statement::Continue => {},
         Statement::Expression(exp) => {
             typecheck_expression(exp);
         }
@@ -97,7 +112,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
                     match symbol_table.return_type {
                         &Some { ref t } => {
                             match t {
-                                Void => return;
+                                Void => {},
                                 _ => {
                                     println!("Error: line {}: invalid return type.", stmt.line_number);
                                     exit(1);
@@ -176,8 +191,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
 
             if !is_addressable(lhs_kind) {
                  println!("Error: line {}: unadressable lvalue.", 
-                          stmt.line_number,
-                          count);
+                          stmt.line_number);
                  exit(1);
             }
 
@@ -229,7 +243,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
             let new_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
             let exp_type = typecheck_expression(condition, symbol_table);
             
-            // how the hell do I compare a Type with bool?
+            // how the hell do I compare a Kind with bool?
             if !type_are_equal(exp_type, fix_me) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
@@ -250,7 +264,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
             let exp_type = typecheck_expression(condition, init_scope);
             typecheck_statement(post, init_scope);
             
-            // how the hell do I compare a Type with bool?
+            // how the hell do I compare a Kind with bool?
             if !type_are_equal(exp_type, fix_me) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
@@ -268,7 +282,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(condition, init_scope);
             
-            // how the hell do I compare a Type with bool?
+            // how the hell do I compare a Kind with bool?
             if !type_are_equal(exp_type, fix_me) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
@@ -282,7 +296,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
 
             match else_branch {
                 &Some(stmt) => typecheck_statement(stmt, init_scope),
-                &None => return;
+                &None => {},
             }
         }
 
@@ -291,7 +305,6 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(expr, init_scope);
 
-            let new_scope = make_new_symbol_table(init_scope.return_type, init_scope);
             for cc in body {
                 match cc.switch_case {
                     SwitchCase::Cases(exp) => {
@@ -302,11 +315,12 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
                             exit(1);
                         }
                     }
-                    SwitchCase::Default => return;
+                    SwitchCase::Default => {},
                 }
 
                 for stmt in cc.statements {
-                    typecheck_statement(stmt, 
+                    let new_scope = make_new_symbol_table(init_scope.return_type, init_scope);
+                    typecheck_statement(stmt, new_scope);
                 }
             }
 
@@ -319,54 +333,68 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &SymbolTable) {
     }
 }
 
-pub fn typecheck_expression(exp: &ExpressionNode, symbol_table: &SymbolTable) -> Type {
+pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> Kind {
     match exp.expression {
         Expression::RawLiteral => {
-            // Resolve base type
+            return exp.kind
         }
-        Expression::Identifier => {
-            
+        Expression::Identifier { ref name } => {
+            let symbol = symbol_table.get_symbol(name);
+            match symbol {
+                &Some(symbol) => {
+                    match symbol.declaration {
+                        Declaration::Variable(ref kind) => {
+                            exp.kind = kind.clone();
+                            kind.clone()
+                        }
+                        Declaration::Type(ref kind) => {
+                            // error
+                        }
+                    }
+                }
+                &None => {},// error ,
+            }
         }
-        Expression::UnaryOperation => {
+        Expression::UnaryOperation { ref op, ref rhs } => {
+        }
+        Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
 
         }
-        Expression::BinaryOperation => {
+        Expression::FunctionCall { ref primary, ref arguments } => {
 
         }
-        Expression::FunctionCall => {
+        Expression::Index { ref primary, ref index } => {
 
         }
-        Expression::Index => {
+        Expression::Selector { ref primary, ref name } => {
 
         }
-        Expression::Selector => {
+        Expression::Append { ref lhs, ref rhs } => {
 
         }
-        Expression::Append => {
-
-        }
-        Expression::TypeCast => {
+        Expression::TypeCast { ref expr } => {
 
         }
     }
 }
 
 pub fn typecheck_expression_vec(exprs: &Vec<ExpressionNode>, 
-                                 symbol_table: &SymbolTable) -> Vec<Type> {
+                                 symbol_table: &mut SymbolTable) -> Vec<Kind> {
     for exp in exprs.iter() {
         // Do something
     }
 }
 
 // Checks if a type is addressable
-pub fn is_adressable(kind: Type) -> bool {
+pub fn is_adressable(kind: Kind) -> bool {
 
 }
 
-pub fn get_type_binary_op(a: Type, b: Type, op: BinaryOperator) -> Option<Type> {
+// Need also to check if kinds are valid for op
+pub fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator) -> Option<Kind> {
 
 }
 
-pub fn get_type_unary_op(a: Type, op: UnaryOperator) -> Option<Type> {
+pub fn get_kind_unary_op(a: Kind, op: UnaryOperator) -> Option<Kind> {
 
 }
