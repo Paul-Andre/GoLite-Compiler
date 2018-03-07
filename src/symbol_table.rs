@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::process::exit;
 use kind::Kind;
+use kind::BaseKind;
 
 pub struct SymbolTable<'a> {
     pub parent_scope: Option<&'a SymbolTable<'a>>,
@@ -19,11 +20,7 @@ impl<'a> SymbolTable<'a>{
 
             match temp {
                 Some(ref sym ) => {
-                    if &sym.identifier == identifier {
                         return Some(sym)
-                    } else {
-                        current_scope = x.parent_scope
-                    }
                 },
                 None => current_scope = x.parent_scope
             }
@@ -51,12 +48,54 @@ impl<'a> SymbolTable<'a>{
 
 pub struct Symbol {
     pub line_number: u32,
-    pub identifier: String,
-    pub declaration: Declaration
+    pub declaration: Declaration,
 }
 
 
 pub enum Declaration {
     Variable(Kind),
+    Constant(Kind),
     Type(Kind),
+}
+
+
+/// Populates the symbol table with the Go defaul variables and types
+pub fn create_root_symbol_table<'a>() -> SymbolTable<'a>{
+    let mut root_scope = SymbolTable{
+        parent_scope: None,
+        symbols: HashMap::new(),
+        return_type: None,
+        in_function: false
+    };
+
+    root_scope.symbols.insert("true".to_string(), Symbol{
+        line_number: 0,
+        declaration: Declaration::Constant(Kind::Base(BaseKind::Bool))
+    });
+    root_scope.symbols.insert("false".to_string(), Symbol{
+        line_number: 0,
+        declaration: Declaration::Constant(Kind::Base(BaseKind::Bool))
+    });
+
+    root_scope.symbols.insert("int".to_string(), Symbol{
+        line_number: 0,
+        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+    });
+    root_scope.symbols.insert("float64".to_string(), Symbol{
+        line_number: 0,
+        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+    });
+    root_scope.symbols.insert("rune".to_string(), Symbol{
+        line_number: 0,
+        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+    });
+    root_scope.symbols.insert("bool".to_string(), Symbol{
+        line_number: 0,
+        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+    });
+    root_scope.symbols.insert("string".to_string(), Symbol{
+        line_number: 0,
+        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+    });
+    return root_scope;
 }
