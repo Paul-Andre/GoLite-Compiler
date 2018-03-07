@@ -5,12 +5,14 @@ mod ast;
 mod ast_constructors;
 mod weed;
 mod pretty;
+mod kind;
 //mod symbol_table;
 //mod symbol_table_constructor;
 
 pub use ast_constructors::*;
 pub use weed::*;
 pub use pretty::*;
+//pub use symbol_table::*;
 //pub use symbol_table::*;
 //pub use typecheck::*;
 
