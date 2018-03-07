@@ -6,6 +6,8 @@ mod ast_constructors;
 mod weed;
 mod pretty;
 mod kind;
+mod symbol_table;
+
 pub use ast_constructors::*;
 pub use weed::*;
 pub use pretty::*;
