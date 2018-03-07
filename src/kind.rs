@@ -1,6 +1,8 @@
 
 pub type DefinitionId = usize;
 
+
+#[repr(C)]
 #[derive(Debug,Copy,Clone,Eq,PartialEq)]
 pub enum BaseKind {
     Int = 0,

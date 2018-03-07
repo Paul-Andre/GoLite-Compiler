@@ -1,28 +1,33 @@
 use std::collections::HashMap;
+use std::process::exit;
 
-#[derive(Debug)]
-pub struct SymbolTable {
-    pub parent_scope: Option<Box<SymbolTable>>,
-    pub children_scopes: <Vec<SymbolTable>,
+pub struct SymbolTable<'a> {
+    pub parent_scope: Option<&'a SymbolTable<'a>>,
     pub variables: HashMap<String, Symbol>,
+    pub types: HashMap<String, Symbol>,
     pub return_type: Option<Type>
-
-    // TODO: On initial creation of symbol table need, to populate global space with predefined declarations (refer to page 3 of specs)
 }
 
-#[derive(Debug)]
+impl struct SymbolTable<'a>{
+    
+}
+
+
 pub struct Symbol {
     pub line_number: u32,
     pub identifier: String,
     pub definition: Definition
 }
 
+
+#[derive(Clone)]
 pub enum Definition {
     Variable(Type),
     Type(Type),
-    Function{params: Vec<Definition>, scope: SymbolTable, return_type: Type}
+    Function{params: Vec<Definition>, return_type: Type}
 }
 
+#[derive(Clone)]
 pub enum BaseType {
     Int = 0,
     Float = 1,
@@ -31,17 +36,20 @@ pub enum BaseType {
     Bool = 4
 }
 
+#[derive(Clone)]
 pub enum StructureType {
     Array(Type),
     Struct(Vec<Field>),
     Slice(Type),
 }
 
+#[derive(Clone)]
 pub struct Field {
-    name: String,
-    _type: Type
+    pub name: String,
+    pub _type: Type
 }
 
+#[derive(Clone)]
 pub enum Type {
     Base(BaseType),
 
@@ -49,48 +57,48 @@ pub enum Type {
     // NOTE: name and base cannot be the same!!!
     // Type equality only happens if bases are the same
     DefinedType{ name: String, base: BaseType},
-    DataStructure(StructureType),
+    DataStructure(Box<StructureType>),
     Void
 }
 
-fn find_variable_definition(identifier: String, scope: &SymbolTable) -> Option(Symbol){
+fn find_variable_definition<'a>(identifier: String, scope: &'a SymbolTable<'a>) -> Option<&'a Symbol>{
 
-    let mut current_scope: SymbolTable = scope;
+    let mut current_scope = Some(scope);
 
-    while current_scope != None {
-        let temp = current_scope.variables.get(identifier);
+    while let Some(x) = current_scope {
+        let temp = x.variables.get(&identifier);
 
         match temp {
-            &Some(ref sym ) => {
+            Some(ref sym ) => {
                 if sym.identifier == identifier {
                     return Some(sym)
                 } else {
-                    current_scope = current_scope.parent_scope
+                    current_scope = x.parent_scope
                 }
             },
-            &None => current_scope.parent_scope
+            None => current_scope = x.parent_scope
         }
     }
 
     return None
 }
 
-fn find_type_definition(identifier: String, scope: &SymbolTable) -> Option(Symbol){
+fn find_type_definition<'a>(identifier: String, scope: &'a SymbolTable<'a>) -> Option<&'a Symbol>{
 
-    let mut current_scope: SymbolTable = scope;
+    let mut current_scope = Some(scope);
 
-    while current_scope != None {
-        let temp = current_scope.types.get(identifier);
+    while let Some(x) = current_scope {
+        let temp = x.types.get(&identifier);
 
         match temp {
-            &Some(ref sym ) => {
+            Some(ref sym ) => {
                 if sym.identifier == identifier {
                     return Some(sym)
                 } else {
-                    current_scope = current_scope.parent_scope
+                    current_scope = x.parent_scope
                 }
             },
-            &None => current_scope.parent_scope
+            None => current_scope = x.parent_scope
         }
     }
 
@@ -98,23 +106,28 @@ fn find_type_definition(identifier: String, scope: &SymbolTable) -> Option(Symbo
 }
 
 // Looks up identifier in context. Returns type if identifier is in current or parent
-fn get_var_type(identifier: String, scope: &SymbolTable) -> Option(Definition::Variable(Type)) {
-    let mut current_scope: SymbolTable = scope;
+fn get_var_type<'a>(identifier: String, scope: &'a SymbolTable<'a>) -> Option<&Type> {
+    let mut current_scope = Some(scope);
 
-    while current_scope != None {
-        let temp = current_scope.variables.get(identifier);
+    while let Some(x) = current_scope {
+        let var = x.variables.get(&identifier);
 
-        match temp {
-            &Some(ref sym ) => {
+        match var {
+            Some(ref sym) => {
                 if sym.identifier == identifier {
                     match sym.definition {
-                        Definition::Variable( ref t) => return Some(t)
+                        Definition::Variable(ref t) => return Some(t),
+                        _ => {
+                            eprintln!("Error: trying to get var type on a type definition");
+                            exit(1);
+                        }
                     }
+
                 } else {
-                    current_scope = current_scope.parent_scope
+                    current_scope = x.parent_scope
                 }
             },
-            &None => current_scope.parent_scope
+            None => current_scope = x.parent_scope
         }
     }
 
@@ -122,52 +135,56 @@ fn get_var_type(identifier: String, scope: &SymbolTable) -> Option(Definition::V
 }
 
 // Adds symbol to symbol table. We need to check duplicates at this point.
-fn add_variable_symbol(identifier: String, definition: Definition::Variable(Type), scope: &SymbolTable) {
+pub fn add_variable_symbol<'a>(identifier: String,
+                       definition: Definition, scope: &mut SymbolTable<'a>) {
 
-    let temp = scope.variables.get(identifier);
+    let temp = scope.variables.get(&identifier);
 
     match temp {
-        &Some(ref var) => {
+        Some(ref var) => {
             if var.identifier == identifier {
                 // TODO: error message with line number
             } else {
                 let sym = Symbol { line_number: 0, identifier, definition };
-                scope.variables.insert(identifier, sym)
+                scope.variables.insert(identifier.clone(), sym);
             }
         },
-        &None => {
+        None => {
             let sym = Symbol { line_number: 0, identifier, definition };
-            scope.variables.insert(identifier, sym)
+            scope.variables.insert(identifier.clone(), sym);
         }
     }
 }
 
 // Adds symbol to symbol table. We need to check duplicates at this point.
-fn add_type_symbol(identifier: String, definition: Definition::Type(Type), scope: &SymbolTable) {
-    let temp = scope.types.get(identifier);
+pub fn add_type_symbol<'a>(identifier: String,
+                   definition: Definition, scope: & mut SymbolTable<'a>) {
+
+    let temp = scope.types.get(&identifier);
 
     match temp {
-        &Some(ref var) => {
+        Some(ref var) => {
             if var.identifier == identifier {
                 // TODO: error message with line number
             } else {
-                let sym = Symbol { line_number: 0, identifier, definition };
-                scope.types.insert(identifier, sym)
+                let sym = Symbol { line_number: 0, identifier: identifier.clone(), definition };
+                scope.types.insert(identifier, sym);
             }
         },
-        &None => {
-            let sym = Symbol { line_number: 0, identifier, definition };
-            scope.types.insert(identifier, sym)
+        None => {
+            let sym = Symbol { line_number: 0, identifier: identifier.clone(), definition };
+            scope.types.insert(identifier, sym);
         }
     }
 }
 
 // Creates new scope
-fn add_new_scope(return_type: Type, table: &SymbolTable) -> &SymbolTable {
-
-}
+//fn add_new_scope(return_type: Type, table: &SymbolTable) -> &SymbolTable {
+//    // TODO
+//}
 
 // Checks equality of two types
 fn types_are_equal(a: Type, b: Type) -> bool {
-
+    // TODO
+    return false
 }
