@@ -10,23 +10,159 @@ pub fn weed_ast(root: &Program){
     for node in root.declarations.iter() {
         match node.top_level_declaration {
             TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
+                check_blank_func_decl(name, parameters, return_kind, body, node.line_number);
                 for stmt in body.iter() {
                     check_for_correct_break_and_continue_usage(stmt, false);
                     traverse_stmt_for_invalid_blank(stmt);
                 }
 
-                check_blank_func_decl(name, parameters, return_kind, body, node.line_number)
             },
             TopLevelDeclaration::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
                     check_blank_var_decl(&decl);
                 }
             },
-            _ => continue
+            _ => {},
         }
     }
 }
 
+pub fn weed_terminating_statements(root: &Program) {
+    for node in root.declarations.iter() {
+        match node.top_level_declaration {
+            TopLevelDeclaration::FunctionDeclaration { ref return_kind, ref body, .. } => {
+                match return_kind {
+                    &Some(..) => check_correct_terminating_statements(body, node.line_number),
+                    &None => {},
+                }
+            }
+            _ => {},
+        }
+    }
+}
+
+fn check_correct_terminating_statements(body: &Vec<StatementNode>, line_number: u32){
+    let length = body.len();
+    match length {
+        0 => error_missing_terminating_statement(line_number),
+        _ => {
+            match body[length-1].statement {
+                Statement::Return(..) => return,
+                Statement::Block(ref body) => check_correct_terminating_statements(body,line_number),
+                Statement::If { ref if_branch, ref else_branch, .. } => {
+                    match else_branch {
+                        &Some(ref else_branch) => {
+                            check_correct_terminating_statements(if_branch, line_number);
+                            check_correct_terminating_statements_elseif(else_branch, line_number);
+                        }
+                        &None => error_missing_terminating_statement(line_number),
+                    }
+                }
+                Statement::For { ref body, ref condition, .. } => {
+                    match condition {
+                        &None => {},
+                        &Some(..) => error_missing_terminating_statement(line_number),
+                    }
+                    if find_break(body) {
+                        error_missing_terminating_statement(line_number)
+                    }
+                }
+                Statement::Switch { ref body, .. } => {
+                    let mut flag = false;
+                    for case_clause in body {
+                        match case_clause.switch_case {
+                            SwitchCase::Default => flag = true,
+                            _ => {},
+                        }
+                        if find_break(&case_clause.statements) {
+                            error_missing_terminating_statement(line_number)
+                        } 
+                        check_correct_terminating_statements(&case_clause.statements, line_number);
+                    }
+
+                    if !flag {
+                        error_missing_terminating_statement(line_number)
+                    }
+                }
+                _ => error_missing_terminating_statement(line_number),
+            }
+        }
+    }
+}
+
+fn find_break(body: &Vec<StatementNode>) -> bool {
+    for stmt in body {
+        match stmt.statement {
+            Statement::Break => return true,
+            Statement::Block(ref body) => {
+                if find_break(body) {
+                    return true;
+                }
+            }
+            Statement::If { ref if_branch, ref else_branch, .. } => {
+                if find_break(if_branch) {
+                    return true;
+                }
+                match else_branch {
+                    &Some(ref else_branch) => {
+                        if find_break_elseif(else_branch) {
+                            return true;
+                        }
+                    }
+                    &None => {},
+                }
+            }
+            _ => {},
+        }
+    }
+    return false;
+}
+
+fn find_break_elseif(stmt: &StatementNode) -> bool {
+    match stmt.statement {
+        Statement::Block(ref body) => {
+            return find_break(body)
+        }
+        Statement::If { ref if_branch, ref else_branch, .. } => {
+            if find_break(if_branch) {
+                return true;
+            }
+            match else_branch {    
+                &Some(ref else_branch) => {
+                    if find_break_elseif(else_branch) {
+                        return true;
+                    }
+                }
+                &None => {},
+            }
+        }
+        _ => return false,
+    }
+    return false;
+}
+
+fn error_missing_terminating_statement(line_number: u32) {
+    print!("Error: line {}: missing terminating statement in function declaration", line_number);
+    exit(1);
+}
+
+fn check_correct_terminating_statements_elseif(stmt: &StatementNode, line_number: u32) {
+    match stmt.statement {
+        Statement::If { ref if_branch, ref else_branch, .. } => {
+            match else_branch {
+                &Some(ref else_branch) => {
+                    check_correct_terminating_statements(if_branch, line_number);
+                    check_correct_terminating_statements_elseif(else_branch, line_number);
+                }
+                &None => error_missing_terminating_statement(line_number),
+            }
+        }
+        Statement::Block(ref body) => {
+            check_correct_terminating_statements(body, line_number);
+        }
+        _ => error_missing_terminating_statement(line_number),
+    }
+}
 
 /*
 BREAK/CONTINUE USAGE WEED FUNCTIONS
@@ -198,18 +334,6 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
             match else_branch {
                 &Some(ref else_branch) => traverse_stmt_for_invalid_blank(&*else_branch),
                 &None => return,
-            }
-        },
-        Statement::Loop { ref body } => {
-            for stmt in body.iter() {
-                traverse_stmt_for_invalid_blank(stmt)
-            }
-        },
-        Statement::While { ref condition, ref body } => {
-            traverse_exp_for_invalid_blank(&*condition);
-
-            for stmt in body.iter() {
-                traverse_stmt_for_invalid_blank(stmt)
             }
         },
         Statement::For { ref init, ref condition, ref post, ref body } => {

@@ -297,23 +297,6 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
                 &None => println!()
             }
         },
-        Statement::Loop { ref body} => {
-            println!("for {{");
-            pretty_print_statement_vector(body, indent+1);
-            indent_print("", indent);
-            print!("}}");
-        },
-        Statement::While { ref condition, ref body } => {
-            indent_print("", indent);
-            print!("for ");
-            pretty_print_expression(&*condition);
-            println!(" {{");
-
-            pretty_print_statement_vector(body, indent+1);
-
-            indent_print("", indent);
-            print!("}}");
-        },
         Statement::For {ref init, ref condition, ref post, ref body } => {
             print!("for ");
             if let Statement::Empty = init.statement {

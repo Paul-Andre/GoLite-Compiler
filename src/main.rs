@@ -5,13 +5,10 @@ mod ast;
 mod ast_constructors;
 mod weed;
 mod pretty;
-mod symbol_table;
-mod symbol_table_constructor;
-
 pub use ast_constructors::*;
 pub use weed::*;
 pub use pretty::*;
-pub use symbol_table::*;
+//pub use symbol_table::*;
 //pub use typecheck::*;
 
 extern "C" {
@@ -62,8 +59,21 @@ fn main() {
                 None =>  eprintln!("Error: AST error")
             }
         }
+    } else if &argv[1] == "typecheck" {
+        let ast = unsafe { from_raw_or_none(parse()) };
+        if let Some(_) = ast {
+            match ast {
+                Some(ast) => {
+                    weed::weed_ast(&ast);
+                    weed::weed_terminating_statements(&ast);
 
-    }else {
+                    // Typecheck here
+                },
+                None =>  eprintln!("Error: AST error")
+            }
+        }
+        print!("OK");
+    } else {
         eprintln!("Error: invalid mode");
         exit(1);
     }

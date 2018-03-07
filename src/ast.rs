@@ -171,11 +171,6 @@ pub enum Statement {
         if_branch: Vec<StatementNode>,
         else_branch: Option<Box<StatementNode>>,
     },
-    Loop { body: Vec<StatementNode> },
-    While {
-        condition: Box<ExpressionNode>,
-        body: Vec<StatementNode>,
-    },
     For {
         init: Box<StatementNode>,
         condition: Option<Box<ExpressionNode>>,
