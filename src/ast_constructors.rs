@@ -436,27 +436,6 @@ pub extern "C" fn make_if_statement(line: u32,
 }
 
 #[no_mangle]
-pub extern "C" fn make_loop_statement(line: u32, body: *mut Vec<StatementNode> ) -> *mut StatementNode {
-    make_statement_ptr(
-        line,
-        Statement::Loop {
-            body: *unsafe{Box::from_raw(body)}
-        }
-    )
-}
-
-#[no_mangle]
-pub extern "C" fn make_while_statement(line: u32, cond: *mut ExpressionNode, body: *mut Vec<StatementNode> ) -> *mut StatementNode {
-    make_statement_ptr(
-        line,
-        Statement::While {
-            condition: unsafe{Box::from_raw(cond)},
-            body: *unsafe{Box::from_raw(body)}
-        }
-    )
-}
-
-#[no_mangle]
 pub extern "C" fn make_for_statement(line: u32,
                                      init: *mut StatementNode,
                                      cond: *mut ExpressionNode,
