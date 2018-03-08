@@ -32,15 +32,17 @@ pub fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbo
     }
 }
 
+
 pub fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &mut SymbolTable) {
     panic!("unimplemented");
-        /*
+
+    /*
     for spec in declarations {
-        let kinds = typecheck_expression_vec(spec.rhs, symbol_table); // 1
+
+        let kinds = typecheck_expression_vec(&mut spec.rhs, symbol_table); // 1
 
         match spec.kind {
             &Some(assigned_type) => {
-                // TODO: see if types are identical here
                 for id in spec.names {
                     symbol_table.add_symbol(id, assigned_type);
                 }
@@ -49,8 +51,6 @@ pub fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_tabl
         }
 
         for (id, exp_kind) in spec.names.iter().zip(kinds.iter()) {
-            // Ok, wtf is happening here
-            let id_kind = symbol_table.get_symbol(&id);
             match id_kind {
                 &Some(id_kind) => {
                     if !kind::are_identical(id_kind, exp_kind) { // 3
@@ -175,28 +175,30 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Assignment { ref mut lhs, ref mut rhs } => {
             panic!("unimplemented");
 
-            /*
-            let lhs_kinds = typecheck_expression_vec(lhs, symbol_table);
-            let rhs_kinds = typecheck_expression_vec(rhs, symbol_table);
-            let mut count = 0;
+            for i in 0..lhs.len() {
+                let lhs_exp = &mut lhs[i];
+                let rhs_exp = &mut rhs[i];
+                if !is_addressable(lhs_exp) {
+                     println!("Error: line {}: lvalue {} in list is not addressable.", 
+                              stmt.line_number,
+                              i + 1);
+                     exit(1);
+                }
+                let lhs_kind = typecheck_expression(lhs_exp, symbol_table);
+                let rhs_kind = typecheck_expression(rhs_exp, symbol_table);
 
-            for it in lhs_kinds.iter().zip(rhs_kinds.iter()) {
-                let (lhs_kind, rhs_kind) = it;
-                if !is_addressable(lhs_kind) {
-                     println!("Error: line {}: unadressable lvalue {} in list.", 
-                              stmt.line_number,
-                              count);
-                     exit(1);
+                if !kind::are_identical(&lhs_kind, &rhs_kind) {
+                    println!("Error: line {}: In position {} of assignment list, \
+                    trying to assign a value of type {} \
+                    to an expression expression {}", 
+                    stmt.line_number,
+                    i + 1,
+                    rhs_kind,
+                    lhs_kind);
+                    exit(1);
                 }
-                if !kind::are_identical(lhs_kind, rhs_kind) {
-                     println!("Error: line {}: invalid type of expression {} in list.", 
-                              stmt.line_number,
-                              count);
-                     exit(1);
-                }
-                count = count + 1;
+
             }
-            */
         }
 
         Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
@@ -232,19 +234,11 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
             let new_scope = &mut symbol_table.new_scope();
             typecheck_statements(statements, new_scope);
         }
-
-        Statement::Print { ref mut exprs } => {
-            let exp_kinds = typecheck_expression_vec(exprs, symbol_table);
-            for kind in exp_kinds {
-                // Resolve type somehow
-            }
-        }
+        Statement::Print { ref mut exprs } |
         Statement::Println { ref mut exprs } => {
-            let exp_kinds = typecheck_expression_vec(exprs, symbol_table);
-            for kind in exp_kinds {
-                // Resolve type somehow
+            for expr in exprs {
+                let kind = typecheck_expression(expr, symbol_table);
             }
-
         }
 
         Statement::For { ref mut init, ref mut condition, ref mut post, ref mut body } => {
@@ -494,19 +488,9 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
     return Kind::Undefined;
 }
 
-pub fn typecheck_expression_vec(exprs: &mut [ExpressionNode],
-                                 symbol_table: &mut SymbolTable) -> Vec<Kind> {
-    let mut out = Vec::new();
-    for e in exprs {
-        out.push(typecheck_expression(e, symbol_table));
-    }
-    return out;
-
-}
-
 // Checks if a type is addressable
 // Question: isn't it an expression that is addressable or not?
-pub fn is_addressable(kind: &Kind) -> bool {
+pub fn is_addressable(exp: &ExpressionNode) -> bool {
     true
 }
 

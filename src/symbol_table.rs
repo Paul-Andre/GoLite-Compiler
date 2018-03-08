@@ -48,16 +48,13 @@ impl<'a> SymbolTable<'a>{
             print_table: self.print_table
         }
     }
-    pub fn add_symbol(&mut self, id: String, symbol: Symbol) {
-        panic!("unimplemented");
-    }
-    pub fn add_variable(&mut self, id: String, kind: Kind) {
-        panic!("unimplemented");
-    }
-    pub fn add_type(&mut self, id: String, kind: Kind) {
-        panic!("unimplemented");
-    }
-    pub fn add_declaration(&mut self, id: String, line_number: u32, decl: Declaration) {
+    pub fn add_declaration(&mut self, id: String, line_number: u32, decl: Declaration, inferred: bool) {
+
+        if let Some(&Symbol{line_number: l, ..}) = self.symbols.get(&id) {
+            eprintln!("Error: line {}: `{}` was already in the current scope at line {}.",
+                      line_number, id, l);
+        }
+
         if (self.print_table) {
 
             let ilk = 
@@ -72,22 +69,26 @@ impl<'a> SymbolTable<'a>{
             print!("{} [{}] = ", id, ilk);
 
             use self::Declaration::*;
-            match decl {
-                Variable(ref k) | Constant(ref k) | Type(ref k) => {
-                    println!("{}", k);
-                },
-                Function{ref params, ref return_kind}  => {
-                    print!("( ");
-                    for param in params {
-                        print!("{}, ", param);
+            if inferred {
+                println!("<infer>");
+            } else {
+                match decl {
+                    Variable(ref k) | Constant(ref k) | Type(ref k) => {
+                        println!("{}", k);
+                    },
+                    Function{ref params, ref return_kind}  => {
+                        print!("( ");
+                        for param in params {
+                            print!("{}, ", param);
+                        }
+                        print!(") -> ");
+                        if let &Some(ref ret) = return_kind {
+                            print!("{}", ret);
+                        } else {
+                            print!("void");
+                        }
+                        println!();
                     }
-                    print!(") -> ");
-                    if let &Some(ref ret) = return_kind {
-                        print!("{}", ret);
-                    } else {
-                        print!("void");
-                    }
-                    println!();
                 }
             }
         }
