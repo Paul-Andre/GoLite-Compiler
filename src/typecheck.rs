@@ -1,5 +1,6 @@
 use ast::*;
 use ast::Field;
+use kind;
 use kind::*;
 use kind::Kind;
 use kind::BasicKind;
@@ -338,6 +339,47 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
         }
     }
 }
+
+pub fn typecheck_kind(ast: &mut AstKindNode, 
+                      symbol_table: &mut SymbolTable, 
+                      top_name: Option<&str>) -> Kind { 
+                    // top_name is to prevent recursive definitions in structs
+    match ast.ast_kind {
+        AstKind::Identifier { ref name } => {
+            match top_name {
+                Some(ref top_name) => {
+                    if name == top_name {
+                        //error recursive def
+                    }
+                }
+                None => {},
+            }
+            if let Declaration::Type(ref kind) = symbol_table.get_symbol(name, ast.line_number).declaration {
+                return kind.clone();
+            } else {
+                //error
+                exit(1);
+            }
+        },
+        AstKind::Slice { ref mut base } => {
+            return Kind::Slice(Box::new(typecheck_kind(base, symbol_table, top_name)))
+        },
+        AstKind::Array { ref mut base, ref size } => {
+            return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)), 0) // CHANGE
+        },
+        AstKind::Struct { ref mut fields } => {
+            let mut kind_fields = Vec::new();  
+            for field in fields {
+                let field_kind = typecheck_kind(&mut field.kind, symbol_table, top_name);
+                for id in &field.identifiers {
+                    kind_fields.push(kind::Field{name: id.clone(), kind: field_kind.clone()});
+                }
+            }
+            return Kind::Struct(kind_fields)
+        }
+    }
+}
+
 
 pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> Kind {
     match exp.expression {
