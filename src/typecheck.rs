@@ -6,9 +6,9 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
-pub fn typecheck(root: &mut Program) {
+pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
-    let universe_block = create_root_symbol_table();
+    let universe_block = create_root_symbol_table(print_table);
     let symbol_table = &mut universe_block.new_scope();
 
     for decl in &mut root.declarations {
@@ -344,22 +344,17 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
             return exp.kind.clone()
         }
         Expression::Identifier { ref name } => {
-            let symbol = symbol_table.get_symbol(name);
-            match symbol {
-                Some(ref symbol) => {
-                    match symbol.declaration {
-                        Declaration::Variable(ref kind) | Declaration::Constant(ref kind) => {
-                            exp.kind = kind.clone();
-                            return kind.clone()
-                        }
-                        _ => {
-                            eprintln!("Error: line {}: `{}` is not a variable or a constant", 
-                                      exp.line_number, name);
-                            exit(1);
-                        }
-                    }
+            let symbol = symbol_table.get_symbol(name, exp.line_number);
+            match symbol.declaration {
+                Declaration::Variable(ref kind) | Declaration::Constant(ref kind) => {
+                    exp.kind = kind.clone();
+                    return kind.clone()
                 }
-                None => {},// error ,
+                _ => {
+                    eprintln!("Error: line {}: `{}` is not a variable or a constant.", 
+                              exp.line_number, name);
+                    exit(1);
+                }
             }
         }
         Expression::UnaryOperation { ref op, ref rhs } => {
@@ -368,8 +363,26 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
 
         }
         Expression::FunctionCall { ref primary, ref arguments } => {
-
+            if let Expression::Identifier{ref name} = primary.expression {
+                let symbol = symbol_table.get_symbol(name, exp.line_number);
+                match symbol.declaration {
+                    Declaration::Type(ref kind) => {
+                        //asdfasdfas
+                    },
+                    Declaration::Function{..} => {
+                        //asdfasdfas
+                    },
+                    _ => {
+                        eprintln!("Error: line {}: `{}` is not a type of function.",
+                                  exp.line_number, name);
+                    }
+                }
+            } else {
+                eprintln!("Error: line {}: primary epression for function call or \
+                type cast must be an identifier.", exp.line_number);
+            }
         }
+
         Expression::Index { ref primary, ref index } => {
 
         }
