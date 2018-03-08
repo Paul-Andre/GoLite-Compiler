@@ -8,7 +8,7 @@ pub struct SymbolTable<'a> {
     pub symbols: HashMap<String, Symbol>,
     pub return_type: Option<Kind>,
     pub in_function: bool,
-    pub indentation: u32,
+    pub level: u32,
     pub print_table: bool,
 }
 
@@ -36,7 +36,7 @@ impl<'a> SymbolTable<'a>{
     }
     pub fn new_scope<'b>(&'b self) -> SymbolTable<'b> {
         if (self.print_table) {
-            indent(self.indentation + 1);
+            indent(self.level + 1);
             println!("{{");
         }
         return SymbolTable {
@@ -44,31 +44,56 @@ impl<'a> SymbolTable<'a>{
             symbols: HashMap::new(),
             return_type: self.return_type.clone(),
             in_function: self.in_function,
-            indentation: self.indentation + 1,
+            level: self.level + 1,
             print_table: self.print_table
         }
     }
     pub fn add_declaration(&mut self, id: String, line_number: u32, decl: Declaration, inferred: bool) {
+        use self::Declaration::*;
+
+        if (&id == "_") {
+            return;
+        }
+
+        let ilk = 
+            match decl {
+                Variable(..) => "variable",
+                Constant(..) => "constant",
+                Type(..) => "type",
+                Function{..} => "function",
+            };
+
+        if (self.level <= 1 && &id == "init") {
+            match decl {
+                Function{ref params, ref return_kind} => {
+                    if (params.len() != 0 || return_kind.is_some()) {
+                        eprintln!("Error: line {}: `init` function must have type () -> void",
+                                    line_number);
+
+                        exit(1);
+                    }
+                },
+                _ => {
+                    eprintln!("Error: line {}: cannot have {} called `init` at top level",
+                              line_number, ilk);
+                    exit(1);
+                }
+            }
+            return;
+        }
 
         if let Some(&Symbol{line_number: l, ..}) = self.symbols.get(&id) {
-            eprintln!("Error: line {}: `{}` was already in the current scope at line {}.",
+            eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
                       line_number, id, l);
+            exit(1);
         }
 
         if (self.print_table) {
 
-            let ilk = 
-                match decl {
-                    Variable(..) => "variable",
-                    Constant(..) => "constant",
-                    Type(..) => "type",
-                    Function{..} => "function",
-                };
 
-            indent(self.indentation + 1);
+            indent(self.level + 1);
             print!("{} [{}] = ", id, ilk);
 
-            use self::Declaration::*;
             if inferred {
                 println!("<infer>");
             } else {
@@ -100,8 +125,8 @@ impl<'a> SymbolTable<'a>{
     }
 }
 
-fn indent(indentation: u32) {
-    for _ in 0..indentation {
+fn indent(level: u32) {
+    for _ in 0..level {
         print!("\t"); // we use tabs now
     }
 }
@@ -109,7 +134,7 @@ fn indent(indentation: u32) {
 impl<'a> Drop for SymbolTable<'a> {
     fn drop(&mut self) {
         if (self.print_table) {
-            indent(self.indentation);
+            indent(self.level);
             println!("}}");
         }
     }
@@ -141,7 +166,7 @@ pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
         symbols: HashMap::new(),
         return_type: None,
         in_function: false,
-        indentation: 0,
+        level: 0,
         print_table: print_table
     };
 

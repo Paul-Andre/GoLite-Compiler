@@ -71,8 +71,13 @@ pub fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_tabl
 pub fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
 
     for spec in declarations {
-        //symbol_table.add_symbol(spec.name);
+        let kind = typecheck_kind(&*spec.kind, symbol_table, Some(&spec.name));
+        symbol_table.add_declaration(spec.name.clone(),
+                                     spec.line_number,
+                                     Declaration::Type(kind),
+                                     /*inferred*/ false);
     }
+
 }
 
 pub fn typecheck_statements(statements: &mut [StatementNode], symbol_table: &mut SymbolTable) {
@@ -186,7 +191,7 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
                 let lhs_kind = typecheck_expression(lhs_exp, symbol_table);
                 let rhs_kind = typecheck_expression(rhs_exp, symbol_table);
 
-                if !kind::are_identical(&lhs_kind, &rhs_kind) {
+                if !are_identical(&lhs_kind, &rhs_kind) {
                     println!("Error: line {}: In position {} of assignment list, \
                     trying to assign a value of type {} \
                     to an expression expression {}", 

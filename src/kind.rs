@@ -62,15 +62,15 @@ impl fmt::Display for Kind {
 
 #[derive(Debug,Clone)]
 pub struct Field {
-    name: String,
-    kind: Kind
+    pub name: String,
+    pub kind: Kind
 }
 
 #[derive(Debug,Clone)]
 pub struct Definition {
-    line_number: u32,
-    name: String,
-    kind: Kind
+    pub line_number: u32,
+    pub name: String,
+    pub kind: Kind
 }
 
 pub fn are_identical(a: &Kind, b: &Kind) -> bool {
