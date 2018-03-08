@@ -40,10 +40,15 @@ impl<'a> SymbolTable<'a>{
             in_function: self.in_function
         }
     }
-    pub fn add_symbol(&mut self, id: String, kind: Kind) {
+    pub fn add_symbol(&mut self, id: String, symbol: Symbol) {
         panic!("unimplemented");
     }
-
+    pub fn add_variable(&mut self, id: String, kind: Kind) {
+        panic!("unimplemented");
+    }
+    pub fn add_type(&mut self, id: String, kind: Kind) {
+        panic!("unimplemented");
+    }
 
 }
 
@@ -57,7 +62,7 @@ pub struct Symbol {
 pub enum Declaration {
     Variable(Kind),
     Constant(Kind),
-    Kind(Kind),
+    Type(Kind),
 }
 
 
@@ -81,23 +86,23 @@ pub fn create_root_symbol_table<'a>() -> SymbolTable<'a>{
 
     root_scope.symbols.insert("int".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
+        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("float64".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
+        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("rune".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
+        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("bool".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
+        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("string".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
+        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
     });
     return root_scope;
 }

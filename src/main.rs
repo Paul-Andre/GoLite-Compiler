@@ -7,7 +7,7 @@ mod weed;
 mod pretty;
 mod kind;
 mod symbol_table;
-//mod typecheck;
+mod typecheck;
 
 pub use ast_constructors::*;
 pub use weed::*;

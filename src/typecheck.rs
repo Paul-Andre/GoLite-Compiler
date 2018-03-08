@@ -1,6 +1,7 @@
 use ast::*;
-use Kind;
-use Kind::kind;
+use kind;
+use kind::Kind;
+use kind::BasicKind;
 use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
@@ -51,7 +52,7 @@ pub fn typecheck_variable_declarations(declarations: &[VarSpec], symbol_table: &
             let id_kind = symbol_table.get_symbol(&id);
             match id_kind {
                 &Some(id_kind) => {
-                    if !type_are_equal(id_kind, exp_kind) { // 3
+                    if !kind::are_identical(id_kind, exp_kind) { // 3
                         println!("Error: line {}: invalid type of expression assigned to {}.", 
                                  stmt.line_number,
                                  id);
@@ -67,7 +68,7 @@ pub fn typecheck_variable_declarations(declarations: &[VarSpec], symbol_table: &
     */
 }
 
-pub fn typecheck_type_declarations(declarations: &[KindSpec], symbol_table: &mut SymbolTable) {
+pub fn typecheck_type_declarations(declarations: &[TypeSpec], symbol_table: &mut SymbolTable) {
     for spec in declarations {
         symbol_table.add_symbol(spec.name);
     }
@@ -77,14 +78,13 @@ pub fn typecheck_function_declaration(name: &String,
                                        params: &[Field],
                                        return_kind: &Option<Box<AstKindNode>>,
                                        body: &[StatementNode],
-                                       line: &int,
+                                       line: u32,
                                        table: &mut SymbolTable) {
     panic!("unimplemented");
 }
 
 pub fn typecheck_statement(stmt: &StatementNode,
-                           symbol_table: &mut SymbolTable,
-                           references: &mut Vec<kind::Definitions>) {
+                           symbol_table: &mut SymbolTable) {
     match stmt.statement {
         Statement::Empty => {},
         Statement::Break => {},
@@ -96,36 +96,32 @@ pub fn typecheck_statement(stmt: &StatementNode,
         Statement::Return(exp) => {
             // We know that return statements only happen inside functions
             match (exp, symbol_table.return_type)  {
-                (&Some( ref exp ), &Some(ref required_kind) => {
-                    actual_kind = typecheck_expression(exp, symbol_table);
+                (&Some( ref exp ), &Some(ref required_kind)) => {
+                    let actual_kind = typecheck_expression(exp, symbol_table);
                     if actual_kind != required_kind {
-                        println!("Error: line {}: invalid return type {}, expected {}.",
-                                 stmt.line_number);
+                        eprintln!("Error: line {}: invalid return type {},
+                        type used in function header is {}.",
+                                 stmt.line_number, actual_kind, required_kind);
                         exit(1);
                     }
-                }
-                &None => {
-                    match symbol_table.return_type {
-                        &Some { ref t } => {
-                            match t {
-                                Void => {},
-                                _ => {
-                                    println!("Error: line {}: invalid return type.", stmt.line_number);
-                                    exit(1);
-                                }
-                            }
-                        }
-                        &None => {
-                            println!("Error: line {}: returning when not in a function call.", stmt.line_number);
-                            exit(1);
-                        }
-                    }
-                }
+                },
+                (&None, &None) => {},
+                (&Some(_), &None) => {
+                        eprintln!("Error: line {}: trying to return something from void function.",
+                                 stmt.line_number);
+                        exit(1);
+
+                },
+                (&None, &Some(ref k)) => {
+                        eprintln!("Error: line {}: must return a value of type {}", stmt.line_number, k);
+                        exit(1);
+                },
             }
 
-        }
-
+        },
         Statement::ShortVarDeclaration { ref identifier_list, ref expression_list } => {
+            panic!("Unimplemented");
+            /*
             let kinds = typecheck_expression_vec(expression_list, symbol_table); // 1
             let mut count = 0;
 
@@ -134,7 +130,7 @@ pub fn typecheck_statement(stmt: &StatementNode,
                 let id_kind = symbol_table.get_type(id);
                 match id_kind {
                     &Some(id_kind) => {
-                        if !type_are_equal(id_kind, exp_kind) { // 3
+                        if !kind::are_identical(id_kind, exp_kind) { // 3
                             println!("Error: line {}: invalid type of expression assigned to {}.", 
                                      stmt.line_number,
                                      id);
@@ -143,7 +139,7 @@ pub fn typecheck_statement(stmt: &StatementNode,
                     }
                     &None => {
                         count = count + 1; // 2
-                        add_symbol(id, exp_kind, symbol_table);
+                        symbol_table.add_variable(id, exp_kind);
                     }
                 }
             }
@@ -152,6 +148,7 @@ pub fn typecheck_statement(stmt: &StatementNode,
                 println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
                 exit(1);
             }
+            */
         }
 
         Statement::VarDeclaration { ref declarations } => {
@@ -171,7 +168,7 @@ pub fn typecheck_statement(stmt: &StatementNode,
                               count);
                      exit(1);
                 }
-                if !type_are_equal(lhs_kind, rhs_kind) {
+                if !kind::are_identical(lhs_kind, rhs_kind) {
                      println!("Error: line {}: invalid type of expression {} in list.", 
                               stmt.line_number,
                               count);
@@ -191,9 +188,9 @@ pub fn typecheck_statement(stmt: &StatementNode,
                  exit(1);
             }
 
-            match get_type_binary_op(lhs_kind, rhs_kind, operator) {
-                &Some(assinged_kind) => {
-                    if !type_are_equal(lhs_kind, assigned_kind) {
+            match get_kind_binary_op(lhs_kind, rhs_kind, operator) {
+                &Some(assigned_kind) => {
+                    if !kind::are_identical(lhs_kind, assigned_kind) {
                         println!("Error: line {}: invalid assignment type.", 
                                  stmt.line_number);
                         exit(1);
@@ -208,9 +205,9 @@ pub fn typecheck_statement(stmt: &StatementNode,
         }
 
         Statement::Block(statements) => {
-            let new_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
+            let new_scope = symbol_table.new_scope();
             for stmt in statements {
-                typecheck_statements(stmt, new_scope);
+                typecheck_statements(stmt, &mut new_scope);
             }
         }
 
@@ -228,76 +225,53 @@ pub fn typecheck_statement(stmt: &StatementNode,
 
         }
 
-        Statement::Loop { ref body } => {
-            let new_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
-            for stmt in body {
-                typecheck_statements(stmt, new_scope);
-            }
-        }
-
-        Statement::While { ref condition, ref body } => {
-            let new_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
-            let exp_type = typecheck_expression(condition, symbol_table);
-            
-            // how the hell do I compare a Kind with bool?
-            if !type_are_equal(exp_type, fix_me) {
-                println!("Error: line {}: condition must be of type bool.", 
-                         stmt.line_number);
-                exit(1);
-            }
-
-            for stmt in body {
-                typecheck_statements(stmt, new_scope);
-            }
-
-        }
-
         Statement::For { ref init, ref condition, ref post, ref body } => {
-            let init_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
+            let init_scope = symbol_table.new_scope();
 
             // init, condition and post are in the same scope; body is in a different one
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(condition, init_scope);
             typecheck_statement(post, init_scope);
             
-            // how the hell do I compare a Kind with bool?
-            if !type_are_equal(exp_type, fix_me) {
+            if !kind::are_identical(exp_type, Kind::BasicKind(kind::BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
             }
 
-            let new_scope = make_new_symbol_table(init_scope.return_type, init_scope);
+            let new_scope = init_scope.new_scope();
             for stmt in body {
                 typecheck_statements(stmt, new_scope);
             }
         }
 
         Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
-            let init_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
-            typecheck_statement(init, init_scope);
-            let exp_type = typecheck_expression(condition, init_scope);
-            
-            // how the hell do I compare a Kind with bool?
-            if !type_are_equal(exp_type, fix_me) {
-                println!("Error: line {}: condition must be of type bool.", 
-                         stmt.line_number);
-                exit(1);
-            }
+            {
+                let init_scope = symbol_table.new_scope();
+                typecheck_statement(init, init_scope);
+                let exp_type = typecheck_expression(condition, init_scope);
 
-            let new_scope = make_new_symbol_table(init_scope.return_type, init_scope);
-            for stmt in if_branch {
-                typecheck_statements(stmt, new_scope);
+                // how the hell do I compare a Kind with bool?
+                if !kind::are_identical(exp_type, Kind::BasicKind(kind::BasicKind::Bool)) {
+                    println!("Error: line {}: condition must be of type bool.", 
+                             stmt.line_number);
+                    exit(1);
+                }
+
+                let new_scope = init_scope.new_scope();
+                for stmt in if_branch {
+                    typecheck_statements(stmt, new_scope);
+                }
             }
 
             match else_branch {
-                &Some(stmt) => typecheck_statement(stmt, init_scope),
+                &Some(stmt) => typecheck_statement(stmt, symbol_table),
                 &None => {},
             }
         }
 
-        Statement::Switch { ref init, ref expr, ref body } => { // DO WE START A NEW SCOPE?
-            let init_scope = make_new_symbol_table(symbol_table.return_type, symbol_table);
+        Statement::Switch { ref init, ref expr, ref body } => {
+            let init_scope = symbol_table.new_scope();
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(expr, init_scope);
 
@@ -305,7 +279,7 @@ pub fn typecheck_statement(stmt: &StatementNode,
                 match cc.switch_case {
                     SwitchCase::Cases(exp) => {
                         let cc_type = typecheck_expression(exp, init_scope);
-                        if !type_are_equal(cc_type, exp_type) {
+                        if !kind::are_identical(cc_type, exp_type) {
                             println!("Error: line {}: mismatched case type.", 
                                      cc.line_number);
                             exit(1);
@@ -315,14 +289,14 @@ pub fn typecheck_statement(stmt: &StatementNode,
                 }
 
                 for stmt in cc.statements {
-                    let new_scope = make_new_symbol_table(init_scope.return_type, init_scope);
-                    typecheck_statement(stmt, new_scope);
+                    let new_scope = init_scope.new_scope();
+                    typecheck_statement(stmt, &mut new_scope);
                 }
             }
 
         }
         Statement::IncDec { ref is_dec, ref expr } => {
-            let exp_type = typecheck_expression(expr);
+            let exp_type = typecheck_expression(expr, symbol_table);
 
             // Resolve base type or something
         }
@@ -341,7 +315,7 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
                     match symbol.declaration {
                         Declaration::Variable(ref kind) => {
                             exp.kind = kind.clone();
-                            kind.clone()
+                            return kind.clone()
                         }
                         Declaration::Type(ref kind) => {
                             // error
@@ -372,25 +346,29 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
 
         }
     }
+    return Kind::Undefined;
 }
 
-pub fn typecheck_expression_vec(exprs: &Vec<ExpressionNode>, 
+pub fn typecheck_expression_vec(exprs: &[ExpressionNode],
                                  symbol_table: &mut SymbolTable) -> Vec<Kind> {
-    for exp in exprs.iter() {
-        // Do something
-    }
+    exprs.iter().map(|ref e| {
+        typecheck_expression(e)
+    }).collect::<Vec<_>>()
+
 }
 
 // Checks if a type is addressable
-pub fn is_adressable(kind: Kind) -> bool {
+// Question: isn't it an expression that is addressable or not?
+pub fn is_addressable(kind: Kind) -> bool {
+    true
 
 }
 
 // Need also to check if kinds are valid for op
 pub fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator) -> Option<Kind> {
-
+    Some(Kind::Undefined)
 }
 
 pub fn get_kind_unary_op(a: Kind, op: UnaryOperator) -> Option<Kind> {
-
+    Some(Kind::Undefined)
 }
