@@ -35,6 +35,10 @@ impl<'a> SymbolTable<'a>{
         self.symbols.get(identifier).is_some()
     }
     pub fn new_scope<'b>(&'b self) -> SymbolTable<'b> {
+        if (self.print_table) {
+            indent(self.indentation + 1);
+            println!("{{");
+        }
         return SymbolTable {
             parent_scope: Some(self),
             symbols: HashMap::new(),
@@ -53,7 +57,61 @@ impl<'a> SymbolTable<'a>{
     pub fn add_type(&mut self, id: String, kind: Kind) {
         panic!("unimplemented");
     }
+    pub fn add_declaration(&mut self, id: String, line_number: u32, decl: Declaration) {
+        if (self.print_table) {
 
+            let ilk = 
+                match decl {
+                    Variable(..) => "variable",
+                    Constant(..) => "constant",
+                    Type(..) => "type",
+                    Function{..} => "function",
+                };
+
+            indent(self.indentation + 1);
+            print!("{} [{}] = ", id, ilk);
+
+            use self::Declaration::*;
+            match decl {
+                Variable(ref k) | Constant(ref k) | Type(ref k) => {
+                    println!("{}", k);
+                },
+                Function{ref params, ref return_kind}  => {
+                    print!("( ");
+                    for param in params {
+                        print!("{}, ", param);
+                    }
+                    print!(") -> ");
+                    if let &Some(ref ret) = return_kind {
+                        print!("{}", ret);
+                    } else {
+                        print!("void");
+                    }
+                    println!();
+                }
+            }
+        }
+            
+        self.symbols.insert(id, Symbol{
+            line_number: line_number,
+            declaration: decl
+        });
+    }
+}
+
+fn indent(indentation: u32) {
+    for _ in 0..indentation {
+        print!("\t"); // we use tabs now
+    }
+}
+
+impl<'a> Drop for SymbolTable<'a> {
+    fn drop(&mut self) {
+        if (self.print_table) {
+            indent(self.indentation);
+            println!("}}");
+        }
+    }
 }
 
 
@@ -73,12 +131,16 @@ pub enum Declaration {
 
 /// Populates the symbol table with the Go defaul variables and types
 pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
+    if (print_table) {
+        indent(0);
+        println!("{{");
+    }
     let mut root_scope = SymbolTable{
         parent_scope: None,
         symbols: HashMap::new(),
         return_type: None,
         in_function: false,
-        indentation: 1,
+        indentation: 0,
         print_table: print_table
     };
 
