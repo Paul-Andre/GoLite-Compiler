@@ -442,13 +442,16 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
                             exp.kind = *a_kind.clone();
                             return *a_kind.clone()
                         } else {
-                            //error
+                            eprintln!("Error: line {}: index expression does not resolve \
+                            to int", exp.linenumber);
                         }
                     } else {
-                        //error
+                        eprintln!("Error: line {}: index expression does not resolve to \
+                        Basic type", exp.line_number);
                     }
                 }
-                _ => {}, //error
+                _ => eprintln!("Error: line {}: primary expression does not resolve to \
+                     Slice or Array type", exp.line_number);
             }
         }
 
@@ -460,9 +463,10 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
                         return field.kind.clone()
                     }
                 }
-                //err unknown field 
+                eprintln!("Error: line {}: unknown field \"{}\"", exp.line_number, name);
             }
-            //err doesnt resolve to struct type
+            eprintln!("Error: line {}: primary expression does not resolve to \
+                      Struct type", exp.line_number);
         }
 
         Expression::Append { ref mut lhs, ref mut rhs } => {
@@ -474,17 +478,19 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
                     exp.kind = s_kind.clone();
                     return s_kind.clone()
                 } else {
-                    //error
+                    eprintln!("Error: line {}: mismatched types in \
+                    append expression", exp.line_number);
                 }
             } else {
-                //error
+                eprintln!("Error: line {}: lhs does not resolve to Slice \
+                in append expression", exp.line_number);
             }
         }
 
         Expression::TypeCast { ref expr } => {
             // We need to remove this
         }
-    } //match?
+    } 
     return Kind::Undefined;
 }
 
