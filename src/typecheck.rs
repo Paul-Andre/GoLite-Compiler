@@ -72,7 +72,7 @@ pub fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_tabl
 pub fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
 
     for spec in declarations {
-        let kind = typecheck_kind(&*spec.kind, symbol_table, Some(&spec.name));
+        let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
         symbol_table.add_declaration(spec.name.clone(),
                                      spec.line_number,
                                      Declaration::Type(kind),
