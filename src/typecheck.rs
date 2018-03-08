@@ -448,7 +448,7 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
                             return *a_kind.clone()
                         } else {
                             eprintln!("Error: line {}: index expression does not resolve \
-                            to int", exp.linenumber);
+                            to int", exp.line_number);
                         }
                     } else {
                         eprintln!("Error: line {}: index expression does not resolve to \
@@ -456,7 +456,7 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
                     }
                 }
                 _ => eprintln!("Error: line {}: primary expression does not resolve to \
-                     Slice or Array type", exp.line_number);
+                     Slice or Array type", exp.line_number),
             }
         }
 
