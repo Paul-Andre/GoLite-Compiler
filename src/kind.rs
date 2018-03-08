@@ -1,4 +1,6 @@
 use std::rc::Rc;
+use std::fmt::Display;
+use std::fmt;
 
 #[repr(C)]
 #[derive(Debug,Copy,Clone,Eq,PartialEq)]
@@ -18,7 +20,41 @@ pub enum Kind {
     Array(Box<Kind>,u32),
     Slice(Box<Kind>),
     Struct(Vec<Field>),
-    Func{params: Vec<Kind>, return_kind: Box<Kind>}
+    Func{params: Vec<Kind>, return_kind: Option<Box<Kind>>}
+}
+
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Kind::*;
+        match *self {
+            Undefined => write!(f, "<undefined>"),
+            Basic(b) => write!(f, "{:?}", b),
+            Defined(ref def) => {
+                write!(f, "{}", def.name)
+            },
+            Array(ref k, s) => write!(f, "[{}]{}", s, k),
+            Slice(ref k) => write!(f, "[]{}", k),
+            Struct(ref fields) => {
+                write!(f, "{{")?;
+                for &Field{ref name, ref kind} in fields {
+                    write!(f, "{} {}; ", name, kind)?;
+                }
+                write!(f, "}}")
+            },
+            Func{ref params, ref return_kind}  => {
+                write!(f, "(")?;
+                for param in params {
+                    write!(f, "{}, ", param)?;
+                }
+                write!(f, ") -> ");
+                if let &Some(ref ret) = return_kind {
+                    write!(f, "{}", ret)
+                } else {
+                    write!(f, "void")
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug,Clone)]

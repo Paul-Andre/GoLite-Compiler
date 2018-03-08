@@ -1,9 +1,12 @@
 use ast::*;
+use Kind;
+use Kind::kind;
 use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
 pub fn typecheck(root: &Program) {
+    // Because of how we defined the back pointers for the symbol table, the parent should be
     let universe_block = create_root_symbol_table(root);
     let mut symbol_table = universe_block.new_scope();
 
@@ -96,7 +99,8 @@ pub fn typecheck_statement(stmt: &StatementNode,
                 (&Some( ref exp ), &Some(ref required_kind) => {
                     actual_kind = typecheck_expression(exp, symbol_table);
                     if actual_kind != required_kind {
-                        println!("Error: line {}: invalid return type.", stmt.line_number);
+                        println!("Error: line {}: invalid return type {}, expected {}.",
+                                 stmt.line_number);
                         exit(1);
                     }
                 }
