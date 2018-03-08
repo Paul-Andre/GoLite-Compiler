@@ -20,7 +20,8 @@ pub enum Kind {
     Array(Box<Kind>,u32),
     Slice(Box<Kind>),
     Struct(Vec<Field>),
-    Func{params: Vec<Kind>, return_kind: Option<Box<Kind>>}
+    Func{params: Vec<Kind>, return_kind: Option<Box<Kind>>},
+    Underscore,
 }
 
 impl fmt::Display for Kind {
@@ -46,13 +47,15 @@ impl fmt::Display for Kind {
                 for param in params {
                     write!(f, "{}, ", param)?;
                 }
-                write!(f, ") -> ");
+                write!(f, ") -> ")?;
                 if let &Some(ref ret) = return_kind {
                     write!(f, "{}", ret)
                 } else {
                     write!(f, "void")
                 }
-            }
+            },
+            Underscore => write!(f, "_"),
+
         }
     }
 }
@@ -92,7 +95,11 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
         },
         (&Func{..}, &Func{..}) => {
             panic!("Cannot check if function types are identical; Should not happen.");
-        }
+        },
+        (&Func{..}, &Func{..}) => {
+            panic!("Cannot check if function types are identical; Should not happen.");
+        },
+        (&Underscore, _) => true, // Ugly hack
         _ => false
     }
 }
