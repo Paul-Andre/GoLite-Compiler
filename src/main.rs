@@ -7,14 +7,14 @@ mod weed;
 mod pretty;
 mod kind;
 mod symbol_table;
-mod typecheck;
+//mod typecheck;
 
 pub use ast_constructors::*;
 pub use weed::*;
 pub use pretty::*;
 //pub use symbol_table::*;
 //pub use symbol_table::*;
-pub use typecheck::*;
+//pub use typecheck::*;
 
 extern "C" {
     fn scan();

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::process::exit;
 use kind::Kind;
-use kind::BaseKind;
+use kind::BasicKind;
 
 pub struct SymbolTable<'a> {
     pub parent_scope: Option<&'a SymbolTable<'a>>,
@@ -11,7 +11,7 @@ pub struct SymbolTable<'a> {
 }
 
 impl<'a> SymbolTable<'a>{
-    fn get_symbol<'b>(&'b self, identifier: &str) -> Option<&'b Symbol>{
+    pub fn get_symbol<'b>(&'b self, identifier: &str) -> Option<&'b Symbol>{
 
         let mut current_scope = Some(self);
 
@@ -29,10 +29,10 @@ impl<'a> SymbolTable<'a>{
     return None
 
     }
-    fn is_in_current_scope<'b>(&'b self, identifier: &str) -> bool {
+    pub fn is_in_current_scope<'b>(&'b self, identifier: &str) -> bool {
         self.symbols.get(identifier).is_some()
     }
-    fn new_scope<'b>(&'b self) -> SymbolTable<'b> {
+    pub fn new_scope<'b>(&'b self) -> SymbolTable<'b> {
         return SymbolTable {
             parent_scope: Some(self),
             symbols: HashMap::new(),
@@ -40,9 +40,11 @@ impl<'a> SymbolTable<'a>{
             in_function: self.in_function
         }
     }
-    fn add_symbol(&'b self, id: String, kind: Kind) {
-
+    pub fn add_symbol(&mut self, id: String, kind: Kind) {
+        panic!("unimplemented");
     }
+
+
 }
 
 
@@ -55,7 +57,7 @@ pub struct Symbol {
 pub enum Declaration {
     Variable(Kind),
     Constant(Kind),
-    Type(Kind),
+    Kind(Kind),
 }
 
 
@@ -70,32 +72,32 @@ pub fn create_root_symbol_table<'a>() -> SymbolTable<'a>{
 
     root_scope.symbols.insert("true".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Constant(Kind::Base(BaseKind::Bool))
+        declaration: Declaration::Constant(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("false".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Constant(Kind::Base(BaseKind::Bool))
+        declaration: Declaration::Constant(Kind::Basic(BasicKind::Bool))
     });
 
     root_scope.symbols.insert("int".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("float64".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("rune".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("bool".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
     });
     root_scope.symbols.insert("string".to_string(), Symbol{
         line_number: 0,
-        declaration: Declaration::Type(Kind::Base(BaseKind::Bool))
+        declaration: Declaration::Kind(Kind::Basic(BasicKind::Bool))
     });
     return root_scope;
 }

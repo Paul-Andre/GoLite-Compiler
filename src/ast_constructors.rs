@@ -1,5 +1,5 @@
 use ast::*;
-use kind::*;
+use kind;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
@@ -149,7 +149,7 @@ fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
         line_number: line,
         expression: expr,
-        kind: Kind::Undefined,
+        kind: kind::Kind::Undefined,
     }))
 }
 
@@ -166,12 +166,12 @@ pub extern "C" fn make_identifier_expression(line: u32, string: *const c_char) -
 pub extern "C" fn make_literal_expression(
     line: u32,
     string: *const c_char,
-    kind: BaseKind,
+    kind: kind::BasicKind,
 ) -> *mut ExpressionNode {
     Box::into_raw(Box::new(ExpressionNode {
         line_number: line,
         expression: Expression::RawLiteral { value: unsafe { from_c_string(string) } },
-        kind: Kind::Basic(kind),
+        kind: kind::Kind::Basic(kind),
     }))
 }
 

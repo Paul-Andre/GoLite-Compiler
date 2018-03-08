@@ -3,23 +3,9 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
-// Imported from symbol_table_constructors
-pub fn construct_program_symbol_table(root: &Program) -> Box<SymbolTable> {
-    let mut root_scope: SymbolTable = SymbolTable {
-        parent_scope: None,
-        variables: HashMap::new(),
-        types: HashMap::new(),
-        return_type: None
-    };
-
-    //populate_root_scope_with_defaults(&mut root_scope);
-
-    return Box::new(root_scope)
-}
-// ----
-
 pub fn typecheck(root: &Program) {
-    let mut symbol_table = construct_program_symbol_table(root);
+    let universe_block = create_root_symbol_table(root);
+    let mut symbol_table = universe_block.new_scope();
 
     for decl in &root.declarations {
         typecheck_top_level_declaration(decl, symbol_table);
@@ -41,12 +27,15 @@ pub fn typecheck_top_level_declaration(decl: &TopLevelDeclarationNode, symbol_ta
     }
 }
 
-pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table: &mut SymbolTable) {
+pub fn typecheck_variable_declarations(declarations: &[VarSpec], symbol_table: &mut SymbolTable) {
+    panic!("unimplemented");
+        /*
     for spec in declarations {
         let kinds = typecheck_expression_vec(spec.rhs, symbol_table); // 1
 
         match spec.kind {
             &Some(assigned_type) => {
+                // TODO: see if types are identical here
                 for id in spec.names {
                     symbol_table.add_symbol(id, assigned_type);
                 }
@@ -54,9 +43,9 @@ pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table
             &None => {},
         }
 
-        for it in identifier_list.iter().zip(kinds.iter()) {
-            let (id, exp_kind) = it;
-            let id_kind = get_type(id, symbol_table);
+        for (id, exp_kind) in spec.names.iter().zip(kinds.iter()) {
+            // Ok, wtf is happening here
+            let id_kind = symbol_table.get_symbol(&id);
             match id_kind {
                 &Some(id_kind) => {
                     if !type_are_equal(id_kind, exp_kind) { // 3
@@ -72,24 +61,27 @@ pub fn typecheck_variable_declarations(declarations: &Vec<VarSpec>, symbol_table
             }
         }
     }
+    */
 }
 
-pub fn typecheck_type_declarations(declarations: &Vec<KindSpec>, symbol_table: &mut SymbolTable) {
+pub fn typecheck_type_declarations(declarations: &[KindSpec], symbol_table: &mut SymbolTable) {
     for spec in declarations {
-        add_symbol(spec.name, );
+        symbol_table.add_symbol(spec.name);
     }
 }
 
 pub fn typecheck_function_declaration(name: &String,
-                                       params: &Vec<Field>,
+                                       params: &[Field],
                                        return_kind: &Option<Box<AstKindNode>>,
-                                       body: &Vec<StatementNode>,
+                                       body: &[StatementNode],
                                        line: &int,
                                        table: &mut SymbolTable) {
-
+    panic!("unimplemented");
 }
 
-pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &mut SymbolTable) {
+pub fn typecheck_statement(stmt: &StatementNode,
+                           symbol_table: &mut SymbolTable,
+                           references: &mut Vec<kind::Definitions>) {
     match stmt.statement {
         Statement::Empty => {},
         Statement::Break => {},
@@ -99,11 +91,11 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &mut SymbolTable)
         }
 
         Statement::Return(exp) => {
-            let mut return_type;
-            match exp {
-                &Some { ref exp } => {
-                    return_type = typecheck_expression(exp, symbol_table);
-                    if return_type != symbol_table.return_type {
+            // We know that return statements only happen inside functions
+            match (exp, symbol_table.return_type)  {
+                (&Some( ref exp ), &Some(ref required_kind) => {
+                    actual_kind = typecheck_expression(exp, symbol_table);
+                    if actual_kind != required_kind {
                         println!("Error: line {}: invalid return type.", stmt.line_number);
                         exit(1);
                     }
@@ -135,7 +127,7 @@ pub fn typecheck_statement(stmt: &StatementNode, symbol_table: &mut SymbolTable)
 
             for it in identifier_list.iter().zip(kinds.iter()) {
                 let (id, exp_kind) = it;
-                let id_kind = get_type(id, symbol_table);
+                let id_kind = symbol_table.get_type(id);
                 match id_kind {
                     &Some(id_kind) => {
                         if !type_are_equal(id_kind, exp_kind) { // 3

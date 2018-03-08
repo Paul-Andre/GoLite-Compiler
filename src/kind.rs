@@ -1,9 +1,8 @@
-pub type DefinitionId = usize;
-
+use std::rc::Rc;
 
 #[repr(C)]
 #[derive(Debug,Copy,Clone,Eq,PartialEq)]
-pub enum BaseKind {
+pub enum BasicKind {
     Int = 0,
     Float = 1,
     Rune = 2,
@@ -14,8 +13,8 @@ pub enum BaseKind {
 #[derive(Debug,Clone)]
 pub enum Kind {
     Undefined,
-    Base(BaseKind),
-    Defined(DefinitionId),
+    Basic(BasicKind),
+    Defined(Rc<Definition>),
     Array(Box<Kind>,u32),
     Slice(Box<Kind>),
     Struct(Vec<Field>),
@@ -38,8 +37,10 @@ pub struct Definition {
 pub fn are_identical(a: &Kind, b: &Kind) -> bool {
     use self::Kind::*;
     match (a, b) {
-        (&Base(a_kind), &Base(b_kind)) => a_kind == b_kind,
-        (&Defined(a_id), &Defined(b_id)) => a_id == b_id,
+        (&Basic(a_kind), &Basic(b_kind)) => a_kind == b_kind,
+        (&Defined(ref a), &Defined(ref b)) => {
+            Rc::ptr_eq(a,b)
+        },
         (&Array(ref a_base, a_size), &Array(ref b_base, b_size)) => {
             are_identical(a_base, b_base) && a_size == b_size
         },
@@ -60,9 +61,9 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
     }
 }
 
-pub fn resolve<'a>(k : &'a Kind, definitions: &'a [Definition]) -> &'a Kind {
+pub fn resolve<'a>(k : &'a Kind) -> &'a Kind {
     match k {
-        &Kind::Defined(id) => &definitions[id].kind,
+        &Kind::Defined(ref r) => &(r.kind),
         something_else => something_else
     }
 }
