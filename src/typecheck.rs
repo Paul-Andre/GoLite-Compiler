@@ -1,5 +1,6 @@
 use ast::*;
-use kind;
+use ast::Field;
+use kind::*;
 use kind::Kind;
 use kind::BasicKind;
 use symbol_table::*;
@@ -109,7 +110,7 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
 
             match (maybe_actual_kind, &symbol_table.return_type)  {
                 (Some( ref actual_kind ), &Some(ref required_kind)) => {
-                    if !kind::are_identical(actual_kind, required_kind) {
+                    if !are_identical(actual_kind, required_kind) {
                         eprintln!("Error: line {}: invalid return type {}. \
                             Type used in function header is {}.",
                                  stmt.line_number, actual_kind, required_kind);
@@ -253,7 +254,7 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
 
             typecheck_statement(post, init_scope);
             
-            if !kind::are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
@@ -268,7 +269,7 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(condition, init_scope);
 
-            if !kind::are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
@@ -301,7 +302,7 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
                     SwitchCase::Cases(ref mut cases) => {
                         for case in cases {
                             let cc_type = typecheck_expression(case, init_scope);
-                            if !kind::are_identical(&cc_type, &exp_type) {
+                            if !are_identical(&cc_type, &exp_type) {
                                 // TODO: also must be comparabel I believe
                                 eprintln!("Error: line {}: mismatched case type {}; \
                                          expected {}.", 
@@ -337,6 +338,7 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
         Expression::RawLiteral{..} => {
             return exp.kind.clone()
         }
+
         Expression::Identifier { ref name } => {
             let symbol = symbol_table.get_symbol(name, exp.line_number);
             match symbol.declaration {
@@ -351,12 +353,23 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
                 }
             }
         }
-        Expression::UnaryOperation { ref op, ref rhs } => {
-        }
-        Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
 
+        Expression::UnaryOperation { ref op, ref mut rhs } => {
+            let kind = typecheck_expression(rhs, symbol_table);
+            let op_kind = get_kind_unary_op(&kind, op.clone(), exp.line_number);
+            exp.kind = op_kind;
+            return exp.kind.clone()
         }
-        Expression::FunctionCall { ref primary, ref arguments } => {
+
+        Expression::BinaryOperation { ref op, ref mut lhs, ref mut rhs } => {
+            let lhs_kind = typecheck_expression(lhs, symbol_table);
+            let rhs_kind = typecheck_expression(rhs, symbol_table);
+            let op_kind = get_kind_binary_op(&lhs_kind, &rhs_kind, op.clone(), exp.line_number);
+            exp.kind = op_kind;
+            return exp.kind.clone()
+        }
+
+        Expression::FunctionCall { ref mut primary, ref arguments } => {
             if let Expression::Identifier{ref name} = primary.expression {
                 let symbol = symbol_table.get_symbol(name, exp.line_number);
                 match symbol.declaration {
@@ -377,19 +390,59 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
             }
         }
 
-        Expression::Index { ref primary, ref index } => {
-
+        Expression::Index { ref mut primary, ref mut index } => {
+            let primary_kind = typecheck_expression(primary, symbol_table);
+            let index_kind = typecheck_expression(index, symbol_table);
+            match primary_kind.resolve() {
+                &Kind::Array(ref a_kind, ..) | &Kind::Slice(ref a_kind) => {
+                    if let &Kind::Basic(ref kind)=index_kind.resolve()  {
+                        if let &BasicKind::Int = kind {
+                            exp.kind = *a_kind.clone();
+                            return *a_kind.clone()
+                        } else {
+                            //error
+                        }
+                    } else {
+                        //error
+                    }
+                }
+                _ => {}, //error
+            }
         }
-        Expression::Selector { ref primary, ref name } => {
 
+        Expression::Selector { ref mut primary, ref name } => {
+            let kind = typecheck_expression(primary, symbol_table);
+            if let &Kind::Struct(ref fields) = kind.resolve() {
+                for field in fields {
+                    if field.name == *name {
+                        return field.kind.clone()
+                    }
+                }
+                //err unknown field 
+            }
+            //err doesnt resolve to struct type
         }
-        Expression::Append { ref lhs, ref rhs } => {
 
+        Expression::Append { ref mut lhs, ref mut rhs } => {
+            let s_kind = typecheck_expression(lhs, symbol_table);
+            let kind = typecheck_expression(rhs, symbol_table);
+
+            if let &Kind::Slice(ref t_kind) = s_kind.resolve() {
+                if are_identical(t_kind, &kind) {
+                    exp.kind = s_kind.clone();
+                    return s_kind.clone()
+                } else {
+                    //error
+                }
+            } else {
+                //error
+            }
         }
+
         Expression::TypeCast { ref expr } => {
-
+            // We need to remove this
         }
-    }
+    } //match?
     return Kind::Undefined;
 }
 
@@ -400,10 +453,10 @@ pub fn is_addressable(exp: &ExpressionNode) -> bool {
 }
 
 // Need also to check if kinds are valid for op
-pub fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator) -> Option<Kind> {
-    Some(Kind::Undefined)
+pub fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
+    Kind::Undefined
 }
 
-pub fn get_kind_unary_op(a: Kind, op: UnaryOperator) -> Option<Kind> {
-    Some(Kind::Undefined)
+pub fn get_kind_unary_op(a: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
+    Kind::Undefined
 }
