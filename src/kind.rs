@@ -121,7 +121,7 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
 impl Kind {
     pub fn resolve<'a>(&'a self) -> &'a Kind {
         match self {
-            &Kind::Defined(ref r) => &(r.kind),
+            &Kind::Defined(ref r) => &(r.kind).resolve(),
             something_else => something_else
         }
     }
