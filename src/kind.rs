@@ -119,6 +119,11 @@ pub fn are_comparable(a: &Kind, b: &Kind) -> bool {
     return are_identical(a, b) && a.is_comparable()
 }
 
+pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
+    return are_identical(a, b) && a.is_ordered()
+
+}
+
 impl Kind {
     pub fn resolve<'a>(&'a self) -> &'a Kind {
         match self {

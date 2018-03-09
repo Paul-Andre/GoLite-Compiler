@@ -566,7 +566,7 @@ fn is_addressable(exp: &ExpressionNode) -> bool {
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
    match op {
        BinaryOperator::Or | BinaryOperator::And => {
-           if are_identical(a, b) && a == Kind::Basic(BasicKind::Bool) {
+           if are_identical(&a, &b) && a == Kind::Basic(BasicKind::Bool) {
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
@@ -574,16 +574,22 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
            }
        },
        BinaryOperator::Eq | BinaryOperator::Neq => {
-           if are_comparable(a, b){
-               return a
+           if are_comparable(&a, &b){
+               return Kind::Basic(BasicKind::Bool)
            } else {
-               eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
+               eprintln!("Error: line {}: trying to perform an invalid operation on a non-comparable type {}", line_number, a);
                exit(1)
            }
        },
        BinaryOperator::Lt | BinaryOperator::Leq | BinaryOperator::Gt | BinaryOperator::Geq => {
-
-       }
+           if are_ordered(&a, &b) {
+               return Kind::Basic(BasicKind::Bool)
+           } else {
+               eprintln!("Error: line {}: trying to perform an invalid operation on a non-ordered type {}", line_number, a);
+               exit(1)
+           }
+       },
+       
    }
 }
 
