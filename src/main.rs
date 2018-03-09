@@ -41,42 +41,30 @@ fn main() {
         }
     } else if &argv[1] == "parse" {
         let ast = unsafe { from_raw_or_none(parse()) };
-        if let Some(_) = ast {
-            match ast {
-                Some(ast) => {
-                    weed::weed_ast(&ast);
-                    println!("OK");
-                },
-                None =>  eprintln!("Error: AST error")
-            }
+        match ast {
+            Some(ast) => {
+                weed::weed_ast(&ast);
+                println!("OK");
+            },
+            None =>  eprintln!("Error: AST error")
         }
     } else if &argv[1] == "print" {
-        let ast = unsafe { from_raw_or_none(parse()) };
+        let ast = unsafe { Box::from_raw(parse()) };
         println!("{:?}", ast);
     } else if &argv[1] == "pretty" {
-        let ast = unsafe { from_raw_or_none(parse()) };
-        if let Some(_) = ast {
-            match ast {
-                Some(ast) => {
-                    weed::weed_ast(&ast);
-                    pretty::pretty_print_program(&ast)
-                },
-                None =>  eprintln!("Error: AST error")
-            }
-        }
+        let ast = unsafe { Box::from_raw(parse()) };
+        weed::weed_ast(&ast);
+        pretty::pretty_print_program(&ast)
+    } else if &argv[1] == "symbol" {
+        let mut ast = unsafe { Box::from_raw(parse()) };
+        weed::weed_ast(&ast);
+        weed::weed_terminating_statements(&ast);
+        typecheck::typecheck(&mut ast, true);
     } else if &argv[1] == "typecheck" {
-        let ast = unsafe { from_raw_or_none(parse()) };
-        if let Some(_) = ast {
-            match ast {
-                Some(ast) => {
-                    weed::weed_ast(&ast);
-                    weed::weed_terminating_statements(&ast);
-
-                    // Typecheck here
-                },
-                None =>  eprintln!("Error: AST error")
-            }
-        }
+        let mut ast = unsafe { Box::from_raw(parse()) };
+        weed::weed_ast(&ast);
+        weed::weed_terminating_statements(&ast);
+        typecheck::typecheck(&mut ast, false);
         print!("OK");
     } else {
         eprintln!("Error: invalid mode");
