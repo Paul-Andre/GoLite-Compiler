@@ -115,6 +115,10 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
     }
 }
 
+pub fn are_comparable(a: &Kind, b: &Kind) -> bool {
+    return a.is_comparable() && b.is_comparable() && are_identical(a, b)
+}
+
 impl Kind {
     pub fn resolve<'a>(&'a self) -> &'a Kind {
         match self {

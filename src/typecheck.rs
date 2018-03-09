@@ -576,8 +576,9 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
        BinaryOperator::Eq | BinaryOperator::Neq => {
            if are_comparable(a, b){
                return a
-           } else if a == Kind{
-
+           } else {
+               eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
+               exit(1)
            }
        },
        BinaryOperator::Lt | BinaryOperator::Leq | BinaryOperator::Gt | BinaryOperator::Geq => {
