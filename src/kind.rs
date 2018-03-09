@@ -116,7 +116,7 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
 }
 
 pub fn are_comparable(a: &Kind, b: &Kind) -> bool {
-    return a.is_comparable() && b.is_comparable() && are_identical(a, b)
+    return are_identical(a, b) && a.is_comparable()
 }
 
 impl Kind {
@@ -140,14 +140,16 @@ impl Kind {
             Kind::Array(ref kind, ..) => {
                 return kind.is_comparable()
             },
-            Kind::Slice(..) | Kind::Func {ref params, ref return_kind } => return false,
+            Kind::Slice(..) | Kind::Func {..} => return false,
             _ => return true
         }
     }
 
     pub fn is_ordered(&self) -> bool {
-        //TODO
-        false
+        match self {
+            Kind::Basic(BasicKind::Bool) | Kind::Slice(..) | Kind::Struct(..) | Kind::Func {..} => false,
+            _ => true
+        }
     }
 
     pub fn is_numeric(&self) -> bool {
