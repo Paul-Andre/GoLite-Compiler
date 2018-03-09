@@ -115,6 +115,15 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
     }
 }
 
+pub fn are_comparable(a: &Kind, b: &Kind) -> bool {
+    return are_identical(a, b) && a.is_comparable()
+}
+
+pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
+    return are_identical(a, b) && a.is_ordered()
+
+}
+
 impl Kind {
     pub fn resolve<'a>(&'a self) -> &'a Kind {
         match self {
@@ -124,13 +133,28 @@ impl Kind {
     }
 
     pub fn is_comparable(&self) -> bool {
-        //TODO
-        false
+        match self {
+            Kind::Struct(ref fields) => {
+                for f in fields.iter(){
+                    if !f.kind.is_comparable() {
+                        return false
+                    }
+                }
+                return true
+            },
+            Kind::Array(ref kind, ..) => {
+                return kind.is_comparable()
+            },
+            Kind::Slice(..) | Kind::Func {..} => return false,
+            _ => return true
+        }
     }
 
     pub fn is_ordered(&self) -> bool {
-        //TODO
-        false
+        match self {
+            Kind::Basic(BasicKind::Bool) | Kind::Slice(..) | Kind::Struct(..) | Kind::Func {..} => false,
+            _ => true
+        }
     }
 
     pub fn is_numeric(&self) -> bool {
