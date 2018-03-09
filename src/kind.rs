@@ -110,9 +110,6 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
         (&Func{..}, &Func{..}) => {
             panic!("Cannot check if function types are identical; Should not happen.");
         },
-        (&Func{..}, &Func{..}) => {
-            panic!("Cannot check if function types are identical; Should not happen.");
-        },
         (&Underscore, _) => true, // Ugly hack
         _ => false
     }
@@ -124,6 +121,26 @@ impl Kind {
             &Kind::Defined(ref r) => &(r.kind).resolve(),
             something_else => something_else
         }
+    }
+
+    pub fn is_comparable(&self) -> bool {
+        //TODO
+        false
+    }
+
+    pub fn is_ordered(&self) -> bool {
+        //TODO
+        false
+    }
+
+    pub fn is_numeric(&self) -> bool {
+        //TODO
+        false
+    }
+
+    pub fn is_integer(&self) -> bool {
+        //TODO
+        false
     }
 }
 
