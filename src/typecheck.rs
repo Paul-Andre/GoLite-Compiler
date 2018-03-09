@@ -34,39 +34,49 @@ pub fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbo
 
 
 pub fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &mut SymbolTable) {
-    panic!("unimplemented");
 
-    /*
     for spec in declarations {
 
-        let kinds = typecheck_expression_vec(&mut spec.rhs, symbol_table); // 1
+        let maybe_declared_kind = 
+            match spec.kind {
+                Some(ref mut k) => Some(typecheck_kind(k, symbol_table, None)),
+                None => None,
+            };
 
-        match spec.kind {
-            &Some(assigned_type) => {
-                for id in spec.names {
-                    symbol_table.add_symbol(id, assigned_type);
-                }
-            }
-            &None => {},
-        }
+        //let kinds = typecheck_expression_vec(&mut spec.rhs, symbol_table); // 1
 
-        for (id, exp_kind) in spec.names.iter().zip(kinds.iter()) {
-            match id_kind {
-                &Some(id_kind) => {
-                    if !kind::are_identical(id_kind, exp_kind) { // 3
-                        println!("Error: line {}: invalid type of expression assigned to {}.", 
-                                 stmt.line_number,
-                                 id);
+        for i in 0..spec.names.len() {
+            match (&mut spec.rhs, &maybe_declared_kind) {
+                (&mut Some(ref mut exps), &Some(ref declared_kind)) => {
+                    let init_kind = typecheck_expression(&mut exps[i], symbol_table);
+                    if !kind::are_identical(&init_kind, &declared_kind) {
+                        eprintln!("Error: line {}: trying to initialize variable `{}` \
+                        of type {} with type {}.",
+                                 spec.line_number, spec.names[i], declared_kind, init_kind);
                         exit(1);
                     }
-                }
-                &None => {
-                    add_symbol(id, exp_kind, symbol_table);
-                }
+                    symbol_table.add_declaration(spec.names[i].clone(),
+                            spec.line_number,
+                            Declaration::Variable(declared_kind.clone()),
+                            /*inferred*/ false);
+                },
+                (&mut Some(ref mut exps), &None) => {
+                    let init_kind = typecheck_expression(&mut exps[i], symbol_table);
+                    symbol_table.add_declaration(spec.names[i].clone(),
+                            spec.line_number,
+                            Declaration::Variable(init_kind),
+                            /*inferred*/ true);
+                },
+                (&mut None, &Some(ref declared_kind)) => {
+                    symbol_table.add_declaration(spec.names[i].clone(),
+                    spec.line_number,
+                    Declaration::Variable(declared_kind.clone()),
+                    /*inferred*/ false);
+                },
+                (&mut None, &None) => unreachable!()
             }
         }
     }
-    */
 }
 
 pub fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
@@ -178,8 +188,6 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
         }
 
         Statement::Assignment { ref mut lhs, ref mut rhs } => {
-            panic!("unimplemented");
-
             for i in 0..lhs.len() {
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
