@@ -51,10 +51,6 @@ impl<'a> SymbolTable<'a>{
     pub fn add_declaration(&mut self, id: String, line_number: u32, decl: Declaration, inferred: bool) {
         use self::Declaration::*;
 
-        if (&id == "_") {
-            return;
-        }
-
         let ilk = 
             match decl {
                 Variable(..) => "variable",
@@ -62,6 +58,44 @@ impl<'a> SymbolTable<'a>{
                 Type(..) => "type",
                 Function{..} => "function",
             };
+
+        if (self.print_table) {
+
+            indent(self.level + 1);
+            print!("{} [{}] = ", id, ilk);
+
+            if inferred {
+                println!("<infer>");
+            } else {
+                match decl {
+                    Variable(ref k) | Constant(ref k) | Type(ref k) => {
+                        println!("{}", k);
+                    },
+                    Function{ref params, ref return_kind}  => {
+                        print!("(");
+                        for (i,param) in params.iter().enumerate() {
+                            if i<params.len()-1 {
+                                print!("{}, ", param);
+                            } else {
+                                print!("{}", param);
+                            }
+                        }
+                        print!(") -> ");
+                        if let &Some(ref ret) = return_kind {
+                            print!("{}", ret);
+                        } else {
+                            print!("void");
+                        }
+                        println!();
+                    }
+                }
+            }
+        }
+
+        if (&id == "_") {
+            return;
+        }
+
 
         if (self.level <= 1 && &id == "init") {
             match decl {
@@ -86,36 +120,6 @@ impl<'a> SymbolTable<'a>{
             eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
                       line_number, id, l);
             exit(1);
-        }
-
-        if (self.print_table) {
-
-
-            indent(self.level + 1);
-            print!("{} [{}] = ", id, ilk);
-
-            if inferred {
-                println!("<infer>");
-            } else {
-                match decl {
-                    Variable(ref k) | Constant(ref k) | Type(ref k) => {
-                        println!("{}", k);
-                    },
-                    Function{ref params, ref return_kind}  => {
-                        print!("( ");
-                        for param in params {
-                            print!("{}, ", param);
-                        }
-                        print!(") -> ");
-                        if let &Some(ref ret) = return_kind {
-                            print!("{}", ret);
-                        } else {
-                            print!("void");
-                        }
-                        println!();
-                    }
-                }
-            }
         }
             
         self.symbols.insert(id, Symbol{
@@ -176,11 +180,11 @@ pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
     root_scope.add_declaration("float64".to_string(), 0,
         Declaration::Type(Kind::Basic(BasicKind::Float)),
         false);
-    root_scope.add_declaration("rune".to_string(), 0,
-        Declaration::Type(Kind::Basic(BasicKind::Rune)),
-        false);
     root_scope.add_declaration("bool".to_string(), 0,
         Declaration::Type(Kind::Basic(BasicKind::Bool)),
+        false);
+    root_scope.add_declaration("rune".to_string(), 0,
+        Declaration::Type(Kind::Basic(BasicKind::Rune)),
         false);
     root_scope.add_declaration("string".to_string(), 0,
         Declaration::Type(Kind::Basic(BasicKind::String)),
