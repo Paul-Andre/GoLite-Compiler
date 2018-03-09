@@ -410,7 +410,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
             if let Declaration::Type(ref kind) = symbol_table.get_symbol(name, ast.line_number).declaration {
                 return kind.clone();
             } else {
-                //error
+                eprintln!("Error: line {}: type {} does not exist.", ast.line_number, name);
                 exit(1);
             }
         },

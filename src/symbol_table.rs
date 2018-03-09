@@ -35,7 +35,7 @@ impl<'a> SymbolTable<'a>{
         self.symbols.get(identifier).is_some()
     }
     pub fn new_scope<'b>(&'b self) -> SymbolTable<'b> {
-        if (self.print_table) {
+        if self.print_table {
             indent(self.level + 1);
             println!("{{");
         }
@@ -59,7 +59,7 @@ impl<'a> SymbolTable<'a>{
                 Function{..} => "function",
             };
 
-        if (self.print_table) {
+        if self.print_table {
 
             indent(self.level + 1);
             print!("{} [{}] = ", id, ilk);
@@ -92,15 +92,15 @@ impl<'a> SymbolTable<'a>{
             }
         }
 
-        if (&id == "_") {
+        if &id == "_" {
             return;
         }
 
 
-        if (self.level <= 1 && &id == "init") {
+        if self.level <= 1 && &id == "init" {
             match decl {
                 Function{ref params, ref return_kind} => {
-                    if (params.len() != 0 || return_kind.is_some()) {
+                    if params.len() != 0 || return_kind.is_some() {
                         eprintln!("Error: line {}: `init` function must have type () -> void",
                                     line_number);
 
@@ -123,7 +123,7 @@ impl<'a> SymbolTable<'a>{
         }
             
         self.symbols.insert(id, Symbol{
-            line_number: line_number,
+            line_number,
             declaration: decl
         });
     }
@@ -137,7 +137,7 @@ fn indent(level: u32) {
 
 impl<'a> Drop for SymbolTable<'a> {
     fn drop(&mut self) {
-        if (self.print_table) {
+        if self.print_table {
             indent(self.level);
             println!("}}");
         }
@@ -159,9 +159,9 @@ pub enum Declaration {
 }
 
 
-/// Populates the symbol table with the Go defaul variables and types
+/// Populates the symbol table with the Go default variables and types
 pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
-    if (print_table) {
+    if print_table {
         indent(0);
         println!("{{");
     }
@@ -171,7 +171,7 @@ pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
         return_kind: None,
         in_function: false,
         level: 0,
-        print_table: print_table
+        print_table
     };
 
     root_scope.add_declaration("int".to_string(), 0,
