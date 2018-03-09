@@ -43,12 +43,19 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                 None => None,
             };
 
-        //let kinds = typecheck_expression_vec(&mut spec.rhs, symbol_table); // 1
+        let maybe_rhs_kinds = 
+            match spec.rhs {
+                Some(ref mut exprs) => {
+                    Some(typecheck_expression_vec(exprs, symbol_table))
+                },
+                None => None,
+            };
+
 
         for i in 0..spec.names.len() {
-            match (&mut spec.rhs, &maybe_declared_kind) {
-                (&mut Some(ref mut exps), &Some(ref declared_kind)) => {
-                    let init_kind = typecheck_expression(&mut exps[i], symbol_table);
+            match (&maybe_rhs_kinds, &maybe_declared_kind) {
+                (&Some(ref rhs_kinds), &Some(ref declared_kind)) => {
+                    let init_kind = &rhs_kinds[i];
                     if !kind::are_identical(&init_kind, &declared_kind) {
                         eprintln!("Error: line {}: trying to initialize variable `{}` \
                         of type {} with type {}.",
@@ -60,20 +67,20 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                             Declaration::Variable(declared_kind.clone()),
                             /*inferred*/ false);
                 },
-                (&mut Some(ref mut exps), &None) => {
-                    let init_kind = typecheck_expression(&mut exps[i], symbol_table);
+                (&Some(ref rhs_kinds), &None) => {
+                    let init_kind = &rhs_kinds[i];
                     symbol_table.add_declaration(spec.names[i].clone(),
                             spec.line_number,
-                            Declaration::Variable(init_kind),
+                            Declaration::Variable(init_kind.clone()),
                             /*inferred*/ true);
                 },
-                (&mut None, &Some(ref declared_kind)) => {
+                (&None, &Some(ref declared_kind)) => {
                     symbol_table.add_declaration(spec.names[i].clone(),
                     spec.line_number,
                     Declaration::Variable(declared_kind.clone()),
                     /*inferred*/ false);
                 },
-                (&mut None, &None) => unreachable!()
+                (&None, &None) => unreachable!()
             }
         }
     }
@@ -97,13 +104,52 @@ fn typecheck_statements(statements: &mut [StatementNode], symbol_table: &mut Sym
     }
 }
 
-fn typecheck_function_declaration(name: &String,
-                                       params: &[Field],
-                                       return_kind: &Option<Box<AstKindNode>>,
-                                       body: &mut [StatementNode],
-                                       line: u32,
-                                       table: &mut SymbolTable) {
-    panic!("unimplemented");
+fn typecheck_function_declaration(name: &str,
+                                   params: &mut [Field],
+                                   return_kind: &mut Option<Box<AstKindNode>>,
+                                   body: &mut [StatementNode],
+                                   line: u32,
+                                   symbol_table: &mut SymbolTable) {
+
+    let mut param_kinds = Vec::new();
+    for f in params.iter_mut() {
+        let k = typecheck_kind(&mut f.kind, symbol_table, None);
+        for _ in 0..f.identifiers.len() {
+            param_kinds.push(k.clone());
+        }
+    }
+
+    let real_return_kind = 
+        match return_kind {
+            &mut Some(ref mut ret) => Some(typecheck_kind(ret, symbol_table, None)),
+            &mut None => None
+        };
+
+    symbol_table.add_declaration(name.to_string(),
+                                 line,
+                                 Declaration::Function{
+                                     params: param_kinds.clone(),
+                                     return_kind: real_return_kind.clone(),
+                                 },
+                                 false);
+
+    let new_scope = &mut symbol_table.new_scope();
+    new_scope.return_kind = real_return_kind;
+
+    for f in params {
+        let k = typecheck_kind(&mut f.kind, new_scope, None);
+        for id in &f.identifiers {
+        new_scope.add_declaration(id.to_string(),
+                                     f.line_number,
+                                     Declaration::Variable(
+                                         k.clone()
+                                     ),
+                                     false);
+
+        }
+    }
+
+    typecheck_statements(body, new_scope);
 }
 
 fn typecheck_statement(stmt: &mut StatementNode,
@@ -124,7 +170,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     None
                 };
 
-            match (maybe_actual_kind, &symbol_table.return_type)  {
+            match (maybe_actual_kind, &symbol_table.return_kind)  {
                 (Some( ref actual_kind ), &Some(ref required_kind)) => {
                     if !are_identical(actual_kind, required_kind) {
                         eprintln!("Error: line {}: invalid return type {}. \
@@ -507,9 +553,19 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
     return Kind::Undefined;
 }
 
+fn typecheck_expression_vec(exprs: &mut [ExpressionNode], symbol_table: &mut SymbolTable) ->
+Vec<Kind> {
+    let mut ret = Vec::new();
+    for e in exprs {
+        ret.push(typecheck_expression(e, symbol_table));
+    }
+    ret
+}
+
 // Checks if a type is addressable
 // Question: isn't it an expression that is addressable or not?
 fn is_addressable(exp: &ExpressionNode) -> bool {
+    // TODO: this
     true
 }
 

@@ -6,7 +6,7 @@ use kind::BasicKind;
 pub struct SymbolTable<'a> {
     pub parent_scope: Option<&'a SymbolTable<'a>>,
     pub symbols: HashMap<String, Symbol>,
-    pub return_type: Option<Kind>,
+    pub return_kind: Option<Kind>,
     pub in_function: bool,
     pub level: u32,
     pub print_table: bool,
@@ -42,7 +42,7 @@ impl<'a> SymbolTable<'a>{
         return SymbolTable {
             parent_scope: Some(self),
             symbols: HashMap::new(),
-            return_type: self.return_type.clone(),
+            return_kind: self.return_kind.clone(),
             in_function: self.in_function,
             level: self.level + 1,
             print_table: self.print_table
@@ -164,7 +164,7 @@ pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
     let mut root_scope = SymbolTable{
         parent_scope: None,
         symbols: HashMap::new(),
-        return_type: None,
+        return_kind: None,
         in_function: false,
         level: 0,
         print_table: print_table
