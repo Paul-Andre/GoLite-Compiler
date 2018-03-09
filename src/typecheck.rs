@@ -564,12 +564,31 @@ fn is_addressable(exp: &ExpressionNode) -> bool {
 
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
-    Kind::Undefined
+   match op {
+       BinaryOperator::Or | BinaryOperator::And => {
+           if are_identical(a, b) && a == Kind::Basic(BasicKind::Bool) {
+               return Kind::Basic(BasicKind::Bool)
+           } else {
+               eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
+               exit(1)
+           }
+       },
+       BinaryOperator::Eq | BinaryOperator::Neq => {
+           if are_comparable(a, b){
+               return a
+           } else if a == Kind{
+
+           }
+       },
+       BinaryOperator::Lt | BinaryOperator::Leq | BinaryOperator::Gt | BinaryOperator::Geq => {
+
+       }
+   }
 }
 
 fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
     match op {
-        UnaryOperator::Plus | UnaryOperator::Neg  => {
+        UnaryOperator::Plus | UnaryOperator::Neg =>  {
             if kind != Kind::Basic(BasicKind::Int) || Kind::Basic(BasicKind::Float) {
                 eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
                 exit(1);
@@ -577,7 +596,15 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
                 return kind
             }
         },
-        UnaryOperator::BwCompl |  UnaryOperator::Not => {
+        UnaryOperator::BwCompl => {
+            if kind != Kind::Basic(BasicKind::Int) {
+                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                exit(1);
+            } else {
+                return kind
+            }
+        }
+        UnaryOperator::Not => {
             if kind != Kind::Basic(BasicKind::Bool) {
                 eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
                 exit(1);

@@ -124,8 +124,8 @@ impl Kind {
     }
 
     pub fn is_comparable(&self) -> bool {
-        //TODO
-        false
+        return self != Kind::Struct(..) || self != Kind::Array(.., ..)
+            || self != Kind::Slice(..) || self != Kind::Func{params: .., return_kind: ..}
     }
 
     pub fn is_ordered(&self) -> bool {
