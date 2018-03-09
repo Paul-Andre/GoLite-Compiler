@@ -128,8 +128,21 @@ impl Kind {
     }
 
     pub fn is_comparable(&self) -> bool {
-        return self != Kind::Struct(..) || self != Kind::Array(.., ..)
-            || self != Kind::Slice(..) || self != Kind::Func{params: .., return_kind: ..}
+        match self {
+            Kind::Struct(ref fields) => {
+                for f in fields.iter(){
+                    if !f.kind.is_comparable() {
+                        return false
+                    }
+                }
+                return true
+            },
+            Kind::Array(ref kind, ..) => {
+                return kind.is_comparable()
+            },
+            Kind::Slice(..) | Kind::Func {ref params, ref return_kind } => return false,
+            _ => return true
+        }
     }
 
     pub fn is_ordered(&self) -> bool {
