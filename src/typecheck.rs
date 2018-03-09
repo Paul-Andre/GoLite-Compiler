@@ -18,7 +18,7 @@ pub fn typecheck(root: &mut Program, print_table: bool) {
     }
 }
 
-pub fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbol_table: &mut SymbolTable) {
+fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbol_table: &mut SymbolTable) {
     match decl.top_level_declaration {
         TopLevelDeclaration::VarDeclarations { ref mut declarations } => {
             typecheck_variable_declarations(declarations, symbol_table);
@@ -33,7 +33,7 @@ pub fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbo
 }
 
 
-pub fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &mut SymbolTable) {
+fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &mut SymbolTable) {
 
     for spec in declarations {
 
@@ -79,7 +79,7 @@ pub fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_tabl
     }
 }
 
-pub fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
+fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
 
     for spec in declarations {
         let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
@@ -91,13 +91,13 @@ pub fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: 
 
 }
 
-pub fn typecheck_statements(statements: &mut [StatementNode], symbol_table: &mut SymbolTable) {
+fn typecheck_statements(statements: &mut [StatementNode], symbol_table: &mut SymbolTable) {
     for s in statements {
-        //symbol_table.add_symbol(spec.name);
+        typecheck_statement(s, symbol_table);
     }
 }
 
-pub fn typecheck_function_declaration(name: &String,
+fn typecheck_function_declaration(name: &String,
                                        params: &[Field],
                                        return_kind: &Option<Box<AstKindNode>>,
                                        body: &mut [StatementNode],
@@ -106,15 +106,15 @@ pub fn typecheck_function_declaration(name: &String,
     panic!("unimplemented");
 }
 
-pub fn typecheck_statement(stmt: &mut StatementNode,
+fn typecheck_statement(stmt: &mut StatementNode,
                            symbol_table: &mut SymbolTable) {
     match stmt.statement {
-        Statement::Empty => panic!("unimplemented"),
-        Statement::Break => panic!("unimplemented"),
-        Statement::Continue => panic!("unimplemented"),
+        Statement::Empty => {},
+        Statement::Break => {},
+        Statement::Continue => {},
         Statement::Expression(ref mut exp) => {
             typecheck_expression(exp, symbol_table);
-        }
+        },
         Statement::Return(ref mut exp) => {
             // We know that return statements only happen inside functions
             let maybe_actual_kind =
@@ -347,7 +347,7 @@ pub fn typecheck_statement(stmt: &mut StatementNode,
     }
 }
 
-pub fn typecheck_kind(ast: &mut AstKindNode, 
+fn typecheck_kind(ast: &mut AstKindNode, 
                       symbol_table: &mut SymbolTable, 
                       top_name: Option<&str>) -> Kind { 
                     // top_name is to prevent recursive definitions in structs
@@ -388,7 +388,7 @@ pub fn typecheck_kind(ast: &mut AstKindNode,
 }
 
 
-pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> Kind {
+fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> Kind {
     match exp.expression {
         Expression::RawLiteral{..} => {
             return exp.kind.clone()
@@ -509,15 +509,15 @@ pub fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolT
 
 // Checks if a type is addressable
 // Question: isn't it an expression that is addressable or not?
-pub fn is_addressable(exp: &ExpressionNode) -> bool {
+fn is_addressable(exp: &ExpressionNode) -> bool {
     true
 }
 
 // Need also to check if kinds are valid for op
-pub fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
+fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
     Kind::Undefined
 }
 
-pub fn get_kind_unary_op(a: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
+fn get_kind_unary_op(a: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
     Kind::Undefined
 }
