@@ -12,8 +12,8 @@ func main() {
 
 	///////////////////////////////////
 
-	var xRowOne []float32
-	var xRowTwo []float32
+	var xRowOne []float64
+	var xRowTwo []float64
 
 	xRowOne = append(xRowOne, 1.0)
 	xRowOne = append(xRowOne, 2.0)
@@ -23,12 +23,12 @@ func main() {
 	xRowTwo = append(xRowTwo, 5.0)
 	xRowTwo = append(xRowTwo, 6.0)
 
-	var X [][]float32
+	var X [][]float64
 	X = append(X, xRowOne)
 	X = append(X, xRowTwo)
 
-	var yRowOne []float32
-	var yRowTwo []float32
+	var yRowOne []float64
+	var yRowTwo []float64
 
 	yRowOne = append(yRowOne, 1.1)
 	yRowOne = append(yRowOne, 2.2)
@@ -38,13 +38,13 @@ func main() {
 	yRowTwo = append(yRowTwo, 5.5)
 	yRowTwo = append(yRowTwo, 6.6)
 
-	var Y [][]float32
+	var Y [][]float64
 	Y = append(Y, yRowOne)
 	Y = append(Y, yRowTwo)
 
 
 	// Change depending on matrix size!!!
-	var transY [3][]float32
+	var transY [3][]float64
 
 	for i := 0; i < Ya; i += 1 {
 		for j := 0; j < Yb; j += 1 {
@@ -53,12 +53,12 @@ func main() {
 	}
 
 	// Change depending on matrix size!!!
-	var result [2][2]float32
+	var result [2][2]float64
 
 	for i := 0; i < Xa; i += 1 {
 		for j := 0; j < Ya; j += 1 {
 			if i == 0 {
-				var temp [2]float32
+				var temp [2]float64
 				result[i] = temp
 			}
 			result[i][j] += X[i][j] * transY[j][i]
