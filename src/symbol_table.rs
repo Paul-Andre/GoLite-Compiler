@@ -170,35 +170,28 @@ pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
         print_table: print_table
     };
 
-    root_scope.symbols.insert("int".to_string(), Symbol{
-        line_number: 0,
-        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
-    });
-    root_scope.symbols.insert("float64".to_string(), Symbol{
-        line_number: 0,
-        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
-    });
-    root_scope.symbols.insert("rune".to_string(), Symbol{
-        line_number: 0,
-        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
-    });
-    root_scope.symbols.insert("bool".to_string(), Symbol{
-        line_number: 0,
-        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
-    });
-    root_scope.symbols.insert("string".to_string(), Symbol{
-        line_number: 0,
-        declaration: Declaration::Type(Kind::Basic(BasicKind::Bool))
-    });
+    root_scope.add_declaration("int".to_string(), 0,
+        Declaration::Type(Kind::Basic(BasicKind::Int)),
+        false);
+    root_scope.add_declaration("float64".to_string(), 0,
+        Declaration::Type(Kind::Basic(BasicKind::Float)),
+        false);
+    root_scope.add_declaration("rune".to_string(), 0,
+        Declaration::Type(Kind::Basic(BasicKind::Rune)),
+        false);
+    root_scope.add_declaration("bool".to_string(), 0,
+        Declaration::Type(Kind::Basic(BasicKind::Bool)),
+        false);
+    root_scope.add_declaration("string".to_string(), 0,
+        Declaration::Type(Kind::Basic(BasicKind::String)),
+        false);
 
-    root_scope.symbols.insert("true".to_string(), Symbol{
-        line_number: 0,
-        declaration: Declaration::Constant(Kind::Basic(BasicKind::Bool))
-    });
-    root_scope.symbols.insert("false".to_string(), Symbol{
-        line_number: 0,
-        declaration: Declaration::Constant(Kind::Basic(BasicKind::Bool))
-    });
+    root_scope.add_declaration("true".to_string(), 0,
+        Declaration::Constant(Kind::Basic(BasicKind::Bool)),
+        false);
+    root_scope.add_declaration("false".to_string(), 0,
+        Declaration::Constant(Kind::Basic(BasicKind::Bool)),
+        false);
 
     return root_scope;
 }

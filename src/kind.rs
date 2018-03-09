@@ -24,12 +24,26 @@ pub enum Kind {
     Underscore,
 }
 
+impl fmt::Display for BasicKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}",
+               match *self {
+                   BasicKind::Int => "int",
+                   BasicKind::Float => "float64",
+                   BasicKind::Rune => "rune",
+                   BasicKind::String => "string",
+                   BasicKind::Bool => "bool",
+               })
+    }
+}
+
+
 impl fmt::Display for Kind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::Kind::*;
         match *self {
             Undefined => write!(f, "<undefined>"),
-            Basic(b) => write!(f, "{:?}", b),
+            Basic(b) => write!(f, "{}", b),
             Defined(ref def) => {
                 write!(f, "{}", def.name)
             },
