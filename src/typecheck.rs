@@ -390,11 +390,14 @@ fn typecheck_statement(stmt: &mut StatementNode,
         }
         Statement::IncDec { ref is_dec, ref mut expr } => {
             // TODO: check if is addressable
+            // or do we need to do it? I beleive we did it in the weed phase
             let exp_type = typecheck_expression(expr, symbol_table);
             let base = exp_type.resolve();
-
-            // Resolve base type or something
-            panic!("unimplemented");
+            if !base.is_numeric(/*not string*/ false) {
+                eprintln!("Error: line {}: attempt to increment/decrement a non-numeric type \
+                {},", expr.line_number, exp_type);
+                exit(1);
+            }
         }
     }
 }
