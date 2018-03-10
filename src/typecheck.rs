@@ -353,19 +353,24 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = 
                 if let Some(ref mut expr) = *expr {
-                    typecheck_expression(expr, init_scope)
+                    let exp_type = typecheck_expression(expr, init_scope)
+                    if !exp.is_comparable() {
+                        eprintln!("Error: line {}: type {} is not comparable",
+                                  expr.line_number, expr_type);
+                        exit(1);
+                    }
+                    exp_type
                 } else {
                     Kind::Basic(BasicKind::Bool)
                 };
 
+
             for cc in body {
-                
                 match cc.switch_case {
                     SwitchCase::Cases(ref mut cases) => {
                         for case in cases {
                             let cc_type = typecheck_expression(case, init_scope);
                             if !are_identical(&cc_type, &exp_type) {
-                                // TODO: also must be comparabel I believe
                                 eprintln!("Error: line {}: mismatched case type {}; \
                                          expected {}.", 
                                          cc.line_number, cc_type, exp_type);
@@ -382,7 +387,6 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     typecheck_statement(&mut stmt, new_scope);
                 }
             }
-
         }
         Statement::IncDec { ref is_dec, ref mut expr } => {
             // TODO: check if is addressable
