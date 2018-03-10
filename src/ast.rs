@@ -15,16 +15,17 @@ pub enum BinaryOperator {
 
     Add,
     Sub,
-    BwOr,
-    BwXor,
-
     Mul,
     Div,
+
+    BwOr,
+    BwXor,
     Mod,
-    LShift,
-    RShift,
     BwAnd,
     BwAndNot,
+
+    LShift,
+    RShift,
 }
 
 #[repr(C)]

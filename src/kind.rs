@@ -121,8 +121,16 @@ pub fn are_comparable(a: &Kind, b: &Kind) -> bool {
 
 pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
     return are_identical(a, b) && a.is_ordered()
-
 }
+
+pub fn are_numeric(a: &Kind, b: &Kind, include_string: bool){
+    return a.is_numeric(include_string) && b.is_numeric(include_string)
+}
+
+pub fn are_integers(a: &Kind, b: &Kind) -> bool {
+    return a.is_integer() && b.is_integer()
+}
+
 
 impl Kind {
     pub fn resolve<'a>(&'a self) -> &'a Kind {
@@ -136,35 +144,43 @@ impl Kind {
         match self {
             Kind::Struct(ref fields) => {
                 for f in fields.iter(){
-                    if !f.kind.is_comparable() {
+                    if !f.kind.resolve().is_comparable() {
                         return false
                     }
                 }
                 return true
             },
             Kind::Array(ref kind, ..) => {
-                return kind.is_comparable()
+                return kind.resolve().is_comparable()
             },
-            Kind::Slice(..) | Kind::Func {..} => return false,
-            _ => return true
+            Kind::Slice(..) | Kind::Func {..} => false,
+            _ => true
         }
     }
 
     pub fn is_ordered(&self) -> bool {
-        match self {
+        let resolved = self.resolve();
+        match resolved {
             Kind::Basic(BasicKind::Bool) | Kind::Slice(..) | Kind::Struct(..) | Kind::Func {..} => false,
             _ => true
         }
     }
 
-    pub fn is_numeric(&self) -> bool {
-        //TODO
-        false
+    pub fn is_numeric(&self, include_string: bool) -> bool {
+        let resolved = self.resolve();
+        match resolved {
+            Kind::Basic(BasicKind::Int) | Kind::Basic(BasicKind::Float) => true,
+            Kind::Basic(BasicKind::String) => include_string,
+            _ => false
+        }
     }
 
     pub fn is_integer(&self) -> bool {
-        //TODO
-        false
+        let resolved = self.resolve();
+        match resolved {
+            Kind::Basic(BasicKind::Int) => true,
+            _ => false
+        }
     }
 }
 

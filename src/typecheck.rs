@@ -8,6 +8,15 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
+macro_rules! matches(
+    ($e:expr, $p:pat) => (
+        match $e {
+            $p => true,
+            _ => false
+        }
+    )
+);
+
 pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
     let universe_block = create_root_symbol_table(print_table);
@@ -564,32 +573,50 @@ fn is_addressable(exp: &ExpressionNode) -> bool {
 
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
-   match op {
-       BinaryOperator::Or | BinaryOperator::And => {
-           if are_identical(&a, &b) && a == Kind::Basic(BasicKind::Bool) {
+    match op {
+        BinaryOperator::Or | BinaryOperator::And => {
+           if are_identical(&a, &b) && matches!(&a.resolve(), Kind::Basic(BasicKind::Bool)){
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
                exit(1)
            }
-       },
-       BinaryOperator::Eq | BinaryOperator::Neq => {
+        },
+        BinaryOperator::Eq | BinaryOperator::Neq => {
            if are_comparable(&a, &b){
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a non-comparable type {}", line_number, a);
                exit(1)
            }
-       },
-       BinaryOperator::Lt | BinaryOperator::Leq | BinaryOperator::Gt | BinaryOperator::Geq => {
+        },
+        BinaryOperator::Lt | BinaryOperator::Leq | BinaryOperator::Gt | BinaryOperator::Geq => {
            if are_ordered(&a, &b) {
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a non-ordered type {}", line_number, a);
                exit(1)
            }
-       },
-       
+        },
+        BinaryOperator::Sub | BinaryOperator::Mul | BinaryOperator::Div |  BinaryOperator::Add=> {
+            let is_add = matches!(op,  BinaryOperator::Add);
+            if are_numeric(&a, &b, is_add) {
+                return a
+            } else {
+                eprintln!("Error: line {}: trying to perform an invalid operation on non-numerical type(s) {} and/or {}", line_number, a, b);
+                exit(1)
+            }
+        },
+        BinaryOperator::BwXor | BinaryOperator::BwOr | BinaryOperator::Mod
+        | BinaryOperator::BwAnd | BinaryOperator::BwAndNot | BinaryOperator::LShift
+        | BinaryOperator::RShift => {
+            if are_integers(a, b) {
+                return Kind::Basic(BasicKind::Int)
+            } else {
+                eprintln!("Error: line {}: trying to perform a bitwise operation on non-integer type(s) {} and/or {}", line_number, a, b);
+                exit(1)
+            }
+        },
    }
 }
 
