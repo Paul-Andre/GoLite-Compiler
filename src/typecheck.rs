@@ -479,7 +479,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                     }
                 }
             } else {
-                eprintln!("Error: line {}: primary epression for function call or \
+                eprintln!("Error: line {}: primary expression for function call or \
                 type cast must be an identifier.", exp.line_number);
             }
         }

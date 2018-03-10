@@ -159,8 +159,7 @@ impl Kind {
     }
 
     pub fn is_ordered(&self) -> bool {
-        let resolved = self.resolve();
-        match resolved {
+        match self.resolve() {
             &Kind::Basic(BasicKind::Bool) | &Kind::Slice(..)
             | &Kind::Struct(..) | &Kind::Func {..} => false,
             _ => true
@@ -168,8 +167,7 @@ impl Kind {
     }
 
     pub fn is_numeric(&self, include_string: bool) -> bool {
-        let resolved = self.resolve();
-        match resolved {
+        match self.resolve() {
             &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float) => true,
             &Kind::Basic(BasicKind::String) => include_string,
             _ => false
@@ -177,8 +175,7 @@ impl Kind {
     }
 
     pub fn is_integer(&self) -> bool {
-        let resolved = self.resolve();
-        match resolved {
+        match self.resolve() {
             &Kind::Basic(BasicKind::Int) => true,
             _ => false
         }
