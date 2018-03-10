@@ -115,7 +115,7 @@ fn typecheck_function_declaration(name: &str,
     for f in params.iter_mut() {
         let k = typecheck_kind(&mut f.kind, symbol_table, None);
         for i in 0..f.identifiers.len() {
-            param_tuples.push((f.identifiers[i].clone(), f.line_number, k.clone()))
+            param_tuples.push((&f.identifiers[i], f.line_number, k.clone()))
         }
     }
 
@@ -128,7 +128,7 @@ fn typecheck_function_declaration(name: &str,
     symbol_table.add_declaration(name.to_string(),
                                  line,
                                  Declaration::Function{
-                                     params: param_tuples.clone().into_iter().map(|x| x.2).collect(),
+                                     params: param_tuples.iter().map(|x| x.2.clone()).collect(),
                                      return_kind: real_return_kind.clone(),
                                  },
                                  false);
@@ -139,7 +139,7 @@ fn typecheck_function_declaration(name: &str,
 
     for f in param_tuples {
         new_scope.add_declaration(f.0.to_string(), f.1,
-                                  Declaration::Variable(f.2.clone()), false);
+                                  Declaration::Variable(f.2), false);
     }
 
     typecheck_statements(body, new_scope);
@@ -155,7 +155,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_expression(exp, symbol_table);
         },
         Statement::Return(ref mut exp) => {
-            // We know that return statements only happen inside functions TODO: Where exactly is this guaranteed??
+            // Since statements happen only inside functions, return only happens inside functions
             let maybe_actual_kind =
                 if let &mut Some(ref mut exp) = exp {
                     Some(typecheck_expression(&mut **exp, symbol_table))
@@ -395,6 +395,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
             match top_name {
                 Some(ref top_name) => {
                     if name == top_name {
+                        // TODO
                         //error recursive def
                     }
                 }
