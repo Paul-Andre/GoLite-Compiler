@@ -465,6 +465,12 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
 
         Expression::FunctionCall { ref mut primary, ref arguments } => {
             if let Expression::Identifier{ref name} = primary.expression {
+
+                if name == "init" {
+                    eprintln!("Error: line {}: attempting to call uncallable function 'init'.", exp.line_number);
+                    exit(1)
+                }
+
                 let symbol = symbol_table.get_symbol(name, exp.line_number);
                 match symbol.declaration {
                     Declaration::Type(ref kind) => {
