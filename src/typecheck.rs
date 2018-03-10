@@ -8,15 +8,6 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
-macro_rules! matches(
-    ($e:expr, $p:pat) => (
-        match $e {
-            $p => true,
-            _ => false
-        }
-    )
-);
-
 pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
     let universe_block = create_root_symbol_table(print_table);
@@ -477,10 +468,24 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                 let symbol = symbol_table.get_symbol(name, exp.line_number);
                 match symbol.declaration {
                     Declaration::Type(ref kind) => {
-                        //asdfasdfas
+                        match kind.resolve() {
+                            Kind::Func {ref params, ref return_kind} => {
+                                match return_kind {
+                                    &Some(ref r) => r,
+                                    &None => Kind::Undefined
+                                }
+                            },
+                            _ => {
+                                eprintln!("Error: line {}: `{}` is not a type of function.",
+                                          exp.line_number, name);
+                            }
+                        }
                     },
-                    Declaration::Function{..} => {
-                        //asdfasdfas
+                    Declaration::Function{ref params, ref return_kind} => {
+                        match return_kind {
+                            &Some(ref r) => r,
+                            &None => Kind::Undefined
+                        }
                     },
                     _ => {
                         eprintln!("Error: line {}: `{}` is not a type of function.",
@@ -488,7 +493,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                     }
                 }
             } else {
-                eprintln!("Error: line {}: primary epression for function call or \
+                eprintln!("Error: line {}: primary expression for function call or \
                 type cast must be an identifier.", exp.line_number);
             }
         }
@@ -549,7 +554,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
         }
 
         Expression::TypeCast { ref expr } => {
-            // We need to remove this
+            // TODO: We need to remove this
         }
     } 
     return Kind::Undefined;
