@@ -353,10 +353,10 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = 
                 if let Some(ref mut expr) = *expr {
-                    let exp_type = typecheck_expression(expr, init_scope)
-                    if !exp.is_comparable() {
+                    let exp_type = typecheck_expression(expr, init_scope);
+                    if !exp_type.resolve().is_comparable() {
                         eprintln!("Error: line {}: type {} is not comparable",
-                                  expr.line_number, expr_type);
+                                  expr.line_number, exp_type);
                         exit(1);
                     }
                     exp_type
@@ -382,8 +382,8 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 }
                 
 
+                let new_scope = &mut init_scope.new_scope();
                 for mut stmt in &mut cc.statements {
-                    let new_scope = &mut init_scope.new_scope();
                     typecheck_statement(&mut stmt, new_scope);
                 }
             }
