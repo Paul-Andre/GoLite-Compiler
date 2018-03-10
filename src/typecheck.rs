@@ -124,7 +124,7 @@ fn typecheck_function_declaration(name: &str,
     for f in params.iter_mut() {
         let k = typecheck_kind(&mut f.kind, symbol_table, None);
         for i in 0..f.identifiers.len() {
-            param_tuples.push((f.identifiers[i], f.line_number, k.clone()))
+            param_tuples.push((f.identifiers[i].clone(), f.line_number, k.clone()))
         }
     }
 
@@ -137,7 +137,7 @@ fn typecheck_function_declaration(name: &str,
     symbol_table.add_declaration(name.to_string(),
                                  line,
                                  Declaration::Function{
-                                     params: param_tuples.into_iter().map(|x| x.0).collect(),
+                                     params: param_tuples.clone().into_iter().map(|x| x.2).collect(),
                                      return_kind: real_return_kind.clone(),
                                  },
                                  false);
@@ -575,12 +575,12 @@ fn is_addressable(exp: &ExpressionNode) -> bool {
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
     match op {
         BinaryOperator::Or | BinaryOperator::And => {
-           if are_identical(&a, &b) && matches!(&a.resolve(), Kind::Basic(BasicKind::Bool)){
+            if are_identical(&a, &b) && a.is_boolean(){
                return Kind::Basic(BasicKind::Bool)
-           } else {
+            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
                exit(1)
-           }
+            }
         },
         BinaryOperator::Eq | BinaryOperator::Neq => {
            if are_comparable(&a, &b){
@@ -599,9 +599,15 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
            }
         },
         BinaryOperator::Sub | BinaryOperator::Mul | BinaryOperator::Div |  BinaryOperator::Add=> {
-            let is_add = matches!(op,  BinaryOperator::Add);
+            let is_add: bool;
+
+            match op {
+                BinaryOperator::Add => is_add = true,
+                _ => is_add = false
+            }
+
             if are_numeric(&a, &b, is_add) {
-                return a
+                return a.clone()
             } else {
                 eprintln!("Error: line {}: trying to perform an invalid operation on non-numerical type(s) {} and/or {}", line_number, a, b);
                 exit(1)
@@ -624,7 +630,8 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
     match op {
         UnaryOperator::Plus | UnaryOperator::Neg =>  {
             match kind.resolve() {
-                Kind::Basic(BasicKind::Int) | Kind::Basic(BasicKind::Float) => kind.resolve(),
+                &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                &Kind::Basic(BasicKind::Float) => Kind::Basic(BasicKind::Float),
                 _ => {
                     eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
                     exit(1);
@@ -633,7 +640,7 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
         },
         UnaryOperator::BwCompl => {
             match kind.resolve() {
-                Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
                 _ => {
                     eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
                     exit(1);
@@ -642,7 +649,7 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
         }
         UnaryOperator::Not => {
             match kind.resolve() {
-                Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
+                &Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
                 _ => {
                     eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
                     exit(1);
