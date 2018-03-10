@@ -123,7 +123,7 @@ pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
     return are_identical(a, b) && a.is_ordered()
 }
 
-pub fn are_numeric(a: &Kind, b: &Kind, include_string: bool){
+pub fn are_numeric(a: &Kind, b: &Kind, include_string: bool) -> bool{
     return a.is_numeric(include_string) && b.is_numeric(include_string)
 }
 
@@ -142,7 +142,7 @@ impl Kind {
 
     pub fn is_comparable(&self) -> bool {
         match self {
-            Kind::Struct(ref fields) => {
+            &Kind::Struct(ref fields) => {
                 for f in fields.iter(){
                     if !f.kind.resolve().is_comparable() {
                         return false
@@ -150,10 +150,10 @@ impl Kind {
                 }
                 return true
             },
-            Kind::Array(ref kind, ..) => {
+            &Kind::Array(ref kind, ..) => {
                 return kind.resolve().is_comparable()
             },
-            Kind::Slice(..) | Kind::Func {..} => false,
+            &Kind::Slice(..) | &Kind::Func {..} => false,
             _ => true
         }
     }
@@ -161,7 +161,8 @@ impl Kind {
     pub fn is_ordered(&self) -> bool {
         let resolved = self.resolve();
         match resolved {
-            Kind::Basic(BasicKind::Bool) | Kind::Slice(..) | Kind::Struct(..) | Kind::Func {..} => false,
+            &Kind::Basic(BasicKind::Bool) | &Kind::Slice(..)
+            | &Kind::Struct(..) | &Kind::Func {..} => false,
             _ => true
         }
     }
@@ -169,8 +170,8 @@ impl Kind {
     pub fn is_numeric(&self, include_string: bool) -> bool {
         let resolved = self.resolve();
         match resolved {
-            Kind::Basic(BasicKind::Int) | Kind::Basic(BasicKind::Float) => true,
-            Kind::Basic(BasicKind::String) => include_string,
+            &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float) => true,
+            &Kind::Basic(BasicKind::String) => include_string,
             _ => false
         }
     }
@@ -178,7 +179,14 @@ impl Kind {
     pub fn is_integer(&self) -> bool {
         let resolved = self.resolve();
         match resolved {
-            Kind::Basic(BasicKind::Int) => true,
+            &Kind::Basic(BasicKind::Int) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_boolean(&self) -> bool {
+        match self.resolve() {
+            &Kind::Basic(BasicKind::Bool) => true,
             _ => false
         }
     }
