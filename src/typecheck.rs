@@ -411,8 +411,9 @@ fn typecheck_kind(ast: &mut AstKindNode,
             match top_name {
                 Some(ref top_name) => {
                     if name == top_name {
-                        // TODO
-                        //error recursive def
+                        eprintln!("Error: line {}: trying to recursively use {} \
+                        in type definition:", ast.line_number, name);
+                        exit(1);
                     }
                 }
                 None => {},
