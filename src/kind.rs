@@ -124,7 +124,7 @@ pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
 }
 
 pub fn are_numeric(a: &Kind, b: &Kind, include_string: bool) -> bool{
-    return a.is_numeric(include_string) && b.is_numeric(include_string)
+    return are_identical(a, b) && a.is_numeric(include_string) && b.is_numeric(include_string)
 }
 
 pub fn are_integers(a: &Kind, b: &Kind) -> bool {
