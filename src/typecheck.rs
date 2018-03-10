@@ -187,6 +187,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
 
         },
         Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
+            // TODO
             panic!("Unimplemented");
             /*
             let kinds = typecheck_expression_vec(expression_list, symbol_table); // 1
@@ -290,6 +291,13 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Println { ref mut exprs } => {
             for expr in exprs {
                 let kind = typecheck_expression(expr, symbol_table);
+                let resolved_kind = kind.resolve();
+                if let &Kind::Basic(..) = resolved_kind {
+                } else {
+                    eprintln!("Error: line {}: trying to print something that resolves \
+                    to a {}", expr.line_number, resolved_kind);
+                    exit(1);
+                }
             }
         }
 
@@ -333,8 +341,9 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 typecheck_statements(if_branch, new_scope);
             }
 
+            let else_scope = &mut init_scope.new_scope();
             match *else_branch {
-                Some(ref mut stmt) => typecheck_statement(stmt, init_scope),
+                Some(ref mut stmt) => typecheck_statement(stmt, else_scope),
                 None => {},
             }
         }
