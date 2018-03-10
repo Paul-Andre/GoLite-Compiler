@@ -7,6 +7,7 @@ use kind::BasicKind;
 use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
@@ -421,7 +422,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
             if let Declaration::Type(ref kind) = symbol_table.get_symbol(name, ast.line_number).declaration {
                 return kind.clone();
             } else {
-                eprintln!("Error: line {}: type {} does not exist.", ast.line_number, name);
+                eprintln!("Error: line {}: `{}` is not a type.", ast.line_number, name);
                 exit(1);
             }
         },
@@ -429,13 +430,22 @@ fn typecheck_kind(ast: &mut AstKindNode,
             return Kind::Slice(Box::new(typecheck_kind(base, symbol_table, top_name)))
         },
         AstKind::Array { ref mut base, ref size } => {
-            return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)), 0) // CHANGE
+            // TODO: parse the size and replace the 0
+            return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)), 0)
         },
         AstKind::Struct { ref mut fields } => {
-            let mut kind_fields = Vec::new();  
+            let mut kind_fields = Vec::new();
+            let mut previous_names = HashSet::new();
             for field in fields {
                 let field_kind = typecheck_kind(&mut field.kind, symbol_table, top_name);
                 for id in &field.identifiers {
+                    if (&*id != "_") {
+                        if previous_names.contains(&*id) {
+                            eprintln!("Error: line {}: duplicate struct field `{}`.", ast.line_number, id);
+                            exit(1);
+                        }
+                        previous_names.insert(id.clone());
+                    }
                     kind_fields.push(kind::Field{name: id.clone(), kind: field_kind.clone()});
                 }
             }
