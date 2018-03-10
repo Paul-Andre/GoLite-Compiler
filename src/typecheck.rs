@@ -1,4 +1,5 @@
 use ast::*;
+use std::mem;
 use ast::Field;
 use kind;
 use kind::*;
@@ -491,47 +492,85 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
             return exp.kind.clone()
         }
 
-        Expression::FunctionCall { ref mut primary, ref arguments } => {
-            if let Expression::Identifier{ref name} = primary.expression {
+        ref mut a@Expression::FunctionCall { .. } => {
+            // Here I do this weird thing where I reassign the node to either a function call or a
+            // type cast depending on what the primary expression is.
+            
+            let primary;
+            let mut arguments;
+            
+            // To move things out of a borrowed value, I need to put something in its place
+            if let Expression::FunctionCall{ primary: p, arguments: a } = mem::replace(
+                a, Expression::Identifier{ name: "^ this is dumb ^".to_string()}) {
+                primary = p;
+                arguments = a;
+            } else {
+                unreachable!();
+            }
 
-                if name == "init" {
-                    eprintln!("Error: line {}: attempting to call uncallable function 'init'.", exp.line_number);
-                    exit(1)
-                }
+            *a = 
+            if let Expression::Identifier{name} = primary.expression {
+                // Note: we don't need to check if we're trying to call init because init is not
+                // going to be in scope anyway.
+                // And we can also have a type called `init`.
 
-                // TODO actually typecheck this
-
-                let symbol = symbol_table.get_symbol(name, exp.line_number);
-                match symbol.declaration {
-                    Declaration::Type(ref kind) => {
-                        match kind.resolve() {
-                            &Kind::Func {ref params, ref return_kind} => {
-                                match return_kind {
-                                    &Some(ref r) => return *r.clone(),
-                                    &None => return Kind::Undefined.clone()
-                                }
-                            },
-                            _ => {
-                                eprintln!("Error: line {}: `{}` is not a type or a function.",
-                                          exp.line_number, name);
-                            }
+                let decl = symbol_table.get_symbol(&name, exp.line_number).declaration.clone();
+                match decl { 
+                    Declaration::Type(cast_kind) => {
+                        if (arguments.len() != 1) {
+                            eprintln!("Error: line {}: Type casts take exactly one parameter.",
+                                      exp.line_number);
+                            exit(1);
                         }
+                        let mut inner_expr = arguments.drain(0..1).next().unwrap();
+                        let expr_kind = typecheck_expression(&mut inner_expr, symbol_table);
+
+                        let resolved_cast_kind = cast_kind.resolve();
+                        let resolved_expr_kind = expr_kind.resolve();
+
+                        if let &Kind::Basic(ref cast_basic) = resolved_cast_kind {
+                            if are_identical(resolved_cast_kind, resolved_expr_kind) ||
+                                (resolved_cast_kind.is_numeric(false) && resolved_expr_kind.is_numeric(false)) ||
+                                    (cast_basic == &BasicKind::String && resolved_expr_kind.is_integer()) {
+
+                            } else {
+                                eprintln!("Error: line {}: Trying to cast expression of type {} \
+                                to incompatible type {}.",
+                                    exp.line_number, expr_kind, cast_kind);
+                                exit(1);
+
+                            }
+                        } else {
+                            eprintln!("Error: line {}: Cast type must resolve to a basic type; \
+                                {} resolves to {} which is not a basic type.",
+                                exp.line_number, cast_kind, resolved_cast_kind);
+                            exit(1);
+                        }
+
+                        exp.kind = cast_kind.clone();
+                        Expression::TypeCast{ expr: Box::new(inner_expr) }
                     },
                     Declaration::Function{ref params, ref return_kind} => {
+                        // TODO: See if we're allowed to call this function with these arguments
                         match return_kind {
                             &Some(ref r) => return r.clone(),
                             &None => return Kind::Undefined.clone()
                         }
+                        Expression::FunctionCall{ primary, arguments }
                     },
                     _ => {
                         eprintln!("Error: line {}: `{}` is not a type or a function.",
                                   exp.line_number, name);
+                        exit(1);
                     }
                 }
             } else {
                 eprintln!("Error: line {}: primary expression for function call or \
                 type cast must be an identifier.", exp.line_number);
-            }
+                exit(1);
+            };
+
+            return exp.kind.clone()
         }
 
         Expression::Index { ref mut primary, ref mut index } => {

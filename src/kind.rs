@@ -20,7 +20,6 @@ pub enum Kind {
     Array(Box<Kind>,u32),
     Slice(Box<Kind>),
     Struct(Vec<Field>),
-    Func{params: Vec<Kind>, return_kind: Option<Box<Kind>>},
     Underscore,
 }
 
@@ -55,18 +54,6 @@ impl fmt::Display for Kind {
                     write!(f, "{} {}; ", name, kind)?;
                 }
                 write!(f, "}}")
-            },
-            Func{ref params, ref return_kind}  => {
-                write!(f, "(")?;
-                for param in params {
-                    write!(f, "{}, ", param)?;
-                }
-                write!(f, ") -> ")?;
-                if let &Some(ref ret) = return_kind {
-                    write!(f, "{}", ret)
-                } else {
-                    write!(f, "void")
-                }
             },
             Underscore => write!(f, "_"),
 
@@ -106,9 +93,6 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
                     &a_field.name == &b_field.name &&
                         are_identical(&a_field.kind,&b_field.kind)
                 })
-        },
-        (&Func{..}, &Func{..}) => {
-            panic!("Cannot check if function types are identical; Should not happen.");
         },
         (&Underscore, _) => true, // Ugly hack
         _ => false
@@ -153,7 +137,7 @@ impl Kind {
             &Kind::Array(ref kind, ..) => {
                 return kind.resolve().is_comparable()
             },
-            &Kind::Slice(..) | &Kind::Func {..} => false,
+            &Kind::Slice(..) => false,
             _ => true
         }
     }
@@ -161,22 +145,26 @@ impl Kind {
     pub fn is_ordered(&self) -> bool {
         match self.resolve() {
             &Kind::Basic(BasicKind::Bool) | &Kind::Slice(..)
-            | &Kind::Struct(..) | &Kind::Func {..} => false,
+            | &Kind::Struct(..) => false,
             _ => true
         }
     }
 
     pub fn is_numeric(&self, include_string: bool) -> bool {
         match self.resolve() {
-            &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float) => true,
-            &Kind::Basic(BasicKind::String) => include_string,
+            &Kind::Basic(t) => {
+                t == BasicKind::Int || t == BasicKind::Rune || t == BasicKind::Float ||
+                    (t == BasicKind::String && include_string)
+            }
             _ => false
         }
     }
 
     pub fn is_integer(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(BasicKind::Int) => true,
+            &Kind::Basic(t) => {
+                t == BasicKind::Int || t == BasicKind::Rune
+            }
             _ => false
         }
     }
