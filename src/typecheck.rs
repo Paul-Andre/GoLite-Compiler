@@ -315,7 +315,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
 
             typecheck_statement(post, init_scope);
             
-            if !are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
@@ -330,7 +330,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(condition, init_scope);
 
-            if !are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
