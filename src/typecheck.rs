@@ -623,27 +623,30 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
 fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
     match op {
         UnaryOperator::Plus | UnaryOperator::Neg =>  {
-            if kind != Kind::Basic(BasicKind::Int) || Kind::Basic(BasicKind::Float) {
-                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
-                exit(1);
-            } else {
-                return kind
+            match kind.resolve() {
+                Kind::Basic(BasicKind::Int) | Kind::Basic(BasicKind::Float) => kind.resolve(),
+                _ => {
+                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    exit(1);
+                }
             }
         },
         UnaryOperator::BwCompl => {
-            if kind != Kind::Basic(BasicKind::Int) {
-                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
-                exit(1);
-            } else {
-                return kind
+            match kind.resolve() {
+                Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                _ => {
+                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    exit(1);
+                }
             }
         }
         UnaryOperator::Not => {
-            if kind != Kind::Basic(BasicKind::Bool) {
-                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
-                exit(1);
-            } else {
-                return kind
+            match kind.resolve() {
+                Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
+                _ => {
+                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    exit(1);
+                }
             }
         }
     }
