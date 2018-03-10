@@ -469,10 +469,10 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                 match symbol.declaration {
                     Declaration::Type(ref kind) => {
                         match kind.resolve() {
-                            Kind::Func {ref params, ref return_kind} => {
+                            &Kind::Func {ref params, ref return_kind} => {
                                 match return_kind {
-                                    &Some(ref r) => r,
-                                    &None => Kind::Undefined
+                                    &Some(ref r) => return *r.clone(),
+                                    &None => return Kind::Undefined.clone()
                                 }
                             },
                             _ => {
@@ -483,8 +483,8 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                     },
                     Declaration::Function{ref params, ref return_kind} => {
                         match return_kind {
-                            &Some(ref r) => r,
-                            &None => Kind::Undefined
+                            &Some(ref r) => return r.clone(),
+                            &None => return Kind::Undefined.clone()
                         }
                     },
                     _ => {
