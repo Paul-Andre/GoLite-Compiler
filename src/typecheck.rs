@@ -8,15 +8,6 @@ use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
 
-macro_rules! matches(
-    ($e:expr, $p:pat) => (
-        match $e {
-            $p => true,
-            _ => false
-        }
-    )
-);
-
 pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
     let universe_block = create_root_symbol_table(print_table);
@@ -549,7 +540,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
         }
 
         Expression::TypeCast { ref expr } => {
-            // We need to remove this
+            // TODO: We need to remove this
         }
     } 
     return Kind::Undefined;
