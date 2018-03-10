@@ -499,6 +499,8 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                     exit(1)
                 }
 
+                // TODO actually typecheck this
+
                 let symbol = symbol_table.get_symbol(name, exp.line_number);
                 match symbol.declaration {
                     Declaration::Type(ref kind) => {
@@ -510,7 +512,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                                 }
                             },
                             _ => {
-                                eprintln!("Error: line {}: `{}` is not a type of function.",
+                                eprintln!("Error: line {}: `{}` is not a type or a function.",
                                           exp.line_number, name);
                             }
                         }
@@ -522,7 +524,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                         }
                     },
                     _ => {
-                        eprintln!("Error: line {}: `{}` is not a type of function.",
+                        eprintln!("Error: line {}: `{}` is not a type or a function.",
                                   exp.line_number, name);
                     }
                 }
