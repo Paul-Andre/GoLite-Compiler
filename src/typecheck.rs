@@ -760,8 +760,9 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
                 &Kind::Basic(BasicKind::Float) => Kind::Basic(BasicKind::Float),
+                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid operation on a non-numerical type {}", line_number, kind);
                     exit(1);
                 }
             }
@@ -769,8 +770,9 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
         UnaryOperator::BwCompl => {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid bitwise negation on a {}", line_number, kind);
                     exit(1);
                 }
             }
@@ -779,7 +781,7 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid logical negation operation on a {}", line_number, kind);
                     exit(1);
                 }
             }
