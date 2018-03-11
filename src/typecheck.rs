@@ -551,11 +551,32 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                         Expression::TypeCast{ expr: Box::new(inner_expr) }
                     },
                     Declaration::Function{ref params, ref return_kind} => {
-                        // TODO: See if we're allowed to call this function with these arguments
-                        match return_kind {
-                            &Some(ref r) => return r.clone(),
-                            &None => return Kind::Undefined.clone()
+
+                        if arguments.len() != params.len() {
+                            eprintln!("Error: line {}: `{}` takes {} arguments but only {} were provided.",
+                                      exp.line_number, &name, params.len(), arguments.len());
+                            exit(1);
                         }
+
+                        let argument_kinds = typecheck_expression_vec(&mut arguments,symbol_table);
+                        for (i, (ref ak, ref pk)) in argument_kinds.iter().zip(params.iter()).enumerate() {
+                            if !are_identical(&ak, &pk) {
+                                eprintln!("Error: line {}: argment {} that was provided for function `{}` is of type {} \
+                                but should be of type {}.",
+                                          exp.line_number, i+1, &name, ak, pk);
+                                exit(1);
+                            }
+                        }
+                        
+                        match return_kind {
+                            &Some(ref r) => {
+                                return r.clone()
+                            }
+                            &None => {
+                                return Kind::Undefined.clone()
+                            }
+                        }
+
                         Expression::FunctionCall{ primary, arguments }
                     },
                     _ => {
@@ -629,7 +650,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
         }
 
         Expression::TypeCast { ref expr } => {
-            // TODO: We need to remove this
+            panic!("This should not happen at this phase.");
         }
     } 
     return Kind::Undefined;
@@ -653,7 +674,7 @@ fn is_addressable(exp: &ExpressionNode) -> bool {
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
     if !are_identical(a, b) {
-        eprintln!("Error: line {}: trying to operation {:?} on expressions \
+        eprintln!("Error: line {}: trying to do operation {:?} on expressions \
                   of different types {} and {}", line_number, op, a, b);
         exit(1);
     }
