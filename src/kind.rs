@@ -49,7 +49,7 @@ impl fmt::Display for Kind {
             Array(ref k, s) => write!(f, "[{}]{}", s, k),
             Slice(ref k) => write!(f, "[]{}", k),
             Struct(ref fields) => {
-                write!(f, "{{")?;
+                write!(f, "struct {{ ")?;
                 for &Field{ref name, ref kind} in fields {
                     write!(f, "{} {}; ", name, kind)?;
                 }
