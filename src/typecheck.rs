@@ -509,7 +509,15 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
             }
 
             *a = 
-            if let Expression::Identifier{name} = primary.expression {
+            if let Some(ref name) =
+                // fml
+                if let Expression::Identifier{ref name} = primary.expression {
+                    Some(name.clone())
+                }
+                else {
+                    None
+                }
+            {
                 // Note: we don't need to check if we're trying to call init because init is not
                 // going to be in scope anyway.
                 // And we can also have a type called `init`.
@@ -570,13 +578,12 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                         
                         match return_kind {
                             &Some(ref r) => {
-                                return r.clone()
+                                exp.kind = r.clone();
                             }
                             &None => {
-                                return Kind::Undefined.clone()
+                                exp.kind = Kind::Undefined.clone();
                             }
                         }
-
                         Expression::FunctionCall{ primary, arguments }
                     },
                     _ => {
