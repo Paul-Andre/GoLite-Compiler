@@ -343,9 +343,11 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 typecheck_statements(if_branch, new_scope);
             }
 
-            let else_scope = &mut init_scope.new_scope();
             match *else_branch {
-                Some(ref mut stmt) => typecheck_statement(stmt, else_scope),
+                Some(ref mut stmt) => {
+                    let else_scope = &mut init_scope.new_scope();
+                    typecheck_statement(stmt, else_scope);
+                },
                 None => {},
             }
         }
@@ -493,6 +495,8 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
         }
 
         ref mut a@Expression::FunctionCall { .. } => {
+            // This block is a horror
+
             // Here I do this weird thing where I reassign the node to either a function call or a
             // type cast depending on what the primary expression is.
             
@@ -741,6 +745,8 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
 }
 
 fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
+    // TODO: this is wrong, read the specs, it is super clear now what this should be.
+    // see page 14 at the top
     match op {
         UnaryOperator::Plus | UnaryOperator::Neg =>  {
             match kind.resolve() {
