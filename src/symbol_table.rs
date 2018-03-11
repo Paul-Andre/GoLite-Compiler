@@ -151,6 +151,7 @@ pub struct Symbol {
 }
 
 
+#[derive(Clone)]
 pub enum Declaration {
     Variable(Kind),
     Constant(Kind),
