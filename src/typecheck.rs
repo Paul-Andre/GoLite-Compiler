@@ -7,7 +7,6 @@ use kind::Kind;
 use kind::BasicKind;
 use symbol_table::*;
 use std::process::exit;
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 pub fn typecheck(root: &mut Program, print_table: bool) {
@@ -241,7 +240,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             for i in 0..lhs.len() {
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
-                if !is_exp_addressable(lhs_exp) {
+                if !is_exp_addressable(lhs_exp, symbol_table) {
                      println!("Error: line {}: lvalue {} in list is not addressable.", 
                               stmt.line_number,
                               i + 1);
@@ -267,14 +266,14 @@ fn typecheck_statement(stmt: &mut StatementNode,
             let lhs_kind = typecheck_expression(lhs, symbol_table);
             let rhs_kind = typecheck_expression(rhs, symbol_table);
 
-            if !is_exp_addressable(lhs_kind) {
+            if !is_exp_addressable(lhs, symbol_table) {
                  println!("Error: line {}: unadressable lvalue.", stmt.line_number);
                  exit(1);
             }
 
-            let assigned_kind = get_kind_binary_op(lhs_kind, rhs_kind, operator, stmt.line_number);
+            let assigned_kind = get_kind_binary_op(&lhs_kind, &rhs_kind, *operator, stmt.line_number);
 
-            if !are_identical(lhs_kind, assigned_kind) {
+            if !are_identical(&lhs_kind, &assigned_kind) {
                 println!("Error: line {}: invalid assignment type.", stmt.line_number);
                 exit(1);
             }
@@ -348,17 +347,19 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Switch { ref mut init, ref mut expr, ref mut body } => {
             let init_scope = &mut symbol_table.new_scope();
             typecheck_statement(init, init_scope);
-            let exp_type = 
-                if let Some(ref mut expr) = *expr {
-                    let exp_type = typecheck_expression(expr, init_scope);
-                    if !exp_type.resolve().is_comparable() {
-                        eprintln!("Error: line {}: type {} is not comparable",
-                                  expr.line_number, exp_type);
-                        exit(1);
-                    }
-                } else {
-                    Kind::Basic(BasicKind::Bool)
-                };
+
+            let exp_type:Kind;
+
+            if let Some(ref mut expr) = *expr {
+                exp_type = typecheck_expression(expr, init_scope);
+                if !exp_type.resolve().is_comparable() {
+                    eprintln!("Error: line {}: type {} is not comparable",
+                              expr.line_number, exp_type);
+                    exit(1);
+                }
+            } else {
+                exp_type = Kind::Basic(BasicKind::Bool);
+            };
 
             for cc in body {
                 match cc.switch_case {
@@ -432,7 +433,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
             for field in fields {
                 let field_kind = typecheck_kind(&mut field.kind, symbol_table, top_name);
                 for id in &field.identifiers {
-                    if (&*id != "_") {
+                    if &*id != "_" {
                         if previous_names.contains(&*id) {
                             eprintln!("Error: line {}: duplicate struct field `{}`.", ast.line_number, id);
                             exit(1);
@@ -519,7 +520,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                 let decl = symbol_table.get_symbol(&name, exp.line_number).declaration.clone();
                 match decl { 
                     Declaration::Type(cast_kind) => {
-                        if (arguments.len() != 1) {
+                        if arguments.len() != 1 {
                             eprintln!("Error: line {}: Type casts take exactly one parameter.",
                                       exp.line_number);
                             exit(1);
@@ -667,10 +668,10 @@ Vec<Kind> {
     ret
 }
 
-fn is_exp_addressable(exp: &ExpressionNode) -> bool {
+fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> bool {
     match exp.expression {
         Expression::Identifier {..} => true,
-        Expression::Index { ref primary, .. } | Expression::Selector{ ref primary, .. }=> {
+        Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. }=> {
             let primary_kind = typecheck_expression(primary, symbol_table);
             if primary_kind.is_addressable() {
                 return true;

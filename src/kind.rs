@@ -1,5 +1,4 @@
 use std::rc::Rc;
-use std::fmt::Display;
 use std::fmt;
 
 #[repr(C)]
@@ -168,8 +167,8 @@ impl Kind {
 
     pub fn is_addressable(&self) -> bool {
         match self.resolve() {
-            Kind::Undefined => false,
-            Kind::Struct(ref v) => {
+            &Kind::Undefined => false,
+            &Kind::Struct(ref v) => {
                 for f in v.iter(){
                     if !f.kind.is_addressable() {
                         return false;
