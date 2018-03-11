@@ -241,7 +241,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             for i in 0..lhs.len() {
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
-                if !is_addressable(lhs_exp) {
+                if !is_exp_addressable(lhs_exp) {
                      println!("Error: line {}: lvalue {} in list is not addressable.", 
                               stmt.line_number,
                               i + 1);
@@ -684,10 +684,19 @@ Vec<Kind> {
     ret
 }
 
-// Question: isn't it an expression that is addressable or not?
-fn is_addressable(exp: &ExpressionNode) -> bool {
-    // TODO: this
-    true
+fn is_exp_addressable(exp: &ExpressionNode) -> bool {
+    match exp.expression {
+        Expression::Identifier {..} => true,
+        Expression::Index { ref primary, .. } | Expression::Selector{ ref primary, .. }=> {
+            let primary_kind = typecheck_expression(primary, symbol_table);
+            if primary_kind.is_addressable() {
+                return true;
+            } else {
+                return false
+            }
+        },
+        _ => false
+    }
 }
 
 // Need also to check if kinds are valid for op
