@@ -188,37 +188,45 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
         },
-        Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
-            // TODO
-            panic!("Unimplemented");
-            /*
-            let kinds = typecheck_expression_vec(expression_list, symbol_table); // 1
-            let mut count = 0;
+        Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
+            let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
-            for it in identifier_list.iter().zip(kinds.iter()) {
+            let mut declared_count = 0;
+
+            for it in identifier_list.iter().zip(rhs_kinds.iter()){
                 let (id, exp_kind) = it;
-                let id_kind = symbol_table.get_type(id);
-                match id_kind {
-                    &Some(id_kind) => {
-                        if !kind::are_identical(id_kind, exp_kind) { // 3
-                            println!("Error: line {}: invalid type of expression assigned to {}.", 
-                                     stmt.line_number,
-                                     id);
+
+                if symbol_table.is_in_current_scope(&id) {
+                    declared_count = declared_count + 1;
+
+                    if declared_count == identifier_list.len(){
+                        println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
+                        exit(1);
+                    }
+
+                    let sym = symbol_table.get_symbol(id, stmt.line_number);
+
+                    match sym.declaration {
+                        Declaration::Variable(ref k) =>{
+                            if !are_identical(k, exp_kind) { // 3
+                                println!("Error: line {}: invalid type of expression assigned to {}.",
+                                         stmt.line_number,
+                                         id);
+                                exit(1);
+                            }
+                        },
+                        _ => {
+                            println!("Error: line {}: Trying to declare non-variable in short variable assignment.", stmt.line_number);
                             exit(1);
                         }
                     }
-                    &None => {
-                        count = count + 1; // 2
-                        symbol_table.add_variable(id, exp_kind);
-                    }
+                } else {
+                    symbol_table.add_declaration(id.clone(),
+                                                 stmt.line_number,
+                                                 Declaration::Variable(exp_kind.clone()),
+                                                 true)
                 }
             }
-
-            if count == 0 {
-                println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
-                exit(1);
-            }
-            */
         }
 
         Statement::VarDeclarations { ref mut declarations } => {
