@@ -241,7 +241,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             for i in 0..lhs.len() {
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
-                if !is_addressable(lhs_exp) {
+                if !is_exp_addressable(lhs_exp) {
                      println!("Error: line {}: lvalue {} in list is not addressable.", 
                               stmt.line_number,
                               i + 1);
@@ -260,37 +260,24 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     lhs_kind);
                     exit(1);
                 }
-
             }
         }
 
         Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
-            panic!("unimplemented");
-            /*
             let lhs_kind = typecheck_expression(lhs, symbol_table);
             let rhs_kind = typecheck_expression(rhs, symbol_table);
 
-            if !is_addressable(lhs_kind) {
-                 println!("Error: line {}: unadressable lvalue.", 
-                          stmt.line_number);
+            if !is_exp_addressable(lhs_kind) {
+                 println!("Error: line {}: unadressable lvalue.", stmt.line_number);
                  exit(1);
             }
 
-            match get_kind_binary_op(lhs_kind, rhs_kind, operator) {
-                &Some(assigned_kind) => {
-                    if !kind::are_identical(lhs_kind, assigned_kind) {
-                        println!("Error: line {}: invalid assignment type.", 
-                                 stmt.line_number);
-                        exit(1);
-                    }
-                },
-                &None => {
-                    println!("Error: line {}: invalid operand types.", 
-                             stmt.line_number);
-                    exit(1);
-                },
+            let assigned_kind = get_kind_binary_op(lhs_kind, rhs_kind, operator, stmt.line_number);
+
+            if !are_identical(lhs_kind, assigned_kind) {
+                println!("Error: line {}: invalid assignment type.", stmt.line_number);
+                exit(1);
             }
-            */
         }
 
         Statement::Block(ref mut statements) => {
@@ -323,13 +310,13 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     Kind::Basic(BasicKind::Bool)
                 };
 
-            typecheck_statement(post, init_scope);
-            
             if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
-                println!("Error: line {}: condition must be of type bool.", 
+                println!("Error: line {}: condition must be of type bool.",
                          stmt.line_number);
                 exit(1);
             }
+
+            typecheck_statement(post, init_scope);
 
             let new_scope = &mut init_scope.new_scope();
             typecheck_statements(body, new_scope);
@@ -346,10 +333,8 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 exit(1);
             }
 
-            {
-                let new_scope = &mut init_scope.new_scope();
-                typecheck_statements(if_branch, new_scope);
-            }
+            let new_scope = &mut init_scope.new_scope();
+            typecheck_statements(if_branch, new_scope);
 
             match *else_branch {
                 Some(ref mut stmt) => {
@@ -371,11 +356,9 @@ fn typecheck_statement(stmt: &mut StatementNode,
                                   expr.line_number, exp_type);
                         exit(1);
                     }
-                    exp_type
                 } else {
                     Kind::Basic(BasicKind::Bool)
                 };
-
 
             for cc in body {
                 match cc.switch_case {
@@ -392,7 +375,6 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     }
                     SwitchCase::Default => {},
                 }
-                
 
                 let new_scope = &mut init_scope.new_scope();
                 for mut stmt in &mut cc.statements {
@@ -656,6 +638,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
 
             if let &Kind::Slice(ref t_kind) = s_kind.resolve() {
                 if are_identical(t_kind, &kind) {
+                    // TODO: why assign to exp.kind??
                     exp.kind = s_kind.clone();
                     return s_kind.clone()
                 } else {
@@ -684,17 +667,26 @@ Vec<Kind> {
     ret
 }
 
-// Question: isn't it an expression that is addressable or not?
-fn is_addressable(exp: &ExpressionNode) -> bool {
-    // TODO: this
-    true
+fn is_exp_addressable(exp: &ExpressionNode) -> bool {
+    match exp.expression {
+        Expression::Identifier {..} => true,
+        Expression::Index { ref primary, .. } | Expression::Selector{ ref primary, .. }=> {
+            let primary_kind = typecheck_expression(primary, symbol_table);
+            if primary_kind.is_addressable() {
+                return true;
+            } else {
+                return false
+            }
+        },
+        _ => false
+    }
 }
 
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
     if !are_identical(a, b) {
         eprintln!("Error: line {}: trying to do operation {:?} on expressions \
-                  of different types {} and {}", line_number, op, a, b);
+        of different types {} and {}", line_number, op, a, b);
         exit(1);
     }
 
