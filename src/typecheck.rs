@@ -395,7 +395,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             // or do we need to do it? I beleive we did it in the weed phase
             let exp_type = typecheck_expression(expr, symbol_table);
             let base = exp_type.resolve();
-            if !base.is_numeric(/*not string*/ false) {
+            if !base.is_numeric() {
                 eprintln!("Error: line {}: attempt to increment/decrement a non-numeric type \
                 {},", expr.line_number, exp_type);
                 exit(1);
@@ -530,7 +530,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
 
                         if let &Kind::Basic(ref cast_basic) = resolved_cast_kind {
                             if are_identical(resolved_cast_kind, resolved_expr_kind) ||
-                                (resolved_cast_kind.is_numeric(false) && resolved_expr_kind.is_numeric(false)) ||
+                                (resolved_cast_kind.is_numeric() && resolved_expr_kind.is_numeric()) ||
                                     (cast_basic == &BasicKind::String && resolved_expr_kind.is_integer()) {
 
                             } else {
@@ -644,7 +644,6 @@ Vec<Kind> {
     ret
 }
 
-// Checks if a type is addressable
 // Question: isn't it an expression that is addressable or not?
 fn is_addressable(exp: &ExpressionNode) -> bool {
     // TODO: this
@@ -653,17 +652,24 @@ fn is_addressable(exp: &ExpressionNode) -> bool {
 
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
+    if !are_identical(a, b) {
+        eprintln!("Error: line {}: trying to operation {:?} on expressions \
+                  of different types {} and {}", line_number, op, a, b);
+        exit(1);
+    }
+
     match op {
         BinaryOperator::Or | BinaryOperator::And => {
-            if are_identical(&a, &b) && a.is_boolean(){
-               return Kind::Basic(BasicKind::Bool)
+            if a.is_boolean() {
+                return a.clone();
+               //return Kind::Basic(BasicKind::Bool)
             } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
                exit(1)
             }
         },
         BinaryOperator::Eq | BinaryOperator::Neq => {
-           if are_comparable(&a, &b){
+           if a.is_comparable() {
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a non-comparable type {}", line_number, a);
@@ -671,7 +677,7 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
            }
         },
         BinaryOperator::Lt | BinaryOperator::Leq | BinaryOperator::Gt | BinaryOperator::Geq => {
-           if are_ordered(&a, &b) {
+           if a.is_ordered() {
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a non-ordered type {}", line_number, a);
@@ -686,20 +692,20 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
                 _ => is_add = false
             }
 
-            if are_numeric(&a, &b, is_add) {
+            if a.is_numeric() || (is_add && a.is_string()) {
                 return a.clone()
             } else {
-                eprintln!("Error: line {}: trying to perform an invalid operation on non-numerical type(s) {} and/or {}", line_number, a, b);
+                eprintln!("Error: line {}: trying to perform an arithmetic operation on non-numerical (or string) type {}", line_number, a);
                 exit(1)
             }
         },
         BinaryOperator::BwXor | BinaryOperator::BwOr | BinaryOperator::Mod
         | BinaryOperator::BwAnd | BinaryOperator::BwAndNot | BinaryOperator::LShift
         | BinaryOperator::RShift => {
-            if are_integers(a, b) {
-                return Kind::Basic(BasicKind::Int)
+            if a.is_integer() {
+                return a.clone();
             } else {
-                eprintln!("Error: line {}: trying to perform a bitwise operation on non-integer type(s) {} and/or {}", line_number, a, b);
+                eprintln!("Error: line {}: trying to perform a bitwise operation on non-integer type {}", line_number, a);
                 exit(1)
             }
         },

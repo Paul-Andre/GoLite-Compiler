@@ -107,8 +107,8 @@ pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
     return are_identical(a, b) && a.is_ordered()
 }
 
-pub fn are_numeric(a: &Kind, b: &Kind, include_string: bool) -> bool{
-    return a.is_numeric(include_string) && b.is_numeric(include_string)
+pub fn are_numeric(a: &Kind, b: &Kind) -> bool{
+    return a.is_numeric() && b.is_numeric()
 }
 
 pub fn are_integers(a: &Kind, b: &Kind) -> bool {
@@ -125,17 +125,17 @@ impl Kind {
     }
 
     pub fn is_comparable(&self) -> bool {
-        match self {
+        match self.resolve() {
             &Kind::Struct(ref fields) => {
                 for f in fields.iter(){
-                    if !f.kind.resolve().is_comparable() {
+                    if !f.kind.is_comparable() {
                         return false
                     }
                 }
                 return true
             },
             &Kind::Array(ref kind, ..) => {
-                return kind.resolve().is_comparable()
+                return kind.is_comparable()
             },
             &Kind::Slice(..) => false,
             _ => true
@@ -150,11 +150,10 @@ impl Kind {
         }
     }
 
-    pub fn is_numeric(&self, include_string: bool) -> bool {
+    pub fn is_numeric(&self) -> bool {
         match self.resolve() {
             &Kind::Basic(t) => {
-                t == BasicKind::Int || t == BasicKind::Rune || t == BasicKind::Float ||
-                    (t == BasicKind::String && include_string)
+                t == BasicKind::Int || t == BasicKind::Rune || t == BasicKind::Float
             }
             _ => false
         }
@@ -172,6 +171,13 @@ impl Kind {
     pub fn is_boolean(&self) -> bool {
         match self.resolve() {
             &Kind::Basic(BasicKind::Bool) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_string(&self) -> bool {
+        match self.resolve() {
+            &Kind::Basic(BasicKind::String) => true,
             _ => false
         }
     }
