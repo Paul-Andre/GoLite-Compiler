@@ -250,7 +250,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 let lhs_kind = typecheck_expression(lhs_exp, symbol_table);
                 let rhs_kind = typecheck_expression(rhs_exp, symbol_table);
 
-                if !are_identical(&lhs_kind.resolve(), &rhs_kind) {
+                if !are_identical(&lhs_kind, &rhs_kind) {
                     println!("Error: line {}: In position {} of assignment list, \
                     trying to assign a value of type {} \
                     to an expression expression {}", 
