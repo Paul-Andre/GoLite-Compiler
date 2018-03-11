@@ -250,7 +250,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 let lhs_kind = typecheck_expression(lhs_exp, symbol_table);
                 let rhs_kind = typecheck_expression(rhs_exp, symbol_table);
 
-                if !are_identical(&lhs_kind, &rhs_kind) {
+                if !are_identical(&lhs_kind.resolve(), &rhs_kind) {
                     println!("Error: line {}: In position {} of assignment list, \
                     trying to assign a value of type {} \
                     to an expression expression {}", 
@@ -274,7 +274,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
 
             let assigned_kind = get_kind_binary_op(lhs_kind, rhs_kind, operator, stmt.line_number);
 
-            if !kind::are_identical(lhs_kind, assigned_kind) {
+            if !are_identical(lhs_kind, assigned_kind) {
                 println!("Error: line {}: invalid assignment type.", stmt.line_number);
                 exit(1);
             }
@@ -310,13 +310,13 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     Kind::Basic(BasicKind::Bool)
                 };
 
-            typecheck_statement(post, init_scope);
-            
             if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
-                println!("Error: line {}: condition must be of type bool.", 
+                println!("Error: line {}: condition must be of type bool.",
                          stmt.line_number);
                 exit(1);
             }
+
+            typecheck_statement(post, init_scope);
 
             let new_scope = &mut init_scope.new_scope();
             typecheck_statements(body, new_scope);
@@ -333,10 +333,8 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 exit(1);
             }
 
-            {
-                let new_scope = &mut init_scope.new_scope();
-                typecheck_statements(if_branch, new_scope);
-            }
+            let new_scope = &mut init_scope.new_scope();
+            typecheck_statements(if_branch, new_scope);
 
             match *else_branch {
                 Some(ref mut stmt) => {
@@ -358,11 +356,9 @@ fn typecheck_statement(stmt: &mut StatementNode,
                                   expr.line_number, exp_type);
                         exit(1);
                     }
-                    exp_type
                 } else {
                     Kind::Basic(BasicKind::Bool)
                 };
-
 
             for cc in body {
                 match cc.switch_case {
@@ -379,7 +375,6 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     }
                     SwitchCase::Default => {},
                 }
-                
 
                 let new_scope = &mut init_scope.new_scope();
                 for mut stmt in &mut cc.statements {
@@ -643,6 +638,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
 
             if let &Kind::Slice(ref t_kind) = s_kind.resolve() {
                 if are_identical(t_kind, &kind) {
+                    // TODO: why assign to exp.kind??
                     exp.kind = s_kind.clone();
                     return s_kind.clone()
                 } else {
