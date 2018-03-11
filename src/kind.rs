@@ -99,22 +99,6 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
     }
 }
 
-pub fn are_comparable(a: &Kind, b: &Kind) -> bool {
-    return are_identical(a, b) && a.is_comparable()
-}
-
-pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
-    return are_identical(a, b) && a.is_ordered()
-}
-
-pub fn are_numeric(a: &Kind, b: &Kind) -> bool{
-    return a.is_numeric() && b.is_numeric()
-}
-
-pub fn are_integers(a: &Kind, b: &Kind) -> bool {
-    return a.is_integer() && b.is_integer()
-}
-
 
 impl Kind {
     pub fn resolve<'a>(&'a self) -> &'a Kind {
