@@ -260,37 +260,24 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     lhs_kind);
                     exit(1);
                 }
-
             }
         }
 
         Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
-            panic!("unimplemented");
-            /*
             let lhs_kind = typecheck_expression(lhs, symbol_table);
             let rhs_kind = typecheck_expression(rhs, symbol_table);
 
-            if !is_addressable(lhs_kind) {
-                 println!("Error: line {}: unadressable lvalue.", 
-                          stmt.line_number);
+            if !is_exp_addressable(lhs_kind) {
+                 println!("Error: line {}: unadressable lvalue.", stmt.line_number);
                  exit(1);
             }
 
-            match get_kind_binary_op(lhs_kind, rhs_kind, operator) {
-                &Some(assigned_kind) => {
-                    if !kind::are_identical(lhs_kind, assigned_kind) {
-                        println!("Error: line {}: invalid assignment type.", 
-                                 stmt.line_number);
-                        exit(1);
-                    }
-                },
-                &None => {
-                    println!("Error: line {}: invalid operand types.", 
-                             stmt.line_number);
-                    exit(1);
-                },
+            let assigned_kind = get_kind_binary_op(lhs_kind, rhs_kind, operator, stmt.line_number);
+
+            if !kind::are_identical(lhs_kind, assigned_kind) {
+                println!("Error: line {}: invalid assignment type.", stmt.line_number);
+                exit(1);
             }
-            */
         }
 
         Statement::Block(ref mut statements) => {
@@ -703,7 +690,7 @@ fn is_exp_addressable(exp: &ExpressionNode) -> bool {
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
     if !are_identical(a, b) {
         eprintln!("Error: line {}: trying to do operation {:?} on expressions \
-                  of different types {} and {}", line_number, op, a, b);
+        of different types {} and {}", line_number, op, a, b);
         exit(1);
     }
 
