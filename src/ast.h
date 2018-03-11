@@ -54,6 +54,7 @@ enum BasicKind {
   kFloat = 1,
   kRune = 2,
   kString = 3,
+  kBool = 4
 };
 
 enum BinaryOperator {
@@ -69,16 +70,17 @@ enum BinaryOperator {
 
     opAdd,
     opSub,
-    opBwOr,
-    opBwXor,
-
     opMul,
     opDiv,
+
+    opBwOr,
+    opBwXor,
     opMod,
-    opLShift,
-    opRShift,
     opBwAnd,
     opBwAndNot,
+
+    opLShift,
+    opRShift,
 };
 
 enum UnaryOperator {

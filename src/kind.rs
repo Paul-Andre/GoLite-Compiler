@@ -20,7 +20,6 @@ pub enum Kind {
     Array(Box<Kind>,u32),
     Slice(Box<Kind>),
     Struct(Vec<Field>),
-    Func{params: Vec<Kind>, return_kind: Option<Box<Kind>>},
     Underscore,
 }
 
@@ -50,23 +49,11 @@ impl fmt::Display for Kind {
             Array(ref k, s) => write!(f, "[{}]{}", s, k),
             Slice(ref k) => write!(f, "[]{}", k),
             Struct(ref fields) => {
-                write!(f, "{{")?;
+                write!(f, "struct {{ ")?;
                 for &Field{ref name, ref kind} in fields {
                     write!(f, "{} {}; ", name, kind)?;
                 }
                 write!(f, "}}")
-            },
-            Func{ref params, ref return_kind}  => {
-                write!(f, "(")?;
-                for param in params {
-                    write!(f, "{}, ", param)?;
-                }
-                write!(f, ") -> ")?;
-                if let &Some(ref ret) = return_kind {
-                    write!(f, "{}", ret)
-                } else {
-                    write!(f, "void")
-                }
             },
             Underscore => write!(f, "_"),
 
@@ -107,28 +94,9 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
                         are_identical(&a_field.kind,&b_field.kind)
                 })
         },
-        (&Func{..}, &Func{..}) => {
-            panic!("Cannot check if function types are identical; Should not happen.");
-        },
         (&Underscore, _) => true, // Ugly hack
         _ => false
     }
-}
-
-pub fn are_comparable(a: &Kind, b: &Kind) -> bool {
-    return are_identical(a, b) && a.is_comparable()
-}
-
-pub fn are_ordered(a: &Kind, b: &Kind) -> bool {
-    return are_identical(a, b) && a.is_ordered()
-}
-
-pub fn are_numeric(a: &Kind, b: &Kind, include_string: bool) -> bool{
-    return a.is_numeric(include_string) && b.is_numeric(include_string)
-}
-
-pub fn are_integers(a: &Kind, b: &Kind) -> bool {
-    return a.is_integer() && b.is_integer()
 }
 
 
@@ -141,19 +109,19 @@ impl Kind {
     }
 
     pub fn is_comparable(&self) -> bool {
-        match self {
+        match self.resolve() {
             &Kind::Struct(ref fields) => {
                 for f in fields.iter(){
-                    if !f.kind.resolve().is_comparable() {
+                    if !f.kind.is_comparable() {
                         return false
                     }
                 }
                 return true
             },
             &Kind::Array(ref kind, ..) => {
-                return kind.resolve().is_comparable()
+                return kind.is_comparable()
             },
-            &Kind::Slice(..) | &Kind::Func {..} => false,
+            &Kind::Slice(..) => false,
             _ => true
         }
     }
@@ -161,22 +129,25 @@ impl Kind {
     pub fn is_ordered(&self) -> bool {
         match self.resolve() {
             &Kind::Basic(BasicKind::Bool) | &Kind::Slice(..)
-            | &Kind::Struct(..) | &Kind::Func {..} => false,
+            | &Kind::Struct(..) => false,
             _ => true
         }
     }
 
-    pub fn is_numeric(&self, include_string: bool) -> bool {
+    pub fn is_numeric(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float) => true,
-            &Kind::Basic(BasicKind::String) => include_string,
+            &Kind::Basic(t) => {
+                t == BasicKind::Int || t == BasicKind::Rune || t == BasicKind::Float
+            }
             _ => false
         }
     }
 
     pub fn is_integer(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(BasicKind::Int) => true,
+            &Kind::Basic(t) => {
+                t == BasicKind::Int || t == BasicKind::Rune
+            }
             _ => false
         }
     }
@@ -184,6 +155,13 @@ impl Kind {
     pub fn is_boolean(&self) -> bool {
         match self.resolve() {
             &Kind::Basic(BasicKind::Bool) => true,
+            _ => false
+        }
+    }
+
+    pub fn is_string(&self) -> bool {
+        match self.resolve() {
+            &Kind::Basic(BasicKind::String) => true,
             _ => false
         }
     }

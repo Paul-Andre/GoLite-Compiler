@@ -1,4 +1,5 @@
 use ast::*;
+use std::mem;
 use ast::Field;
 use kind;
 use kind::*;
@@ -7,6 +8,7 @@ use kind::BasicKind;
 use symbol_table::*;
 use std::process::exit;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
@@ -115,7 +117,7 @@ fn typecheck_function_declaration(name: &str,
     for f in params.iter_mut() {
         let k = typecheck_kind(&mut f.kind, symbol_table, None);
         for i in 0..f.identifiers.len() {
-            param_tuples.push((f.identifiers[i].clone(), f.line_number, k.clone()))
+            param_tuples.push((&f.identifiers[i], f.line_number, k.clone()))
         }
     }
 
@@ -128,7 +130,7 @@ fn typecheck_function_declaration(name: &str,
     symbol_table.add_declaration(name.to_string(),
                                  line,
                                  Declaration::Function{
-                                     params: param_tuples.clone().into_iter().map(|x| x.2).collect(),
+                                     params: param_tuples.iter().map(|x| x.2.clone()).collect(),
                                      return_kind: real_return_kind.clone(),
                                  },
                                  false);
@@ -139,7 +141,7 @@ fn typecheck_function_declaration(name: &str,
 
     for f in param_tuples {
         new_scope.add_declaration(f.0.to_string(), f.1,
-                                  Declaration::Variable(f.2.clone()), false);
+                                  Declaration::Variable(f.2), false);
     }
 
     typecheck_statements(body, new_scope);
@@ -155,7 +157,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_expression(exp, symbol_table);
         },
         Statement::Return(ref mut exp) => {
-            // We know that return statements only happen inside functions TODO: Where exactly is this guaranteed??
+            // Since statements happen only inside functions, return only happens inside functions
             let maybe_actual_kind =
                 if let &mut Some(ref mut exp) = exp {
                     Some(typecheck_expression(&mut **exp, symbol_table))
@@ -186,36 +188,45 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
         },
-        Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
-            panic!("Unimplemented");
-            /*
-            let kinds = typecheck_expression_vec(expression_list, symbol_table); // 1
-            let mut count = 0;
+        Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
+            let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
-            for it in identifier_list.iter().zip(kinds.iter()) {
+            let mut declared_count = 0;
+
+            for it in identifier_list.iter().zip(rhs_kinds.iter()){
                 let (id, exp_kind) = it;
-                let id_kind = symbol_table.get_type(id);
-                match id_kind {
-                    &Some(id_kind) => {
-                        if !kind::are_identical(id_kind, exp_kind) { // 3
-                            println!("Error: line {}: invalid type of expression assigned to {}.", 
-                                     stmt.line_number,
-                                     id);
+
+                if symbol_table.is_in_current_scope(&id) {
+                    declared_count = declared_count + 1;
+
+                    if declared_count == identifier_list.len(){
+                        println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
+                        exit(1);
+                    }
+
+                    let sym = symbol_table.get_symbol(id, stmt.line_number);
+
+                    match sym.declaration {
+                        Declaration::Variable(ref k) =>{
+                            if !are_identical(k, exp_kind) { // 3
+                                println!("Error: line {}: invalid type of expression assigned to {}.",
+                                         stmt.line_number,
+                                         id);
+                                exit(1);
+                            }
+                        },
+                        _ => {
+                            println!("Error: line {}: Trying to declare non-variable in short variable assignment.", stmt.line_number);
                             exit(1);
                         }
                     }
-                    &None => {
-                        count = count + 1; // 2
-                        symbol_table.add_variable(id, exp_kind);
-                    }
+                } else {
+                    symbol_table.add_declaration(id.clone(),
+                                                 stmt.line_number,
+                                                 Declaration::Variable(exp_kind.clone()),
+                                                 true)
                 }
             }
-
-            if count == 0 {
-                println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
-                exit(1);
-            }
-            */
         }
 
         Statement::VarDeclarations { ref mut declarations } => {
@@ -290,6 +301,13 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Println { ref mut exprs } => {
             for expr in exprs {
                 let kind = typecheck_expression(expr, symbol_table);
+                let resolved_kind = kind.resolve();
+                if let &Kind::Basic(..) = resolved_kind {
+                } else {
+                    eprintln!("Error: line {}: trying to print something that resolves \
+                    to a {}", expr.line_number, resolved_kind);
+                    exit(1);
+                }
             }
         }
 
@@ -307,7 +325,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
 
             typecheck_statement(post, init_scope);
             
-            if !are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
@@ -322,7 +340,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(condition, init_scope);
 
-            if !are_identical(&exp_type, &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
@@ -334,7 +352,10 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
             match *else_branch {
-                Some(ref mut stmt) => typecheck_statement(stmt, init_scope),
+                Some(ref mut stmt) => {
+                    let else_scope = &mut init_scope.new_scope();
+                    typecheck_statement(stmt, else_scope);
+                },
                 None => {},
             }
         }
@@ -344,19 +365,24 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = 
                 if let Some(ref mut expr) = *expr {
-                    typecheck_expression(expr, init_scope)
+                    let exp_type = typecheck_expression(expr, init_scope);
+                    if !exp_type.resolve().is_comparable() {
+                        eprintln!("Error: line {}: type {} is not comparable",
+                                  expr.line_number, exp_type);
+                        exit(1);
+                    }
+                    exp_type
                 } else {
                     Kind::Basic(BasicKind::Bool)
                 };
 
+
             for cc in body {
-                
                 match cc.switch_case {
                     SwitchCase::Cases(ref mut cases) => {
                         for case in cases {
                             let cc_type = typecheck_expression(case, init_scope);
                             if !are_identical(&cc_type, &exp_type) {
-                                // TODO: also must be comparabel I believe
                                 eprintln!("Error: line {}: mismatched case type {}; \
                                          expected {}.", 
                                          cc.line_number, cc_type, exp_type);
@@ -368,20 +394,22 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 }
                 
 
+                let new_scope = &mut init_scope.new_scope();
                 for mut stmt in &mut cc.statements {
-                    let new_scope = &mut init_scope.new_scope();
                     typecheck_statement(&mut stmt, new_scope);
                 }
             }
-
         }
         Statement::IncDec { ref is_dec, ref mut expr } => {
             // TODO: check if is addressable
+            // or do we need to do it? I beleive we did it in the weed phase
             let exp_type = typecheck_expression(expr, symbol_table);
             let base = exp_type.resolve();
-
-            // Resolve base type or something
-            panic!("unimplemented");
+            if !base.is_numeric() {
+                eprintln!("Error: line {}: attempt to increment/decrement a non-numeric type \
+                {},", expr.line_number, exp_type);
+                exit(1);
+            }
         }
     }
 }
@@ -395,7 +423,9 @@ fn typecheck_kind(ast: &mut AstKindNode,
             match top_name {
                 Some(ref top_name) => {
                     if name == top_name {
-                        //error recursive def
+                        eprintln!("Error: line {}: trying to recursively use {} \
+                        in type definition:", ast.line_number, name);
+                        exit(1);
                     }
                 }
                 None => {},
@@ -403,7 +433,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
             if let Declaration::Type(ref kind) = symbol_table.get_symbol(name, ast.line_number).declaration {
                 return kind.clone();
             } else {
-                eprintln!("Error: line {}: type {} does not exist.", ast.line_number, name);
+                eprintln!("Error: line {}: `{}` is not a type.", ast.line_number, name);
                 exit(1);
             }
         },
@@ -411,13 +441,22 @@ fn typecheck_kind(ast: &mut AstKindNode,
             return Kind::Slice(Box::new(typecheck_kind(base, symbol_table, top_name)))
         },
         AstKind::Array { ref mut base, ref size } => {
-            return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)), 0) // CHANGE
+            // TODO: parse the size and replace the 0
+            return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)), 0)
         },
         AstKind::Struct { ref mut fields } => {
-            let mut kind_fields = Vec::new();  
+            let mut kind_fields = Vec::new();
+            let mut previous_names = HashSet::new();
             for field in fields {
                 let field_kind = typecheck_kind(&mut field.kind, symbol_table, top_name);
                 for id in &field.identifiers {
+                    if (&*id != "_") {
+                        if previous_names.contains(&*id) {
+                            eprintln!("Error: line {}: duplicate struct field `{}`.", ast.line_number, id);
+                            exit(1);
+                        }
+                        previous_names.insert(id.clone());
+                    }
                     kind_fields.push(kind::Field{name: id.clone(), kind: field_kind.clone()});
                 }
             }
@@ -463,39 +502,115 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
             return exp.kind.clone()
         }
 
-        Expression::FunctionCall { ref mut primary, ref arguments } => {
-            if let Expression::Identifier{ref name} = primary.expression {
-                let symbol = symbol_table.get_symbol(name, exp.line_number);
-                match symbol.declaration {
-                    Declaration::Type(ref kind) => {
-                        match kind.resolve() {
-                            Kind::Func {ref params, ref return_kind} => {
-                                match return_kind {
-                                    &Some(ref r) => r,
-                                    &None => Kind::Undefined
-                                }
-                            },
-                            _ => {
-                                eprintln!("Error: line {}: `{}` is not a type of function.",
-                                          exp.line_number, name);
-                            }
+        ref mut a@Expression::FunctionCall { .. } => {
+            // This block is a horror
+
+            // Here I do this weird thing where I reassign the node to either a function call or a
+            // type cast depending on what the primary expression is.
+            
+            let primary;
+            let mut arguments;
+            
+            // To move things out of a borrowed value, I need to put something in its place
+            if let Expression::FunctionCall{ primary: p, arguments: a } = mem::replace(
+                a, Expression::Identifier{ name: "^ this is dumb ^".to_string()}) {
+                primary = p;
+                arguments = a;
+            } else {
+                unreachable!();
+            }
+
+            *a = 
+            if let Some(ref name) =
+                // fml
+                if let Expression::Identifier{ref name} = primary.expression {
+                    Some(name.clone())
+                }
+                else {
+                    None
+                }
+            {
+                // Note: we don't need to check if we're trying to call init because init is not
+                // going to be in scope anyway.
+                // And we can also have a type called `init`.
+
+                let decl = symbol_table.get_symbol(&name, exp.line_number).declaration.clone();
+                match decl { 
+                    Declaration::Type(cast_kind) => {
+                        if (arguments.len() != 1) {
+                            eprintln!("Error: line {}: Type casts take exactly one parameter.",
+                                      exp.line_number);
+                            exit(1);
                         }
+                        let mut inner_expr = arguments.drain(0..1).next().unwrap();
+                        let expr_kind = typecheck_expression(&mut inner_expr, symbol_table);
+
+                        let resolved_cast_kind = cast_kind.resolve();
+                        let resolved_expr_kind = expr_kind.resolve();
+
+                        if let &Kind::Basic(ref cast_basic) = resolved_cast_kind {
+                            if are_identical(resolved_cast_kind, resolved_expr_kind) ||
+                                (resolved_cast_kind.is_numeric() && resolved_expr_kind.is_numeric()) ||
+                                    (cast_basic == &BasicKind::String && resolved_expr_kind.is_integer()) {
+
+                            } else {
+                                eprintln!("Error: line {}: Trying to cast expression of type {} \
+                                to incompatible type {}.",
+                                    exp.line_number, expr_kind, cast_kind);
+                                exit(1);
+
+                            }
+                        } else {
+                            eprintln!("Error: line {}: Cast type must resolve to a basic type; \
+                                {} resolves to {} which is not a basic type.",
+                                exp.line_number, cast_kind, resolved_cast_kind);
+                            exit(1);
+                        }
+
+                        exp.kind = cast_kind.clone();
+                        Expression::TypeCast{ expr: Box::new(inner_expr) }
                     },
                     Declaration::Function{ref params, ref return_kind} => {
-                        match return_kind {
-                            &Some(ref r) => r,
-                            &None => Kind::Undefined
+
+                        if arguments.len() != params.len() {
+                            eprintln!("Error: line {}: `{}` takes {} arguments but only {} were provided.",
+                                      exp.line_number, &name, params.len(), arguments.len());
+                            exit(1);
                         }
+
+                        let argument_kinds = typecheck_expression_vec(&mut arguments,symbol_table);
+                        for (i, (ref ak, ref pk)) in argument_kinds.iter().zip(params.iter()).enumerate() {
+                            if !are_identical(&ak, &pk) {
+                                eprintln!("Error: line {}: argment {} that was provided for function `{}` is of type {} \
+                                but should be of type {}.",
+                                          exp.line_number, i+1, &name, ak, pk);
+                                exit(1);
+                            }
+                        }
+                        
+                        match return_kind {
+                            &Some(ref r) => {
+                                exp.kind = r.clone();
+                            }
+                            &None => {
+                                exp.kind = Kind::Undefined.clone();
+                            }
+                        }
+                        Expression::FunctionCall{ primary, arguments }
                     },
                     _ => {
-                        eprintln!("Error: line {}: `{}` is not a type of function.",
+                        eprintln!("Error: line {}: `{}` is not a type or a function.",
                                   exp.line_number, name);
+                        exit(1);
                     }
                 }
             } else {
                 eprintln!("Error: line {}: primary expression for function call or \
                 type cast must be an identifier.", exp.line_number);
-            }
+                exit(1);
+            };
+
+            return exp.kind.clone()
         }
 
         Expression::Index { ref mut primary, ref mut index } => {
@@ -554,7 +669,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
         }
 
         Expression::TypeCast { ref expr } => {
-            // TODO: We need to remove this
+            panic!("This should not happen at this phase.");
         }
     } 
     return Kind::Undefined;
@@ -569,7 +684,6 @@ Vec<Kind> {
     ret
 }
 
-// Checks if a type is addressable
 // Question: isn't it an expression that is addressable or not?
 fn is_addressable(exp: &ExpressionNode) -> bool {
     // TODO: this
@@ -578,17 +692,24 @@ fn is_addressable(exp: &ExpressionNode) -> bool {
 
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
+    if !are_identical(a, b) {
+        eprintln!("Error: line {}: trying to do operation {:?} on expressions \
+                  of different types {} and {}", line_number, op, a, b);
+        exit(1);
+    }
+
     match op {
         BinaryOperator::Or | BinaryOperator::And => {
-            if are_identical(&a, &b) && a.is_boolean(){
-               return Kind::Basic(BasicKind::Bool)
+            if a.is_boolean() {
+                return a.clone();
+               //return Kind::Basic(BasicKind::Bool)
             } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, a);
                exit(1)
             }
         },
         BinaryOperator::Eq | BinaryOperator::Neq => {
-           if are_comparable(&a, &b){
+           if a.is_comparable() {
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a non-comparable type {}", line_number, a);
@@ -596,7 +717,7 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
            }
         },
         BinaryOperator::Lt | BinaryOperator::Leq | BinaryOperator::Gt | BinaryOperator::Geq => {
-           if are_ordered(&a, &b) {
+           if a.is_ordered() {
                return Kind::Basic(BasicKind::Bool)
            } else {
                eprintln!("Error: line {}: trying to perform an invalid operation on a non-ordered type {}", line_number, a);
@@ -611,20 +732,20 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
                 _ => is_add = false
             }
 
-            if are_numeric(&a, &b, is_add) {
+            if a.is_numeric() || (is_add && a.is_string()) {
                 return a.clone()
             } else {
-                eprintln!("Error: line {}: trying to perform an invalid operation on non-numerical type(s) {} and/or {}", line_number, a, b);
+                eprintln!("Error: line {}: trying to perform an arithmetic operation on non-numerical (or string) type {}", line_number, a);
                 exit(1)
             }
         },
         BinaryOperator::BwXor | BinaryOperator::BwOr | BinaryOperator::Mod
         | BinaryOperator::BwAnd | BinaryOperator::BwAndNot | BinaryOperator::LShift
         | BinaryOperator::RShift => {
-            if are_integers(a, b) {
-                return Kind::Basic(BasicKind::Int)
+            if a.is_integer() {
+                return a.clone();
             } else {
-                eprintln!("Error: line {}: trying to perform a bitwise operation on non-integer type(s) {} and/or {}", line_number, a, b);
+                eprintln!("Error: line {}: trying to perform a bitwise operation on non-integer type {}", line_number, a);
                 exit(1)
             }
         },
@@ -632,13 +753,16 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
 }
 
 fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
+    // TODO: this is wrong, read the specs, it is super clear now what this should be.
+    // see page 14 at the top
     match op {
         UnaryOperator::Plus | UnaryOperator::Neg =>  {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
                 &Kind::Basic(BasicKind::Float) => Kind::Basic(BasicKind::Float),
+                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid operation on a non-numerical type {}", line_number, kind);
                     exit(1);
                 }
             }
@@ -646,8 +770,9 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
         UnaryOperator::BwCompl => {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid bitwise negation on a {}", line_number, kind);
                     exit(1);
                 }
             }
@@ -656,7 +781,7 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid logical negation operation on a {}", line_number, kind);
                     exit(1);
                 }
             }
