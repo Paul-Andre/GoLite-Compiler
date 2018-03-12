@@ -7,7 +7,6 @@ use kind::Kind;
 use kind::BasicKind;
 use symbol_table::*;
 use std::process::exit;
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 pub fn typecheck(root: &mut Program, print_table: bool) {
@@ -188,37 +187,45 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
         },
-        Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
-            // TODO
-            panic!("Unimplemented");
-            /*
-            let kinds = typecheck_expression_vec(expression_list, symbol_table); // 1
-            let mut count = 0;
+        Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
+            let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
-            for it in identifier_list.iter().zip(kinds.iter()) {
+            let mut declared_count = 0;
+
+            for it in identifier_list.iter().zip(rhs_kinds.iter()){
                 let (id, exp_kind) = it;
-                let id_kind = symbol_table.get_type(id);
-                match id_kind {
-                    &Some(id_kind) => {
-                        if !kind::are_identical(id_kind, exp_kind) { // 3
-                            println!("Error: line {}: invalid type of expression assigned to {}.", 
-                                     stmt.line_number,
-                                     id);
+
+                if symbol_table.is_in_current_scope(&id) {
+                    declared_count = declared_count + 1;
+
+                    if declared_count == identifier_list.len(){
+                        println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
+                        exit(1);
+                    }
+
+                    let sym = symbol_table.get_symbol(id, stmt.line_number);
+
+                    match sym.declaration {
+                        Declaration::Variable(ref k) =>{
+                            if !are_identical(k, exp_kind) { // 3
+                                println!("Error: line {}: invalid type of expression assigned to {}.",
+                                         stmt.line_number,
+                                         id);
+                                exit(1);
+                            }
+                        },
+                        _ => {
+                            println!("Error: line {}: Trying to declare non-variable in short variable assignment.", stmt.line_number);
                             exit(1);
                         }
                     }
-                    &None => {
-                        count = count + 1; // 2
-                        symbol_table.add_variable(id, exp_kind);
-                    }
+                } else {
+                    symbol_table.add_declaration(id.clone(),
+                                                 stmt.line_number,
+                                                 Declaration::Variable(exp_kind.clone()),
+                                                 true)
                 }
             }
-
-            if count == 0 {
-                println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
-                exit(1);
-            }
-            */
         }
 
         Statement::VarDeclarations { ref mut declarations } => {
@@ -233,7 +240,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             for i in 0..lhs.len() {
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
-                if !is_addressable(lhs_exp) {
+                if !is_exp_addressable(lhs_exp, symbol_table) {
                      println!("Error: line {}: lvalue {} in list is not addressable.", 
                               stmt.line_number,
                               i + 1);
@@ -252,37 +259,24 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     lhs_kind);
                     exit(1);
                 }
-
             }
         }
 
         Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
-            panic!("unimplemented");
-            /*
             let lhs_kind = typecheck_expression(lhs, symbol_table);
             let rhs_kind = typecheck_expression(rhs, symbol_table);
 
-            if !is_addressable(lhs_kind) {
-                 println!("Error: line {}: unadressable lvalue.", 
-                          stmt.line_number);
+            if !is_exp_addressable(lhs, symbol_table) {
+                 println!("Error: line {}: unadressable lvalue.", stmt.line_number);
                  exit(1);
             }
 
-            match get_kind_binary_op(lhs_kind, rhs_kind, operator) {
-                &Some(assigned_kind) => {
-                    if !kind::are_identical(lhs_kind, assigned_kind) {
-                        println!("Error: line {}: invalid assignment type.", 
-                                 stmt.line_number);
-                        exit(1);
-                    }
-                },
-                &None => {
-                    println!("Error: line {}: invalid operand types.", 
-                             stmt.line_number);
-                    exit(1);
-                },
+            let assigned_kind = get_kind_binary_op(&lhs_kind, &rhs_kind, *operator, stmt.line_number);
+
+            if !are_identical(&lhs_kind, &assigned_kind) {
+                println!("Error: line {}: invalid assignment type.", stmt.line_number);
+                exit(1);
             }
-            */
         }
 
         Statement::Block(ref mut statements) => {
@@ -315,13 +309,13 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     Kind::Basic(BasicKind::Bool)
                 };
 
-            typecheck_statement(post, init_scope);
-            
             if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
-                println!("Error: line {}: condition must be of type bool.", 
+                println!("Error: line {}: condition must be of type bool.",
                          stmt.line_number);
                 exit(1);
             }
+
+            typecheck_statement(post, init_scope);
 
             let new_scope = &mut init_scope.new_scope();
             typecheck_statements(body, new_scope);
@@ -338,10 +332,8 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 exit(1);
             }
 
-            {
-                let new_scope = &mut init_scope.new_scope();
-                typecheck_statements(if_branch, new_scope);
-            }
+            let new_scope = &mut init_scope.new_scope();
+            typecheck_statements(if_branch, new_scope);
 
             match *else_branch {
                 Some(ref mut stmt) => {
@@ -355,19 +347,19 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Switch { ref mut init, ref mut expr, ref mut body } => {
             let init_scope = &mut symbol_table.new_scope();
             typecheck_statement(init, init_scope);
-            let exp_type = 
-                if let Some(ref mut expr) = *expr {
-                    let exp_type = typecheck_expression(expr, init_scope);
-                    if !exp_type.resolve().is_comparable() {
-                        eprintln!("Error: line {}: type {} is not comparable",
-                                  expr.line_number, exp_type);
-                        exit(1);
-                    }
-                    exp_type
-                } else {
-                    Kind::Basic(BasicKind::Bool)
-                };
 
+            let exp_type:Kind;
+
+            if let Some(ref mut expr) = *expr {
+                exp_type = typecheck_expression(expr, init_scope);
+                if !exp_type.resolve().is_comparable() {
+                    eprintln!("Error: line {}: type {} is not comparable",
+                              expr.line_number, exp_type);
+                    exit(1);
+                }
+            } else {
+                exp_type = Kind::Basic(BasicKind::Bool);
+            };
 
             for cc in body {
                 match cc.switch_case {
@@ -384,7 +376,6 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     }
                     SwitchCase::Default => {},
                 }
-                
 
                 let new_scope = &mut init_scope.new_scope();
                 for mut stmt in &mut cc.statements {
@@ -442,7 +433,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
             for field in fields {
                 let field_kind = typecheck_kind(&mut field.kind, symbol_table, top_name);
                 for id in &field.identifiers {
-                    if (&*id != "_") {
+                    if &*id != "_" {
                         if previous_names.contains(&*id) {
                             eprintln!("Error: line {}: duplicate struct field `{}`.", ast.line_number, id);
                             exit(1);
@@ -529,7 +520,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                 let decl = symbol_table.get_symbol(&name, exp.line_number).declaration.clone();
                 match decl { 
                     Declaration::Type(cast_kind) => {
-                        if (arguments.len() != 1) {
+                        if arguments.len() != 1 {
                             eprintln!("Error: line {}: Type casts take exactly one parameter.",
                                       exp.line_number);
                             exit(1);
@@ -648,6 +639,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
 
             if let &Kind::Slice(ref t_kind) = s_kind.resolve() {
                 if are_identical(t_kind, &kind) {
+                    // TODO: why assign to exp.kind??
                     exp.kind = s_kind.clone();
                     return s_kind.clone()
                 } else {
@@ -676,17 +668,26 @@ Vec<Kind> {
     ret
 }
 
-// Question: isn't it an expression that is addressable or not?
-fn is_addressable(exp: &ExpressionNode) -> bool {
-    // TODO: this
-    true
+fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> bool {
+    match exp.expression {
+        Expression::Identifier {..} => true,
+        Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. }=> {
+            let primary_kind = typecheck_expression(primary, symbol_table);
+            if primary_kind.is_addressable() {
+                return true;
+            } else {
+                return false
+            }
+        },
+        _ => false
+    }
 }
 
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
     if !are_identical(a, b) {
         eprintln!("Error: line {}: trying to do operation {:?} on expressions \
-                  of different types {} and {}", line_number, op, a, b);
+        of different types {} and {}", line_number, op, a, b);
         exit(1);
     }
 
@@ -752,8 +753,9 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
                 &Kind::Basic(BasicKind::Float) => Kind::Basic(BasicKind::Float),
+                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid operation on a non-numerical type {}", line_number, kind);
                     exit(1);
                 }
             }
@@ -761,8 +763,9 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
         UnaryOperator::BwCompl => {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid bitwise negation on a {}", line_number, kind);
                     exit(1);
                 }
             }
@@ -771,7 +774,7 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
             match kind.resolve() {
                 &Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
                 _ => {
-                    eprintln!("Error: line {}: trying to perform an invalid operation on a {}", line_number, kind);
+                    eprintln!("Error: line {}: trying to perform an invalid logical negation operation on a {}", line_number, kind);
                     exit(1);
                 }
             }
