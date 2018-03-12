@@ -7,7 +7,8 @@ type person struct {
 
 
 func main(){
-	x := person{5, 5}
+  // We don't support struct literals and without that this test is pointless
+  x := person{5, 5}
 }
 
 

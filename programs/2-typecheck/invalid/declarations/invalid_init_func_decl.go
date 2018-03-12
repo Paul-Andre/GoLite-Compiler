@@ -3,7 +3,7 @@ package main
 func main(){
 }
 
-func init(a){
+func init(a int){
 
 }
 
