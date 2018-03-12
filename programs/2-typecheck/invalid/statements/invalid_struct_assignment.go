@@ -7,7 +7,7 @@ type person struct {
 
 
 func main(){
-	x := person{"hi", 5}
+  var x person
 
 	x.name = 5
 }

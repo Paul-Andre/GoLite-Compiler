@@ -2,7 +2,7 @@
 package main
 type T int
 func main() {
-  type T {
+  type T struct {
     a T
   }
 }
