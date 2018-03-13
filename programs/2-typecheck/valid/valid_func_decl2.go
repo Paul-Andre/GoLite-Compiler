@@ -1,6 +1,13 @@
 package main
+func f() []int {
+    var a []int
+    return a
+}
+
+
 
 func main(){
+    f()[1] = 2
 	var x = 1
 }
 
@@ -9,6 +16,6 @@ func x(a int) int {
 }
 
 var true bool
-func f() {
+func g() {
     true = false
 }
