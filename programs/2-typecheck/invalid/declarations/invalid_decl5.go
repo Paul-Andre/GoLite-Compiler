@@ -1,9 +1,10 @@
+// invalid declaration: variable of type void
 package main
 
-func main(){
-	var x int = assign()
+func assign(){
 }
 
-func assign(){
-	print("hi")
+func main(){
+	var x = assign()
 }
+

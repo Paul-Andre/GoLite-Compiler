@@ -1,8 +1,8 @@
+// Invalid declaration: assigning an int to an int_type
 package main
 
 func main() {
-	type aInt int
-	var y aInt = "string"
-	print(y)
+	type int_type int
+	var y int_type = 1
 }
 

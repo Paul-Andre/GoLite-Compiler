@@ -1,8 +1,5 @@
+// Expecting int return value, got void
 package main
-
-func main(){
-	doStuff()
-}
 
 func doStuff() int {
 	return

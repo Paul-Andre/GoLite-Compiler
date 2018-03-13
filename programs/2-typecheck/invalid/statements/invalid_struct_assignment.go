@@ -1,3 +1,4 @@
+// Assigning value of invalid type in struct field
 package main
 
 type person struct {
@@ -5,11 +6,7 @@ type person struct {
 	age  int
 }
 
-
 func main(){
-  var x person
-
+    var x person
 	x.name = 5
 }
-
-

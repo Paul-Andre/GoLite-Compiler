@@ -1,3 +1,4 @@
+// Type redeclaration
 package main
 
 func main(){

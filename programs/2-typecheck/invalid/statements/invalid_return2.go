@@ -1,3 +1,4 @@
+// Undeclared function doStuff()
 package main
 
 func main(){
@@ -5,6 +6,6 @@ func main(){
 }
 
 func doStuff() {
-	return 5
+	return
 }
 

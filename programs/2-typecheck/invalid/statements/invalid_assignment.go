@@ -1,3 +1,4 @@
+// Mismatched types (type_y <- int)
 package main
 
 func main(){

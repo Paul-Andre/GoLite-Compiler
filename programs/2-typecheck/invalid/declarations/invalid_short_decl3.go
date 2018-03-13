@@ -1,5 +1,4 @@
 // All variables in short declaration have already been declared
-
 package main
 
 func main(){

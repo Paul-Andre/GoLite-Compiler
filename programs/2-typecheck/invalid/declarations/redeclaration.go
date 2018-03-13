@@ -1,3 +1,4 @@
+// Variable redecleration
 package main
 
 func main(){

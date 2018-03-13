@@ -1,6 +1,7 @@
+// invalid operand types
 package main
 
 func main(){
-	x := "hi" + 5
+	print("hi" + 5)
 }
 
