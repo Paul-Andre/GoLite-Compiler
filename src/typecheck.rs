@@ -112,6 +112,12 @@ fn typecheck_function_declaration(name: &str,
                                    line: u32,
                                    symbol_table: &mut SymbolTable) {
 
+    symbol_table.add_declaration(name.to_string(),
+                                 line,
+                                 Declaration::Dummy,
+                                 },
+                                 false);
+
     let mut param_tuples = Vec::new();
     for f in params.iter_mut() {
         let k = typecheck_kind(&mut f.kind, symbol_table, None);
@@ -154,6 +160,14 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Continue => {},
         Statement::Expression(ref mut exp) => {
             typecheck_expression(exp, symbol_table);
+            match exp.expression {
+                Expression::FunctionCall {..} => {},
+                _ => {
+                    eprintln!("Error: line {}: Invalid expression statement. \
+                              Expected a function call", exp.line_number);
+                    exit(1);
+                }
+            }
         },
         Statement::Return(ref mut exp) => {
             // Since statements happen only inside functions, return only happens inside functions

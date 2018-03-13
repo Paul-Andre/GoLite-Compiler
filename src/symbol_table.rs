@@ -130,7 +130,7 @@ impl<'a> SymbolTable<'a>{
         });
     }
 
-    fn define_type(&mut self, name: String, line_number: u32, kind: Kind) {
+    pub fn define_type(&mut self, name: String, line_number: u32, kind: Kind) {
         self.add_declaration( name.clone(), line_number, Declaration::Type(
                 Kind::Defined(Rc::new(
                         kind::Definition { line_number, name, kind } ) )),
@@ -166,7 +166,8 @@ pub enum Declaration {
     Variable(Kind),
     Constant(Kind),
     Type(Kind),
-    Function{params: Vec<Kind>, return_kind: Option<Kind>}
+    Function{params: Vec<Kind>, return_kind: Option<Kind>},
+    Dummy,
 }
 
 
