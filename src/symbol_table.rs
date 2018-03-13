@@ -59,11 +59,11 @@ impl<'a> SymbolTable<'a>{
                 Constant(..) => "constant",
                 Type(..) => "type",
                 Function{..} => "function",
-                Dummy => "dummy",
+                Dummy => panic!("Dummy should not be added using add_declaration."),
             };
 
 
-        if self.print_table && match decl { Dummy => false, _ => true } {
+        if self.print_table {
 
             indent(self.level + 1);
             print!("{} [{}] = ", id, ilk);
@@ -100,7 +100,6 @@ impl<'a> SymbolTable<'a>{
         if &id == "_" {
             return;
         }
-
 
         if self.level <= 1 && &id == "init" {
             match decl {
@@ -140,7 +139,6 @@ impl<'a> SymbolTable<'a>{
                     exit(1);
                 }
             }
-            return;
         }
 
         match self.symbols.get(&id) {
@@ -164,6 +162,13 @@ impl<'a> SymbolTable<'a>{
                 Kind::Defined(Rc::new(
                         kind::Definition { line_number, name, kind } ) )),
                         false);
+    }
+
+    pub fn add_dummy(&mut self, name: String, line_number: u32) {
+        self.symbols.insert(name, Symbol{
+            line_number,
+            declaration: Declaration::Dummy
+        });
     }
 
 }

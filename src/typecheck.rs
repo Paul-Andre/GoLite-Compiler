@@ -112,10 +112,7 @@ fn typecheck_function_declaration(name: &str,
                                    line: u32,
                                    symbol_table: &mut SymbolTable) {
 
-    symbol_table.add_declaration(name.to_string(),
-                                 line,
-                                 Declaration::Dummy,
-                                 false);
+    symbol_table.add_dummy(name.to_string(), line);
 
     let mut param_tuples = Vec::new();
     for f in params.iter_mut() {
