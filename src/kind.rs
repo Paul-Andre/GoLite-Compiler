@@ -20,6 +20,7 @@ pub enum Kind {
     Slice(Box<Kind>),
     Struct(Vec<Field>),
     Underscore,
+    Void,
 }
 
 impl fmt::Display for BasicKind {
@@ -55,7 +56,7 @@ impl fmt::Display for Kind {
                 write!(f, "}}")
             },
             Underscore => write!(f, "_"),
-
+            Void => write!(f, "void")
         }
     }
 }
@@ -93,7 +94,8 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
                         are_identical(&a_field.kind,&b_field.kind)
                 })
         },
-        (&Underscore, _) => true, // Ugly hack
+        (&Underscore, &Void) => false, // Ugly hack #1
+        (&Underscore, _) => true,      // Ugly hack #2
         _ => false
     }
 }

@@ -156,7 +156,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Break => {},
         Statement::Continue => {},
         Statement::Expression(ref mut exp) => {
-            typecheck_expression(exp, symbol_table);
+            typecheck_expression(exp, symbol_table, true);
             match exp.expression {
                 Expression::FunctionCall {..} => {},
                 _ => {
@@ -170,7 +170,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             // Since statements happen only inside functions, return only happens inside functions
             let maybe_actual_kind =
                 if let &mut Some(ref mut exp) = exp {
-                    Some(typecheck_expression(&mut **exp, symbol_table))
+                    Some(typecheck_expression(&mut **exp, symbol_table, false))
                 } else {
                     None
                 };
@@ -257,8 +257,8 @@ fn typecheck_statement(stmt: &mut StatementNode,
                               i + 1);
                      exit(1);
                 }
-                let lhs_kind = typecheck_expression(lhs_exp, symbol_table);
-                let rhs_kind = typecheck_expression(rhs_exp, symbol_table);
+                let lhs_kind = typecheck_expression(lhs_exp, symbol_table, false);
+                let rhs_kind = typecheck_expression(rhs_exp, symbol_table, false);
 
                 if !are_identical(&lhs_kind, &rhs_kind) {
                     println!("Error: line {}: In position {} of assignment list, \
@@ -274,8 +274,8 @@ fn typecheck_statement(stmt: &mut StatementNode,
         }
 
         Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
-            let lhs_kind = typecheck_expression(lhs, symbol_table);
-            let rhs_kind = typecheck_expression(rhs, symbol_table);
+            let lhs_kind = typecheck_expression(lhs, symbol_table, false);
+            let rhs_kind = typecheck_expression(rhs, symbol_table, false);
 
             if !is_exp_addressable(lhs, symbol_table) {
                  println!("Error: line {}: unadressable lvalue.", stmt.line_number);
@@ -297,7 +297,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Print { ref mut exprs } |
         Statement::Println { ref mut exprs } => {
             for expr in exprs {
-                let kind = typecheck_expression(expr, symbol_table);
+                let kind = typecheck_expression(expr, symbol_table, false);
                 let resolved_kind = kind.resolve();
                 if let &Kind::Basic(..) = resolved_kind {
                 } else {
@@ -315,7 +315,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = 
                 if let Some(ref mut condition) = *condition {
-                    typecheck_expression(condition, init_scope)
+                    typecheck_expression(condition, init_scope, false)
                 } else {
                     Kind::Basic(BasicKind::Bool)
                 };
@@ -335,7 +335,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::If { ref mut init, ref mut condition, ref mut if_branch, ref mut else_branch } => {
             let init_scope = &mut symbol_table.new_scope();
             typecheck_statement(init, init_scope);
-            let exp_type = typecheck_expression(condition, init_scope);
+            let exp_type = typecheck_expression(condition, init_scope, false);
 
             if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
@@ -362,7 +362,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             let exp_type:Kind;
 
             if let Some(ref mut expr) = *expr {
-                exp_type = typecheck_expression(expr, init_scope);
+                exp_type = typecheck_expression(expr, init_scope, false);
                 if !exp_type.resolve().is_comparable() {
                     eprintln!("Error: line {}: type {} is not comparable",
                               expr.line_number, exp_type);
@@ -376,7 +376,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 match cc.switch_case {
                     SwitchCase::Cases(ref mut cases) => {
                         for case in cases {
-                            let cc_type = typecheck_expression(case, init_scope);
+                            let cc_type = typecheck_expression(case, init_scope, false);
                             if !are_identical(&cc_type, &exp_type) {
                                 eprintln!("Error: line {}: mismatched case type {}; \
                                          expected {}.", 
@@ -397,7 +397,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::IncDec { ref is_dec, ref mut expr } => {
             // TODO: check if is addressable
             // or do we need to do it? I beleive we did it in the weed phase
-            let exp_type = typecheck_expression(expr, symbol_table);
+            let exp_type = typecheck_expression(expr, symbol_table, false);
             let base = exp_type.resolve();
             if !base.is_numeric() {
                 eprintln!("Error: line {}: attempt to increment/decrement a non-numeric type \
@@ -407,6 +407,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
         }
     }
 }
+
 
 fn typecheck_kind(ast: &mut AstKindNode, 
                       symbol_table: &mut SymbolTable, 
@@ -460,10 +461,12 @@ fn typecheck_kind(ast: &mut AstKindNode,
 }
 
 
-fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> Kind {
+fn typecheck_expression(exp: &mut ExpressionNode, 
+                        symbol_table: &mut SymbolTable, 
+                        from_expression_statement: bool) -> Kind {
+
     match exp.expression {
         Expression::RawLiteral{..} => {
-            return exp.kind.clone()
         }
 
         Expression::Identifier { ref name } => {
@@ -471,7 +474,6 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
             match symbol.declaration {
                 Declaration::Variable(ref kind) | Declaration::Constant(ref kind) => {
                     exp.kind = kind.clone();
-                    return kind.clone()
                 }
                 _ => {
                     eprintln!("Error: line {}: `{}` is not a variable or a constant.", 
@@ -482,18 +484,16 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
         }
 
         Expression::UnaryOperation { ref op, ref mut rhs } => {
-            let kind = typecheck_expression(rhs, symbol_table);
+            let kind = typecheck_expression(rhs, symbol_table, false);
             let op_kind = get_kind_unary_op(&kind, op.clone(), exp.line_number);
             exp.kind = op_kind;
-            return exp.kind.clone()
         }
 
         Expression::BinaryOperation { ref op, ref mut lhs, ref mut rhs } => {
-            let lhs_kind = typecheck_expression(lhs, symbol_table);
-            let rhs_kind = typecheck_expression(rhs, symbol_table);
+            let lhs_kind = typecheck_expression(lhs, symbol_table, false);
+            let rhs_kind = typecheck_expression(rhs, symbol_table, false);
             let op_kind = get_kind_binary_op(&lhs_kind, &rhs_kind, op.clone(), exp.line_number);
             exp.kind = op_kind;
-            return exp.kind.clone()
         }
 
         ref mut a@Expression::FunctionCall { .. } => {
@@ -537,7 +537,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                             exit(1);
                         }
                         let mut inner_expr = arguments.drain(0..1).next().unwrap();
-                        let expr_kind = typecheck_expression(&mut inner_expr, symbol_table);
+                        let expr_kind = typecheck_expression(&mut inner_expr, symbol_table, false);
 
                         let resolved_cast_kind = cast_kind.resolve();
                         let resolved_expr_kind = expr_kind.resolve();
@@ -587,7 +587,7 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                                 exp.kind = r.clone();
                             }
                             &None => {
-                                exp.kind = Kind::Undefined.clone();
+                                exp.kind = Kind::Void;
                             }
                         }
                         Expression::FunctionCall{ primary, arguments }
@@ -604,62 +604,73 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
                 exit(1);
             };
 
-            return exp.kind.clone()
         }
 
         Expression::Index { ref mut primary, ref mut index } => {
-            let primary_kind = typecheck_expression(primary, symbol_table);
-            let index_kind = typecheck_expression(index, symbol_table);
+            let primary_kind = typecheck_expression(primary, symbol_table, false);
+            let index_kind = typecheck_expression(index, symbol_table, false);
             match primary_kind.resolve() {
                 &Kind::Array(ref a_kind, ..) | &Kind::Slice(ref a_kind) => {
                     if let &Kind::Basic(ref kind)=index_kind.resolve()  {
                         if let &BasicKind::Int = kind {
                             exp.kind = *a_kind.clone();
-                            return *a_kind.clone()
                         } else {
                             eprintln!("Error: line {}: index expression does not resolve \
                             to int", exp.line_number);
+                            exit(1);
                         }
                     } else {
                         eprintln!("Error: line {}: index expression does not resolve to \
                         Basic type", exp.line_number);
+                        exit(1);
                     }
                 }
-                _ => eprintln!("Error: line {}: primary expression does not resolve to \
-                     Slice or Array type", exp.line_number),
+                _ => {
+                    eprintln!("Error: line {}: primary expression does not resolve to \
+                               Slice or Array type", exp.line_number);
+                    exit(1);
+                }
             }
         }
 
         Expression::Selector { ref mut primary, ref name } => {
-            let kind = typecheck_expression(primary, symbol_table);
+            let kind = typecheck_expression(primary, symbol_table, false);
             if let &Kind::Struct(ref fields) = kind.resolve() {
+                let mut found = false;  // used to skip over error printing messages
                 for field in fields {
                     if field.name == *name {
-                        return field.kind.clone()
+                        exp.kind = field.kind.clone();
+                        found = true;
+                        break;
                     }
                 }
-                eprintln!("Error: line {}: unknown field \"{}\"", exp.line_number, name);
+                if !found {
+                    eprintln!("Error: line {}: unknown field \"{}\"", exp.line_number, name);
+                    exit(1);
+                }
+            } else {
+                eprintln!("Error: line {}: primary expression does not resolve to \
+                          Struct type", exp.line_number);
+                exit(1);
             }
-            eprintln!("Error: line {}: primary expression does not resolve to \
-                      Struct type", exp.line_number);
         }
 
         Expression::Append { ref mut lhs, ref mut rhs } => {
-            let s_kind = typecheck_expression(lhs, symbol_table);
-            let kind = typecheck_expression(rhs, symbol_table);
+            let s_kind = typecheck_expression(lhs, symbol_table, false);
+            let kind = typecheck_expression(rhs, symbol_table, false);
 
             if let &Kind::Slice(ref t_kind) = s_kind.resolve() {
                 if are_identical(t_kind, &kind) {
-                    // TODO: why assign to exp.kind??
                     exp.kind = s_kind.clone();
-                    return s_kind.clone()
                 } else {
                     eprintln!("Error: line {}: mismatched types in \
                     append expression", exp.line_number);
+                    exit(1);
                 }
             } else {
                 eprintln!("Error: line {}: lhs does not resolve to Slice \
                 in append expression", exp.line_number);
+                exit(1);
             }
         }
 
@@ -667,14 +678,25 @@ fn typecheck_expression(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable
             panic!("This should not happen at this phase.");
         }
     } 
-    return Kind::Undefined;
+    if let Kind::Void = exp.kind {
+        if !from_expression_statement {
+            eprintln!("Error: line {}: Void value used in expression.", exp.line_number);
+            exit(1);
+        }
+        return exp.kind.clone()
+    }else if let Kind::Undefined = exp.kind {
+        eprintln!("Error: line {}: Undefined value used in expression.", exp.line_number);
+        exit(1);
+    } else {
+        return exp.kind.clone()
+    }
 }
 
 fn typecheck_expression_vec(exprs: &mut [ExpressionNode], symbol_table: &mut SymbolTable) ->
 Vec<Kind> {
     let mut ret = Vec::new();
     for e in exprs {
-        ret.push(typecheck_expression(e, symbol_table));
+        ret.push(typecheck_expression(e, symbol_table, false));
     }
     ret
 }
@@ -695,7 +717,7 @@ fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) 
             }
         },
         Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. }=> {
-            let primary_kind = typecheck_expression(primary, symbol_table);
+            let primary_kind = typecheck_expression(primary, symbol_table, false);
             if primary_kind.is_addressable() {
                 return true;
             } else {
