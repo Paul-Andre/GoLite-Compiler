@@ -470,6 +470,10 @@ fn typecheck_expression(exp: &mut ExpressionNode,
         }
 
         Expression::Identifier { ref name } => {
+            if name == "_" {
+                exp.kind = Kind::Underscore;
+                return exp.kind.clone();
+            }
             let symbol = symbol_table.get_symbol(name, exp.line_number);
             match symbol.declaration {
                 Declaration::Variable(ref kind) | Declaration::Constant(ref kind) => {
@@ -704,6 +708,9 @@ Vec<Kind> {
 fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> bool {
     match exp.expression {
         Expression::Identifier {ref name } => {
+            if name == "_" {
+                return true
+            }
             let symbol = symbol_table.get_symbol(name, exp.line_number);
             match symbol.declaration {
                 Declaration::Variable(ref kind)  => {
