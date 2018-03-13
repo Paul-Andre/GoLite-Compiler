@@ -171,23 +171,5 @@ impl Kind {
         }
     }
 
-    pub fn is_addressable(&self) -> bool {
-        match self.resolve() {
-            Kind::Undefined => false,
-            Kind::Struct(ref v) => {
-                for f in v.iter(){
-                    if !f.kind.is_addressable() {
-                        return false;
-                    }
-                }
-                return true
-            },
-            Kind::Array(ref kind, ..)| Kind::Slice(ref kind) => {
-                return kind.is_addressable()
-            },
-            _ => true
-
-        }
-    }
 }
 

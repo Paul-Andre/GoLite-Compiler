@@ -1,7 +1,6 @@
 use ast::*;
 use std::mem;
 use ast::Field;
-use std::rc::Rc;
 use kind;
 use kind::*;
 use kind::Kind;
@@ -400,7 +399,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 }
             }
         }
-        Statement::IncDec { ref is_dec, ref mut expr } => {
+        Statement::IncDec { ref mut expr, .. } => {
             // TODO: check if is addressable
             // or do we need to do it? I beleive we did it in the weed phase
             let exp_type = typecheck_expression(expr, symbol_table, false);
@@ -684,7 +683,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             }
         }
 
-        Expression::TypeCast { ref expr } => {
+        Expression::TypeCast { .. } => {
             panic!("This should not happen at this phase.");
         }
     } 
@@ -719,8 +718,8 @@ fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) 
             }
             let symbol = symbol_table.get_symbol(name, exp.line_number);
             match symbol.declaration {
-                Declaration::Variable(ref kind)  => {
-                    return kind.is_addressable()
+                Declaration::Variable(..)  => {
+                    return true;
                 }
                 _ => {
                     eprintln!("Error: line {}: Cannot assign to `{}`: is not a variable.",
@@ -729,17 +728,18 @@ fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) 
                 }
             }
         },
-        Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. }=> {
+        Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. } => {
             let primary_kind = typecheck_expression(primary, symbol_table, false);
-            if primary_kind.is_addressable() {
+            if let Kind::Slice(..) = primary_kind {
                 return true;
             } else {
-                return false
+                return is_exp_addressable(primary, symbol_table);
             }
         },
         _ => false
     }
 }
+
 
 // Need also to check if kinds are valid for op
 fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) -> Kind {
