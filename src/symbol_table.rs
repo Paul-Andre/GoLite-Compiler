@@ -50,6 +50,7 @@ impl<'a> SymbolTable<'a>{
             print_table: self.print_table
         }
     }
+
     pub fn add_declaration(&mut self, id: String, line_number: u32, decl: Declaration, inferred: bool) {
         use self::Declaration::*;
 
@@ -63,7 +64,62 @@ impl<'a> SymbolTable<'a>{
             };
 
 
-        if self.print_table {
+        if self.level <= 1 && &id == "init" {
+            match decl {
+                Function{ref params, ref return_kind} => {
+                    if params.len() != 0 || return_kind.is_some() {
+                        eprintln!("Error: line {}: `init` function must have type () -> void",
+                                    line_number);
+
+                        exit(1);
+                    }
+                },
+                _ => {
+                    eprintln!("Error: line {}: cannot have {} called `init` at top level.\
+                    `init` must be a function",
+                              line_number, ilk);
+                    exit(1);
+                }
+            }
+            if(self.print_table) {
+                indent(self.level + 1);
+                println!("init [function] = <unmapped>");
+            }
+            return;
+        }
+
+        let mut is_main = false;
+        if self.level <= 1 && &id == "main" {
+            match decl {
+                Function{ref params, ref return_kind} => {
+                    if params.len() != 0 || return_kind.is_some() {
+                        eprintln!("Error: line {}: `main` function must have type () -> void",
+                                    line_number);
+
+                        exit(1);
+                    }
+                },
+                _ => {
+                    eprintln!("Error: line {}: cannot have {} called `main` at top level. \
+                    `main` must be a function",
+                              line_number, ilk);
+                    exit(1);
+                }
+            }
+
+            if(self.print_table) {
+                indent(self.level + 1);
+                println!("init [function] = <unmapped>");
+            }
+            is_main = true;
+        }
+        
+        if &id == "_" && !match decl { Function{..} => true, _ => false} {
+            return;
+        }
+
+    
+        if self.print_table && !is_main {
 
             indent(self.level + 1);
             print!("{} [{}] = ", id, ilk);
@@ -99,44 +155,6 @@ impl<'a> SymbolTable<'a>{
 
         if &id == "_" {
             return;
-        }
-
-        if self.level <= 1 && &id == "init" {
-            match decl {
-                Function{ref params, ref return_kind} => {
-                    if params.len() != 0 || return_kind.is_some() {
-                        eprintln!("Error: line {}: `init` function must have type () -> void",
-                                    line_number);
-
-                        exit(1);
-                    }
-                },
-                _ => {
-                    eprintln!("Error: line {}: cannot have {} called `init` at top level.\
-                    `init` must be a function",
-                              line_number, ilk);
-                    exit(1);
-                }
-            }
-            return;
-        }
-        if self.level <= 1 && &id == "main" {
-            match decl {
-                Function{ref params, ref return_kind} => {
-                    if params.len() != 0 || return_kind.is_some() {
-                        eprintln!("Error: line {}: `main` function must have type () -> void",
-                                    line_number);
-
-                        exit(1);
-                    }
-                },
-                _ => {
-                    eprintln!("Error: line {}: cannot have {} called `main` at top level. \
-                    `main` must be a function",
-                              line_number, ilk);
-                    exit(1);
-                }
-            }
         }
 
         match self.symbols.get(&id) {

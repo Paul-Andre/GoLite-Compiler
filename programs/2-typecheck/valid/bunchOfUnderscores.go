@@ -43,3 +43,7 @@ func _(_, _ int) {
 
 func f(init, main int) {
 }
+
+func main() {
+  main()
+}
