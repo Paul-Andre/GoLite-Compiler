@@ -103,7 +103,6 @@ impl<'a> SymbolTable<'a>{
 
         if self.level <= 1 && &id == "init" {
             match decl {
-                Dummy => {},
                 Function{ref params, ref return_kind} => {
                     if params.len() != 0 || return_kind.is_some() {
                         eprintln!("Error: line {}: `init` function must have type () -> void",
@@ -123,7 +122,6 @@ impl<'a> SymbolTable<'a>{
         }
         if self.level <= 1 && &id == "main" {
             match decl {
-                Dummy => {},
                 Function{ref params, ref return_kind} => {
                     if params.len() != 0 || return_kind.is_some() {
                         eprintln!("Error: line {}: `main` function must have type () -> void",
@@ -143,14 +141,15 @@ impl<'a> SymbolTable<'a>{
 
         match self.symbols.get(&id) {
             Some(&Symbol{declaration: Declaration::Dummy, ..})  => {},
-            None => {},
             Some(&Symbol{line_number: l, ..}) =>  {
                 eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
                           line_number, id, l);
                 exit(1);
             }
+            None => {},
         }
             
+        println!("INserted {}", id);
         self.symbols.insert(id, Symbol{
             line_number,
             declaration: decl
