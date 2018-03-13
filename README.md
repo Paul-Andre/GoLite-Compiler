@@ -49,6 +49,14 @@ In order to build the source code, run:
 
 ```
 
+If you ever need to do some changes to the C files for some reason, you will need to force cargo to rebuild as it will not detect the changes. Simply clean the directory using:
+
+```
+cargo clean
+```
+
+Then build again.
+
 ### Running a single phase
 
 To run a single phase on a single file, run:
@@ -91,4 +99,6 @@ This project is licensed under the MIT License.
 
 * Alexander Krolik
 * McGill University
+* Amir Bawab
+* Several other people from the facebook group
 
