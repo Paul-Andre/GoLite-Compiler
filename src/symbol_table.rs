@@ -59,9 +59,11 @@ impl<'a> SymbolTable<'a>{
                 Constant(..) => "constant",
                 Type(..) => "type",
                 Function{..} => "function",
+                Dummy => "dummy",
             };
 
-        if self.print_table {
+
+        if self.print_table && match decl { Dummy => false, _ => true } {
 
             indent(self.level + 1);
             print!("{} [{}] = ", id, ilk);
@@ -89,7 +91,8 @@ impl<'a> SymbolTable<'a>{
                             print!("void");
                         }
                         println!();
-                    }
+                    },
+                    Dummy => unreachable!()
                 }
             }
         }
@@ -118,10 +121,14 @@ impl<'a> SymbolTable<'a>{
             return;
         }
 
-        if let Some(&Symbol{line_number: l, ..}) = self.symbols.get(&id) {
-            eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
-                      line_number, id, l);
-            exit(1);
+        match self.symbols.get(&id) {
+            Some(&Symbol{declaration: Declaration::Dummy, ..})  => {},
+            None => {},
+            Some(&Symbol{line_number: l, ..}) =>  {
+                eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
+                          line_number, id, l);
+                exit(1);
+            }
         }
             
         self.symbols.insert(id, Symbol{

@@ -115,7 +115,6 @@ fn typecheck_function_declaration(name: &str,
     symbol_table.add_declaration(name.to_string(),
                                  line,
                                  Declaration::Dummy,
-                                 },
                                  false);
 
     let mut param_tuples = Vec::new();
