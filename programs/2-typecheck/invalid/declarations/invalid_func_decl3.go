@@ -1,11 +1,10 @@
+// Invalid type of parameter in func declaration
 package main
 
-func main(){
+func main() {
 
 }
-
-func x(a int) int {
-	a = "hi"
+func x(a main) int {
 	return 5
 }
 

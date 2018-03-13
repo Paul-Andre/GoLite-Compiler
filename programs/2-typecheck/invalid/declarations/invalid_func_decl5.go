@@ -1,9 +1,6 @@
+// Invalid return type
 package main
 
-func main(){
-
-}
-
-func x(a int) int {
-	return "hi"
+func x(a int) string {
+	return a
 }

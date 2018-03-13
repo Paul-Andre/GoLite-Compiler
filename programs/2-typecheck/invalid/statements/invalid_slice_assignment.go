@@ -1,3 +1,4 @@
+// Mismatched assignment operands (int <- string)
 package main
 
 func main(){

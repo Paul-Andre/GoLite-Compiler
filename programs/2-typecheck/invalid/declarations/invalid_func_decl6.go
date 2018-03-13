@@ -1,11 +1,7 @@
+// Invalid redeclaration of function parameter
 package main
 
-func main(){
-
-}
-
 func x(a int) int {
-	return a
-
-	a = "hi"
+	var a = "hi"
+    return 2
 }

@@ -1,3 +1,4 @@
+// Mismatched types (int <- string)
 package main
 
 func main(){

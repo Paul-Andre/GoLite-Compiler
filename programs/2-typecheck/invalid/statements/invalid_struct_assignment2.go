@@ -1,3 +1,4 @@
+// Accessing undefined field in struct
 package main
 
 type person struct {
@@ -7,8 +8,7 @@ type person struct {
 
 
 func main(){
-  var x person
-
+    var x person
 	x.height = 5
 }
 

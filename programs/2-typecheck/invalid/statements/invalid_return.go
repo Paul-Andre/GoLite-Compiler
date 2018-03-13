@@ -1,9 +1,6 @@
+// Expecting int return value, got string
 package main
 
-func main(){
-	doStuff()
-}
-
 func doStuff() int{
-	return 5 + "string"
+	return "string"
 }
