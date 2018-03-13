@@ -1,6 +1,7 @@
 use ast::*;
 use std::mem;
 use ast::Field;
+use std::rc::Rc;
 use kind;
 use kind::*;
 use kind::Kind;
@@ -91,10 +92,9 @@ fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut
 
     for spec in declarations {
         let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
-        symbol_table.add_declaration(spec.name.clone(),
-                                     spec.line_number,
-                                     Declaration::Type(kind),
-                                     /*inferred*/ false);
+        symbol_table.define_type(spec.name.clone(),
+                                 spec.line_number,
+                                 kind);
     }
 
 }
