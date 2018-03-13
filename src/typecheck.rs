@@ -686,11 +686,11 @@ fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) 
         Expression::Identifier {ref name } => {
             let symbol = symbol_table.get_symbol(name, exp.line_number);
             match symbol.declaration {
-                Declaration::Variable(ref kind) | Declaration::Constant(ref kind) => {
+                Declaration::Variable(ref kind)  => {
                     return kind.is_addressable()
                 }
                 _ => {
-                    eprintln!("Error: line {}: `{}` is not a variable or a constant.",
+                    eprintln!("Error: line {}: Cannot assign to `{}`: is not a variable.",
                               exp.line_number, name);
                     exit(1);
                 }
