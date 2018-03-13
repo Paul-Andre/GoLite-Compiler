@@ -670,7 +670,19 @@ Vec<Kind> {
 
 fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> bool {
     match exp.expression {
-        Expression::Identifier {..} => true,
+        Expression::Identifier {ref name } => {
+            let symbol = symbol_table.get_symbol(name, exp.line_number);
+            match symbol.declaration {
+                Declaration::Variable(ref kind) | Declaration::Constant(ref kind) => {
+                    return kind.is_addressable()
+                }
+                _ => {
+                    eprintln!("Error: line {}: `{}` is not a variable or a constant.",
+                              exp.line_number, name);
+                    exit(1);
+                }
+            }
+        },
         Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. }=> {
             let primary_kind = typecheck_expression(primary, symbol_table);
             if primary_kind.is_addressable() {
@@ -746,8 +758,6 @@ fn get_kind_binary_op(a: &Kind, b: &Kind, op: BinaryOperator, line_number: u32) 
 }
 
 fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
-    // TODO: this is wrong, read the specs, it is super clear now what this should be.
-    // see page 14 at the top
     match op {
         UnaryOperator::Plus | UnaryOperator::Neg =>  {
             match kind.resolve() {
