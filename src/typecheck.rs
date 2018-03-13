@@ -1,6 +1,7 @@
 use ast::*;
 use std::mem;
 use ast::Field;
+use std::rc::Rc;
 use kind;
 use kind::*;
 use kind::Kind;
@@ -91,10 +92,9 @@ fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut
 
     for spec in declarations {
         let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
-        symbol_table.add_declaration(spec.name.clone(),
-                                     spec.line_number,
-                                     Declaration::Type(kind),
-                                     /*inferred*/ false);
+        symbol_table.define_type(spec.name.clone(),
+                                 spec.line_number,
+                                 kind);
     }
 
 }
@@ -111,6 +111,12 @@ fn typecheck_function_declaration(name: &str,
                                    body: &mut [StatementNode],
                                    line: u32,
                                    symbol_table: &mut SymbolTable) {
+
+    symbol_table.add_declaration(name.to_string(),
+                                 line,
+                                 Declaration::Dummy,
+                                 },
+                                 false);
 
     let mut param_tuples = Vec::new();
     for f in params.iter_mut() {
@@ -154,6 +160,14 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Continue => {},
         Statement::Expression(ref mut exp) => {
             typecheck_expression(exp, symbol_table);
+            match exp.expression {
+                Expression::FunctionCall {..} => {},
+                _ => {
+                    eprintln!("Error: line {}: Invalid expression statement. \
+                              Expected a function call", exp.line_number);
+                    exit(1);
+                }
+            }
         },
         Statement::Return(ref mut exp) => {
             // Since statements happen only inside functions, return only happens inside functions
