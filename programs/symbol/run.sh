@@ -9,7 +9,7 @@ COUNT=0
 COUNT_PASSED=0
 if [[ -x ~cs520/golitec ]] 
 then
-  for PROGRAM in `find programs/2-typecheck -name "*.go" `
+  for PROGRAM in `find programs/2-typecheck/valid -name "*.go" `
   do
     ((COUNT++))
 
