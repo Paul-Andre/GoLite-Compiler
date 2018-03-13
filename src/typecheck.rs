@@ -92,10 +92,16 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
 fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
 
     for spec in declarations {
-        let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
         symbol_table.define_type(spec.name.clone(),
                                  spec.line_number,
-                                 kind);
+                                 Kind::Undefined);
+        let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
+        match symbol_table.get_symbol(&spec.name, spec.line_number) {
+            &Symbol{ declaration: Declaration::Type(Kind::Defined(ref r)), ..} => {
+                r.borrow_mut().kind = kind
+            },
+            _ => panic!("This type should have been a dummy definition")
+        }
     }
 
 }
