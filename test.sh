@@ -29,7 +29,7 @@ then
 	exit 1
 fi
 
-./build.sh
+./build.sh || exit 1
 
 if [ ! -f run.sh ]
 then
