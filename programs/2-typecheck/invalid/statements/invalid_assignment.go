@@ -1,10 +1,10 @@
 package main
 
 func main(){
-	type x int
-	type y x
+	type type_x int
+	type type_y type_x
 
-	var z y = y(5)
+	var z type_y //= type_y(5)
 
 	z = 11
 }
