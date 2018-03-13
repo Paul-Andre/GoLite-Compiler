@@ -149,7 +149,6 @@ impl<'a> SymbolTable<'a>{
             None => {},
         }
             
-        println!("INserted {}", id);
         self.symbols.insert(id, Symbol{
             line_number,
             declaration: decl
@@ -164,6 +163,17 @@ impl<'a> SymbolTable<'a>{
     }
 
     pub fn add_dummy(&mut self, name: String, line_number: u32) {
+
+        match self.symbols.get(&name) {
+            Some(&Symbol{declaration: Declaration::Dummy, ..})  => {},
+            Some(&Symbol{line_number: l, ..}) =>  {
+                eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
+                          line_number, name, l);
+                exit(1);
+            }
+            None => {},
+        }
+            
         self.symbols.insert(name, Symbol{
             line_number,
             declaration: Declaration::Dummy
