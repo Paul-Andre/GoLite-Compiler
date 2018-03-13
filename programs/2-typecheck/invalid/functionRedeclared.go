@@ -1,3 +1,4 @@
+// Function redeclaration
 package main
 func f() {
 }
