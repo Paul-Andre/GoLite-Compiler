@@ -55,6 +55,9 @@ func k() int {
     switch 5 {
         case 4 :
             print("hi");
+            for ;; {
+                break;
+            }
             return 2;
         default:
             return 2;
