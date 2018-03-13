@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::process::exit;
+use std::rc::Rc;
+use kind;
 use kind::Kind;
 use kind::BasicKind;
 
@@ -127,6 +129,14 @@ impl<'a> SymbolTable<'a>{
             declaration: decl
         });
     }
+
+    fn define_type(&mut self, name: String, line_number: u32, kind: Kind) {
+        self.add_declaration( name.clone(), line_number, Declaration::Type(
+                Kind::Defined(Rc::new(
+                        kind::Definition { line_number, name, kind } ) )),
+                        false);
+    }
+
 }
 
 fn indent(level: u32) {
