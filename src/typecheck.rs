@@ -299,7 +299,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             for expr in exprs {
                 let kind = typecheck_expression(expr, symbol_table, false);
                 let resolved_kind = kind.resolve();
-                if let &Kind::Basic(..) = resolved_kind {
+                if let Kind::Basic(..) = resolved_kind {
                 } else {
                     eprintln!("Error: line {}: trying to print something that resolves \
                     to a {}", expr.line_number, resolved_kind);
@@ -320,7 +320,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     Kind::Basic(BasicKind::Bool)
                 };
 
-            if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(&exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.",
                          stmt.line_number);
                 exit(1);
@@ -337,7 +337,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(condition, init_scope, false);
 
-            if !are_identical(exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
+            if !are_identical(&exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
                 println!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
@@ -546,8 +546,8 @@ fn typecheck_expression(exp: &mut ExpressionNode,
                         let resolved_cast_kind = cast_kind.resolve();
                         let resolved_expr_kind = expr_kind.resolve();
 
-                        if let &Kind::Basic(ref cast_basic) = resolved_cast_kind {
-                            if are_identical(resolved_cast_kind, resolved_expr_kind) ||
+                        if let Kind::Basic(ref cast_basic) = resolved_cast_kind {
+                            if are_identical(&resolved_cast_kind, &resolved_expr_kind) ||
                                 (resolved_cast_kind.is_numeric() && resolved_expr_kind.is_numeric()) ||
                                     (cast_basic == &BasicKind::String && resolved_expr_kind.is_integer()) {
 
@@ -614,8 +614,8 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             let primary_kind = typecheck_expression(primary, symbol_table, false);
             let index_kind = typecheck_expression(index, symbol_table, false);
             match primary_kind.resolve() {
-                &Kind::Array(ref a_kind, ..) | &Kind::Slice(ref a_kind) => {
-                    if let &Kind::Basic(ref kind)=index_kind.resolve()  {
+                Kind::Array(ref a_kind, ..) | Kind::Slice(ref a_kind) => {
+                    if let Kind::Basic(ref kind)=index_kind.resolve()  {
                         if let &BasicKind::Int = kind {
                             exp.kind = *a_kind.clone();
                         } else {
@@ -639,7 +639,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
 
         Expression::Selector { ref mut primary, ref name } => {
             let kind = typecheck_expression(primary, symbol_table, false);
-            if let &Kind::Struct(ref fields) = kind.resolve() {
+            if let Kind::Struct(ref fields) = kind.resolve() {
                 let mut found = false;  // used to skip over error printing messages
                 for field in fields {
                     if field.name == *name {
@@ -663,7 +663,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             let s_kind = typecheck_expression(lhs, symbol_table, false);
             let kind = typecheck_expression(rhs, symbol_table, false);
 
-            if let &Kind::Slice(ref t_kind) = s_kind.resolve() {
+            if let Kind::Slice(ref t_kind) = s_kind.resolve() {
                 if are_identical(t_kind, &kind) {
                     exp.kind = s_kind.clone();
                 } else {
@@ -801,9 +801,9 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
     match op {
         UnaryOperator::Plus | UnaryOperator::Neg =>  {
             match kind.resolve() {
-                &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
-                &Kind::Basic(BasicKind::Float) => Kind::Basic(BasicKind::Float),
-                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
+                Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                Kind::Basic(BasicKind::Float) => Kind::Basic(BasicKind::Float),
+                Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
                     eprintln!("Error: line {}: trying to perform an invalid operation on a non-numerical type {}", line_number, kind);
                     exit(1);
@@ -812,8 +812,8 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
         },
         UnaryOperator::BwCompl => {
             match kind.resolve() {
-                &Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
-                &Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
+                Kind::Basic(BasicKind::Int) => Kind::Basic(BasicKind::Int),
+                Kind::Basic(BasicKind::Rune) => Kind::Basic(BasicKind::Rune),
                 _ => {
                     eprintln!("Error: line {}: trying to perform an invalid bitwise negation on a {}", line_number, kind);
                     exit(1);
@@ -822,7 +822,7 @@ fn get_kind_unary_op(kind: &Kind, op: UnaryOperator, line_number: u32) -> Kind {
         }
         UnaryOperator::Not => {
             match kind.resolve() {
-                &Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
+                Kind::Basic(BasicKind::Bool) => Kind::Basic(BasicKind::Bool),
                 _ => {
                     eprintln!("Error: line {}: trying to perform an invalid logical negation operation on a {}", line_number, kind);
                     exit(1);

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::process::exit;
 use std::rc::Rc;
+use std::cell::RefCell;
 use kind;
 use kind::Kind;
 use kind::BasicKind;
@@ -175,8 +176,8 @@ impl<'a> SymbolTable<'a>{
 
     pub fn define_type(&mut self, name: String, line_number: u32, kind: Kind) {
         self.add_declaration( name.clone(), line_number, Declaration::Type(
-                Kind::Defined(Rc::new(
-                        kind::Definition { line_number, name, kind } ) )),
+                Kind::Defined(Rc::new(RefCell::new(
+                        kind::Definition { line_number, name, kind } ) ))),
                         false);
     }
 

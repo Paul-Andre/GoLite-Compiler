@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::cell::RefCell;
 use std::fmt;
 
 #[repr(C)]
@@ -15,7 +16,7 @@ pub enum BasicKind {
 pub enum Kind {
     Undefined,
     Basic(BasicKind),
-    Defined(Rc<Definition>),
+    Defined(Rc<RefCell<Definition>>),
     Array(Box<Kind>,u32),
     Slice(Box<Kind>),
     Struct(Vec<Field>),
@@ -44,7 +45,7 @@ impl fmt::Display for Kind {
             Undefined => write!(f, "<undefined>"),
             Basic(b) => write!(f, "{}", b),
             Defined(ref def) => {
-                write!(f, "{}", def.name)
+                write!(f, "{}", def.borrow().name)
             },
             Array(ref k, s) => write!(f, "[{}]{}", s, k),
             Slice(ref k) => write!(f, "[]{}", k),
@@ -102,16 +103,19 @@ pub fn are_identical(a: &Kind, b: &Kind) -> bool {
 
 
 impl Kind {
-    pub fn resolve<'a>(&'a self) -> &'a Kind {
+    pub fn resolve<'a>(&'a self) -> Kind {
         match self {
-            &Kind::Defined(ref r) => &(r.kind).resolve(),
-            something_else => something_else
+            &Kind::Defined(ref r) => {
+                let k = r.borrow();
+                (k.kind).resolve()
+            }
+            something_else => something_else.clone()
         }
     }
 
     pub fn is_comparable(&self) -> bool {
         match self.resolve() {
-            &Kind::Struct(ref fields) => {
+            Kind::Struct(ref fields) => {
                 for f in fields.iter(){
                     if !f.kind.is_comparable() {
                         return false
@@ -119,25 +123,25 @@ impl Kind {
                 }
                 return true
             },
-            &Kind::Array(ref kind, ..) => {
+            Kind::Array(ref kind, ..) => {
                 return kind.is_comparable()
             },
-            &Kind::Slice(..) => false,
+            Kind::Slice(..) => false,
             _ => true
         }
     }
 
     pub fn is_ordered(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(BasicKind::Bool) | &Kind::Slice(..)
-            | &Kind::Struct(..) => false,
+            Kind::Basic(BasicKind::Bool) | Kind::Slice(..)
+            | Kind::Struct(..) => false,
             _ => true
         }
     }
 
     pub fn is_numeric(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(t) => {
+            Kind::Basic(t) => {
                 t == BasicKind::Int || t == BasicKind::Rune || t == BasicKind::Float
             }
             _ => false
@@ -146,7 +150,7 @@ impl Kind {
 
     pub fn is_integer(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(t) => {
+            Kind::Basic(t) => {
                 t == BasicKind::Int || t == BasicKind::Rune
             }
             _ => false
@@ -155,22 +159,22 @@ impl Kind {
 
     pub fn is_boolean(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(BasicKind::Bool) => true,
+            Kind::Basic(BasicKind::Bool) => true,
             _ => false
         }
     }
 
     pub fn is_string(&self) -> bool {
         match self.resolve() {
-            &Kind::Basic(BasicKind::String) => true,
+            Kind::Basic(BasicKind::String) => true,
             _ => false
         }
     }
 
     pub fn is_addressable(&self) -> bool {
         match self.resolve() {
-            &Kind::Undefined => false,
-            &Kind::Struct(ref v) => {
+            Kind::Undefined => false,
+            Kind::Struct(ref v) => {
                 for f in v.iter(){
                     if !f.kind.is_addressable() {
                         return false;
@@ -178,7 +182,7 @@ impl Kind {
                 }
                 return true
             },
-            &Kind::Array(ref kind, ..)| &Kind::Slice(ref kind) => {
+            Kind::Array(ref kind, ..)| Kind::Slice(ref kind) => {
                 return kind.is_addressable()
             },
             _ => true
