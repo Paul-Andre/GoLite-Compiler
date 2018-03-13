@@ -431,7 +431,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
             }
         },
         AstKind::Slice { ref mut base } => {
-            return Kind::Slice(Box::new(typecheck_kind(base, symbol_table, top_name)))
+            return Kind::Slice(Box::new(typecheck_kind(base, symbol_table, None)))
         },
         AstKind::Array { ref mut base, ref size } => {
             // TODO: parse the size and replace the 0

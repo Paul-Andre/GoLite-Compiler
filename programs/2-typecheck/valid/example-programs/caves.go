@@ -93,9 +93,9 @@ func main() {
                     }
                 }
                 if (tmp[i][j]) {
-                    cave[i][j] = neighborCount > 3
+                    cave[i][j] = neighborCount > 3.
                 } else {
-                    cave[i][j] = neighborCount > 4
+                    cave[i][j] = neighborCount > 4.
                 }
 
             }
