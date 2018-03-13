@@ -104,6 +104,7 @@ impl<'a> SymbolTable<'a>{
 
         if self.level <= 1 && &id == "init" {
             match decl {
+                Dummy => {},
                 Function{ref params, ref return_kind} => {
                     if params.len() != 0 || return_kind.is_some() {
                         eprintln!("Error: line {}: `init` function must have type () -> void",
@@ -113,7 +114,28 @@ impl<'a> SymbolTable<'a>{
                     }
                 },
                 _ => {
-                    eprintln!("Error: line {}: cannot have {} called `init` at top level",
+                    eprintln!("Error: line {}: cannot have {} called `init` at top level.\
+                    `init` must be a function",
+                              line_number, ilk);
+                    exit(1);
+                }
+            }
+            return;
+        }
+        if self.level <= 1 && &id == "main" {
+            match decl {
+                Dummy => {},
+                Function{ref params, ref return_kind} => {
+                    if params.len() != 0 || return_kind.is_some() {
+                        eprintln!("Error: line {}: `main` function must have type () -> void",
+                                    line_number);
+
+                        exit(1);
+                    }
+                },
+                _ => {
+                    eprintln!("Error: line {}: cannot have {} called `main` at top level. \
+                    `main` must be a function",
                               line_number, ilk);
                     exit(1);
                 }
