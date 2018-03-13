@@ -8,6 +8,7 @@ mod pretty;
 mod kind;
 mod symbol_table;
 mod typecheck;
+mod util;
 
 pub use ast_constructors::*;
 pub use weed::*;

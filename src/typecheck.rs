@@ -9,6 +9,7 @@ use kind::BasicKind;
 use symbol_table::*;
 use std::process::exit;
 use std::collections::HashSet;
+use util;
 
 pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
@@ -435,8 +436,8 @@ fn typecheck_kind(ast: &mut AstKindNode,
             return Kind::Slice(Box::new(typecheck_kind(base, symbol_table, None)))
         },
         AstKind::Array { ref mut base, ref size } => {
-            // TODO: parse the size and replace the 0
-            return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)), 0)
+            return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)),
+                                util::string_to_int(size))
         },
         AstKind::Struct { ref mut fields } => {
             let mut kind_fields = Vec::new();
