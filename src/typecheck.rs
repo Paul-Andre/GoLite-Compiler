@@ -205,41 +205,43 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
             let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
-            let mut declared_count = 0;
+            let mut new_count = 0;
 
             for it in identifier_list.iter().zip(rhs_kinds.iter()){
                 let (id, exp_kind) = it;
 
                 if symbol_table.is_in_current_scope(&id) {
-                    declared_count = declared_count + 1;
-
-                    if declared_count == identifier_list.len(){
-                        println!("Error: line {}: All variables on the lhs of the assignment are already declared.", stmt.line_number);
-                        exit(1);
-                    }
 
                     let sym = symbol_table.get_symbol(id, stmt.line_number);
 
                     match sym.declaration {
                         Declaration::Variable(ref k) =>{
                             if !are_identical(k, exp_kind) { // 3
-                                println!("Error: line {}: invalid type of expression assigned to {}.",
+                                eprintln!("Error: line {}: invalid type of expression assigned to {}.",
                                          stmt.line_number,
                                          id);
                                 exit(1);
                             }
                         },
                         _ => {
-                            println!("Error: line {}: Trying to declare non-variable in short variable assignment.", stmt.line_number);
+                            eprintln!("Error: line {}: Trying to declare non-variable in short variable assignment.", stmt.line_number);
                             exit(1);
                         }
                     }
                 } else {
-                    symbol_table.add_variable(id.clone(),
-                                                 stmt.line_number,
-                                                 exp_kind.clone(),
-                                                 true)
+                    if (&*id != "_") {
+                        symbol_table.add_variable(id.clone(),
+                                                     stmt.line_number,
+                                                     exp_kind.clone(),
+                                                     true);
+                        new_count += 1;
+
+                    }
                 }
+            }
+            if new_count == 0 {
+                eprintln!("Error: line {}: no new variable on lhs.", stmt.line_number);
+                exit(1);
             }
         }
 
@@ -256,7 +258,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
                 if !is_exp_addressable(lhs_exp, symbol_table) {
-                     println!("Error: line {}: lvalue {} in list is not addressable.", 
+                     eprintln!("Error: line {}: lvalue {} in list is not addressable.", 
                               stmt.line_number,
                               i + 1);
                      exit(1);
@@ -265,7 +267,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 let rhs_kind = typecheck_expression(rhs_exp, symbol_table, false);
 
                 if !are_identical(&lhs_kind, &rhs_kind) {
-                    println!("Error: line {}: In position {} of assignment list, \
+                    eprintln!("Error: line {}: In position {} of assignment list, \
                     trying to assign a value of type {} \
                     to an expression expression {}", 
                     stmt.line_number,
@@ -282,14 +284,14 @@ fn typecheck_statement(stmt: &mut StatementNode,
             let rhs_kind = typecheck_expression(rhs, symbol_table, false);
 
             if !is_exp_addressable(lhs, symbol_table) {
-                 println!("Error: line {}: unadressable lvalue.", stmt.line_number);
+                 eprintln!("Error: line {}: unadressable lvalue.", stmt.line_number);
                  exit(1);
             }
 
             let assigned_kind = get_kind_binary_op(&lhs_kind, &rhs_kind, *operator, stmt.line_number);
 
             if !are_identical(&lhs_kind, &assigned_kind) {
-                println!("Error: line {}: invalid assignment type.", stmt.line_number);
+                eprintln!("Error: line {}: invalid assignment type.", stmt.line_number);
                 exit(1);
             }
         }
@@ -327,7 +329,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 };
 
             if !are_identical(&exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
-                println!("Error: line {}: condition must be of type bool.",
+                eprintln!("Error: line {}: condition must be of type bool.",
                          stmt.line_number);
                 exit(1);
             }
@@ -344,7 +346,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             let exp_type = typecheck_expression(condition, init_scope, false);
 
             if !are_identical(&exp_type.resolve(), &Kind::Basic(BasicKind::Bool)) {
-                println!("Error: line {}: condition must be of type bool.", 
+                eprintln!("Error: line {}: condition must be of type bool.", 
                          stmt.line_number);
                 exit(1);
             }
