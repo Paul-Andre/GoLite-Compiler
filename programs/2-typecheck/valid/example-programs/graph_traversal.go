@@ -7,7 +7,7 @@ func dfs(r int, k int) int {
     if values[r] == k {
         return 1
     }
-    for i := 0; i<len(tree[r]); i++ {
+    for i := 0; i<7 /* some constant because len is not defined in golite*/; i++ {
         if 1 == dfs(tree[r][i], k) {
             return 1
         }

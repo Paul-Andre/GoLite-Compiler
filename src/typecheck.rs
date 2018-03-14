@@ -95,11 +95,13 @@ fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut
                                  spec.line_number,
                                  Kind::Undefined);
         let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
-        match symbol_table.get_symbol(&spec.name, spec.line_number) {
-            &Symbol{ declaration: Declaration::Type(Kind::Defined(ref r)), ..} => {
-                r.borrow_mut().kind = kind
-            },
-            _ => panic!("This type should have been a dummy definition")
+        if &spec.name != "_" {
+            match symbol_table.get_symbol(&spec.name, spec.line_number) {
+                &Symbol{ declaration: Declaration::Type(Kind::Defined(ref r)), ..} => {
+                    r.borrow_mut().kind = kind
+                },
+                _ => panic!("This type should have been a dummy definition")
+            }
         }
     }
 
