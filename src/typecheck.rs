@@ -82,7 +82,7 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                     Declaration::Variable(declared_kind.clone()),
                     /*inferred*/ false);
                 },
-                (&None, &None) => unreachable!()
+                (&None, &None) => unreachable!() // This would not have passed parsing
             }
         }
     }
