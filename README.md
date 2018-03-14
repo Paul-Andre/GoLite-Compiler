@@ -46,7 +46,6 @@ In order to build the source code, run:
 
 ```
 ./build.sh
-
 ```
 
 If you ever need to do some changes to the C files for some reason, you will need to force cargo to rebuild as it will not detect the changes. Simply clean the directory using:
