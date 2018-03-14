@@ -64,22 +64,22 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                                  spec.line_number, spec.names[i], declared_kind, init_kind);
                         exit(1);
                     }
-                    symbol_table.add_declaration(spec.names[i].clone(),
+                    symbol_table.add_variable(spec.names[i].clone(),
                             spec.line_number,
-                            Declaration::Variable(declared_kind.clone()),
+                            declared_kind.clone(),
                             /*inferred*/ false);
                 },
                 (&Some(ref rhs_kinds), &None) => {
                     let init_kind = &rhs_kinds[i];
-                    symbol_table.add_declaration(spec.names[i].clone(),
+                    symbol_table.add_variable(spec.names[i].clone(),
                             spec.line_number,
-                            Declaration::Variable(init_kind.clone()),
+                            init_kind.clone(),
                             /*inferred*/ true);
                 },
                 (&None, &Some(ref declared_kind)) => {
-                    symbol_table.add_declaration(spec.names[i].clone(),
+                    symbol_table.add_variable(spec.names[i].clone(),
                     spec.line_number,
-                    Declaration::Variable(declared_kind.clone()),
+                    declared_kind.clone(),
                     /*inferred*/ false);
                 },
                 (&None, &None) => unreachable!() // This would not have passed parsing
@@ -98,10 +98,11 @@ fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut
         if &spec.name != "_" {
             match symbol_table.get_symbol(&spec.name, spec.line_number) {
                 &Symbol{ declaration: Declaration::Type(Kind::Defined(ref r)), ..} => {
-                    r.borrow_mut().kind = kind
+                    r.borrow_mut().kind = kind.clone()
                 },
                 _ => panic!("This type should have been a dummy definition")
             }
+            symbol_table.print_type_definition(&spec.name, &kind);
         }
     }
 
@@ -136,21 +137,17 @@ fn typecheck_function_declaration(name: &str,
             &mut None => None
         };
 
-    symbol_table.add_declaration(name.to_string(),
+    symbol_table.add_function(name.to_string(),
                                  line,
-                                 Declaration::Function{
-                                     params: param_tuples.iter().map(|x| x.2.clone()).collect(),
-                                     return_kind: real_return_kind.clone(),
-                                 },
-                                 false);
+                                 param_tuples.iter().map(|x| x.2.clone()).collect(),
+                                 real_return_kind.clone());
 
     let new_scope = &mut symbol_table.new_scope();
     new_scope.return_kind = real_return_kind;
     new_scope.in_function = true;
 
     for f in param_tuples {
-        new_scope.add_declaration(f.0.to_string(), f.1,
-                                  Declaration::Variable(f.2), false);
+        new_scope.add_variable(f.0.to_string(), f.1, f.2, false);
     }
 
     typecheck_statements(body, new_scope);
@@ -238,9 +235,9 @@ fn typecheck_statement(stmt: &mut StatementNode,
                         }
                     }
                 } else {
-                    symbol_table.add_declaration(id.clone(),
+                    symbol_table.add_variable(id.clone(),
                                                  stmt.line_number,
-                                                 Declaration::Variable(exp_kind.clone()),
+                                                 exp_kind.clone(),
                                                  true)
                 }
             }
@@ -298,8 +295,10 @@ fn typecheck_statement(stmt: &mut StatementNode,
         }
 
         Statement::Block(ref mut statements) => {
-            let new_scope = &mut symbol_table.new_scope();
-            typecheck_statements(statements, new_scope);
+            if statements.len() != 0 {
+                let new_scope = &mut symbol_table.new_scope();
+                typecheck_statements(statements, new_scope);
+            }
         }
         Statement::Print { ref mut exprs } |
         Statement::Println { ref mut exprs } => {
@@ -350,13 +349,15 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 exit(1);
             }
 
-            let new_scope = &mut init_scope.new_scope();
-            typecheck_statements(if_branch, new_scope);
+            {
+                let new_scope = &mut init_scope.new_scope();
+                typecheck_statements(if_branch, new_scope);
+            }
 
             match *else_branch {
                 Some(ref mut stmt) => {
-                    let else_scope = &mut init_scope.new_scope();
-                    typecheck_statement(stmt, else_scope);
+                    //let else_scope = &mut init_scope.new_scope();
+                    typecheck_statement(stmt, init_scope);
                 },
                 None => {},
             }

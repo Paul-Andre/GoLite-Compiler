@@ -52,123 +52,35 @@ impl<'a> SymbolTable<'a>{
         }
     }
 
-    pub fn add_declaration(&mut self, id: String, line_number: u32, decl: Declaration, inferred: bool) {
-        use self::Declaration::*;
+    fn add_declaration(&mut self, name: String, line_number: u32, decl: Declaration) {
 
-        let ilk = 
+        if (&name == "init" || &name == "main") && self.level == 1 {
             match decl {
-                Variable(..) => "variable",
-                Constant(..) => "constant",
-                Type(..) => "type",
-                Function{..} => "function",
-                Dummy => panic!("Dummy should not be added using add_declaration."),
-            };
-
-
-        if self.level <= 1 && &id == "init" {
-            match decl {
-                Function{ref params, ref return_kind} => {
-                    if params.len() != 0 || return_kind.is_some() {
-                        eprintln!("Error: line {}: `init` function must have type () -> void",
-                                    line_number);
-
-                        exit(1);
-                    }
-                },
+                Declaration::Function{..} | Declaration::Dummy => {},
                 _ => {
-                    eprintln!("Error: line {}: cannot have {} called `init` at top level.\
-                    `init` must be a function",
-                              line_number, ilk);
+                    // If declaration is anythig other than a dummy or a function
+                    eprintln!("Error: line {}: only functions can be called `{}` at global \
+                    scope.", line_number, name);
                     exit(1);
                 }
             }
-            if(self.print_table) {
-                indent(self.level + 1);
-                println!("init [function] = <unmapped>");
-            }
+        }
+
+        if &name == "_" || (&name == "init" && self.level == 1) {
             return;
         }
 
-        let mut is_main = false;
-        if self.level <= 1 && &id == "main" {
-            match decl {
-                Function{ref params, ref return_kind} => {
-                    if params.len() != 0 || return_kind.is_some() {
-                        eprintln!("Error: line {}: `main` function must have type () -> void",
-                                    line_number);
-
-                        exit(1);
-                    }
-                },
-                _ => {
-                    eprintln!("Error: line {}: cannot have {} called `main` at top level. \
-                    `main` must be a function",
-                              line_number, ilk);
-                    exit(1);
-                }
-            }
-
-            if(self.print_table) {
-                indent(self.level + 1);
-                println!("init [function] = <unmapped>");
-            }
-            is_main = true;
-        }
-        
-        if &id == "_" && !match decl { Function{..} => true, _ => false} {
-            return;
-        }
-
-    
-        if self.print_table && !is_main {
-
-            indent(self.level + 1);
-            print!("{} [{}] = ", id, ilk);
-
-            if inferred {
-                println!("<infer>");
-            } else {
-                match decl {
-                    Variable(ref k) | Constant(ref k) | Type(ref k) => {
-                        println!("{}", k);
-                    },
-                    Function{ref params, ref return_kind}  => {
-                        print!("(");
-                        for (i,param) in params.iter().enumerate() {
-                            if i<params.len()-1 {
-                                print!("{}, ", param);
-                            } else {
-                                print!("{}", param);
-                            }
-                        }
-                        print!(") -> ");
-                        if let &Some(ref ret) = return_kind {
-                            print!("{}", ret);
-                        } else {
-                            print!("void");
-                        }
-                        println!();
-                    },
-                    Dummy => unreachable!()
-                }
-            }
-        }
-
-        if &id == "_" {
-            return;
-        }
-
-        match self.symbols.get(&id) {
+        match self.symbols.get(&name) {
             Some(&Symbol{declaration: Declaration::Dummy, ..})  => {},
             Some(&Symbol{line_number: l, ..}) =>  {
                 eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
-                          line_number, id, l);
+                          line_number, name, l);
                 exit(1);
             }
             None => {},
         }
             
-        self.symbols.insert(id, Symbol{
+        self.symbols.insert(name, Symbol{
             line_number,
             declaration: decl
         });
@@ -177,12 +89,105 @@ impl<'a> SymbolTable<'a>{
     pub fn define_type(&mut self, name: String, line_number: u32, kind: Kind) {
         self.add_declaration( name.clone(), line_number, Declaration::Type(
                 Kind::Defined(Rc::new(RefCell::new(
-                        kind::Definition { line_number, name, kind } ) ))),
-                        false);
+                        kind::Definition { line_number, name, kind } ) ))));
+    }
+
+    pub fn print_type_definition(&mut self, name: &str, kind: &Kind) {
+        if self.print_table {
+            indent(self.level + 1);
+            println!("{} [type] = {} -> {}", name, name, kind);
+        }
+    }
+
+
+    pub fn add_initial_type(&mut self, name: String, kind: Kind) {
+        if self.print_table {
+            indent(self.level + 1);
+            println!("{} [type] = {}", name, kind);
+        }
+
+        self.add_declaration(name.clone(), 0, Declaration::Type(kind));
+    }
+
+    pub fn add_function(&mut self, name: String, line_number: u32,
+                        params: Vec<Kind>, return_kind: Option<Kind>) {
+
+
+        if self.print_table {
+            indent(self.level + 1);
+            print!("{} [function] = ", name);
+
+            if &name == "_" || &name == "init" {
+                print!("<unmapped>");
+            }
+            else {
+                print!("(");
+                for (i,param) in params.iter().enumerate() {
+                    if i<params.len()-1 {
+                        print!("{}, ", param);
+                    } else {
+                        print!("{}", param);
+                    }
+                }
+                print!(") -> ");
+                if let &Some(ref ret) = &return_kind {
+                    print!("{}", ret);
+                } else {
+                    print!("void");
+                }
+            }
+            println!();
+        }
+
+
+        if (&name == "init" || &name == "main") &&
+            (params.len() != 0 || return_kind.is_some()) {
+            eprintln!("Error: line {}: {} function must have type () -> void",
+                        line_number, name);
+            exit(1);
+        }
+
+        self.add_declaration(name.clone(),
+                             line_number,
+                             Declaration::Function{
+                                 params: params,
+                                 return_kind: return_kind.clone()
+                             });
+    }
+
+    pub fn add_variable(&mut self, name: String, line_number: u32, kind: Kind, is_inferred: bool) {
+        
+
+        if self.print_table && &name != "_" {
+            indent(self.level + 1);
+            if !is_inferred {
+                println!("{} [variable] = {}", name, kind);
+            } else {
+                println!("{} [variable] = <infer>", name);
+            }
+        }
+
+        self.add_declaration(name, line_number, Declaration::Variable(kind));
+
+    }
+
+    pub fn add_constant(&mut self, name: String, line_number: u32, kind: Kind) {
+
+        if self.print_table && &name != "_" {
+            indent(self.level + 1);
+            println!("{} [constant] = {}", name, kind);
+        }
+        
+        self.add_declaration(name, line_number, Declaration::Constant(kind));
+
     }
 
     pub fn add_dummy(&mut self, name: String, line_number: u32) {
 
+        self.add_declaration(name, line_number,
+                             Declaration::Dummy);
+
+        /*
         match self.symbols.get(&name) {
             Some(&Symbol{declaration: Declaration::Dummy, ..})  => {},
             Some(&Symbol{line_number: l, ..}) =>  {
@@ -197,6 +202,7 @@ impl<'a> SymbolTable<'a>{
             line_number,
             declaration: Declaration::Dummy
         });
+        */
     }
 
 }
@@ -248,28 +254,15 @@ pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
         print_table
     };
 
-    root_scope.add_declaration("int".to_string(), 0,
-        Declaration::Type(Kind::Basic(BasicKind::Int)),
-        false);
-    root_scope.add_declaration("float64".to_string(), 0,
-        Declaration::Type(Kind::Basic(BasicKind::Float)),
-        false);
-    root_scope.add_declaration("bool".to_string(), 0,
-        Declaration::Type(Kind::Basic(BasicKind::Bool)),
-        false);
-    root_scope.add_declaration("rune".to_string(), 0,
-        Declaration::Type(Kind::Basic(BasicKind::Rune)),
-        false);
-    root_scope.add_declaration("string".to_string(), 0,
-        Declaration::Type(Kind::Basic(BasicKind::String)),
-        false);
-
-    root_scope.add_declaration("true".to_string(), 0,
-        Declaration::Constant(Kind::Basic(BasicKind::Bool)),
-        false);
-    root_scope.add_declaration("false".to_string(), 0,
-        Declaration::Constant(Kind::Basic(BasicKind::Bool)),
-        false);
+    root_scope.add_initial_type("int".to_string(), Kind::Basic(BasicKind::Int));
+    root_scope.add_initial_type("float64".to_string(), Kind::Basic(BasicKind::Float));
+    root_scope.add_initial_type("bool".to_string(), Kind::Basic(BasicKind::Bool));
+    root_scope.add_initial_type("rune".to_string(), Kind::Basic(BasicKind::Rune));
+    root_scope.add_initial_type("string".to_string(), Kind::Basic(BasicKind::String));
+        
+    root_scope.add_constant("true".to_string(), 0, Kind::Basic(BasicKind::Bool));
+    root_scope.add_constant("false".to_string(), 0, Kind::Basic(BasicKind::Bool));
+        
 
     return root_scope;
 }
