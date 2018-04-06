@@ -9,7 +9,7 @@ mod kind;
 mod symbol_table;
 mod typecheck;
 mod util;
-mod codegen;
+//mod codegen;
 
 pub use ast_constructors::*;
 pub use weed::*;
@@ -74,7 +74,7 @@ fn main() {
         weed::weed_terminating_statements(&ast);
         typecheck::typecheck(&mut ast, false);
 
-        codegen::codegen(&mut ast);
+        //codegen::codegen(&mut ast);
 
     } else {
         eprintln!("Error: invalid mode");

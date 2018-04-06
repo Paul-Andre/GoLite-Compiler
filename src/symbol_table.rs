@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::process::exit;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::cell::Cell;
 use kind;
 use kind::Kind;
 use kind::BasicKind;
@@ -13,6 +14,7 @@ pub struct SymbolTable<'a> {
     pub in_function: bool,
     pub level: u32,
     pub print_table: bool,
+    pub id_counter: Rc<Cell<u32>>,
 }
 
 impl<'a> SymbolTable<'a>{
@@ -48,11 +50,14 @@ impl<'a> SymbolTable<'a>{
             return_kind: self.return_kind.clone(),
             in_function: self.in_function,
             level: self.level + 1,
-            print_table: self.print_table
+            print_table: self.print_table,
+            id_counter: self.id_counter.clone()
         }
     }
 
-    fn add_declaration(&mut self, name: String, line_number: u32, decl: Declaration) {
+    /// returns the name that the identifier should be renamed to
+    fn add_declaration(&mut self, name: String, line_number: u32, decl: Declaration, rename: bool)
+        -> String {
 
         if (&name == "init" || &name == "main") && self.level == 1 {
             match decl {
@@ -67,7 +72,7 @@ impl<'a> SymbolTable<'a>{
         }
 
         if &name == "_" || (&name == "init" && self.level == 1) {
-            return;
+            return name;
         }
 
         match self.symbols.get(&name) {
@@ -79,17 +84,26 @@ impl<'a> SymbolTable<'a>{
             }
             None => {},
         }
-            
+
+        let new_name = if rename {
+            self.id_counter.set(self.id_counter.get() + 1);
+            format!("{}_{}", name, &self.id_counter.get().to_string())
+        } else {
+            name.clone()
+        };
         self.symbols.insert(name, Symbol{
             line_number,
-            declaration: decl
+            declaration: decl,
+            new_name: new_name.clone()
         });
+        return new_name;
     }
 
     pub fn define_type(&mut self, name: String, line_number: u32, kind: Kind) {
         self.add_declaration( name.clone(), line_number, Declaration::Type(
                 Kind::Defined(Rc::new(RefCell::new(
-                        kind::Definition { line_number, name, kind } ) ))));
+                        kind::Definition { line_number, name, kind } ) ))),
+                /*rename*/ true);
     }
 
     pub fn print_type_definition(&mut self, name: &str, kind: &Kind) {
@@ -106,11 +120,11 @@ impl<'a> SymbolTable<'a>{
             println!("{} [type] = {}", name, kind);
         }
 
-        self.add_declaration(name.clone(), 0, Declaration::Type(kind));
+        self.add_declaration(name.clone(), 0, Declaration::Type(kind), /*rename*/ false);
     }
 
     pub fn add_function(&mut self, name: String, line_number: u32,
-                        params: Vec<Kind>, return_kind: Option<Kind>) {
+                        params: Vec<Kind>, return_kind: Option<Kind>) -> String {
 
 
         if self.print_table {
@@ -152,10 +166,11 @@ impl<'a> SymbolTable<'a>{
                              Declaration::Function{
                                  params: params,
                                  return_kind: return_kind.clone()
-                             });
+                             },
+                             /*rename*/ true)
     }
 
-    pub fn add_variable(&mut self, name: String, line_number: u32, kind: Kind, is_inferred: bool) {
+    pub fn add_variable(&mut self, name: String, line_number: u32, kind: Kind, is_inferred: bool)  -> String {
         
 
         if self.print_table && &name != "_" {
@@ -167,7 +182,7 @@ impl<'a> SymbolTable<'a>{
             }
         }
 
-        self.add_declaration(name, line_number, Declaration::Variable(kind));
+        self.add_declaration(name, line_number, Declaration::Variable(kind), true)
 
     }
 
@@ -178,31 +193,15 @@ impl<'a> SymbolTable<'a>{
             println!("{} [constant] = {}", name, kind);
         }
         
-        self.add_declaration(name, line_number, Declaration::Constant(kind));
+        self.add_declaration(name, line_number, Declaration::Constant(kind), false);
 
     }
 
     pub fn add_dummy(&mut self, name: String, line_number: u32) {
 
         self.add_declaration(name, line_number,
-                             Declaration::Dummy);
+                             Declaration::Dummy, true);
 
-        /*
-        match self.symbols.get(&name) {
-            Some(&Symbol{declaration: Declaration::Dummy, ..})  => {},
-            Some(&Symbol{line_number: l, ..}) =>  {
-                eprintln!("Error: line {}: `{}` was already declared in the current scope at line {}.",
-                          line_number, name, l);
-                exit(1);
-            }
-            None => {},
-        }
-            
-        self.symbols.insert(name, Symbol{
-            line_number,
-            declaration: Declaration::Dummy
-        });
-        */
     }
 
 }
@@ -225,6 +224,7 @@ impl<'a> Drop for SymbolTable<'a> {
 
 pub struct Symbol {
     pub line_number: u32,
+    pub new_name: String,
     pub declaration: Declaration,
 }
 
@@ -251,7 +251,8 @@ pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
         return_kind: None,
         in_function: false,
         level: 0,
-        print_table
+        print_table,
+        id_counter: Rc::new(Cell::new(0))
     };
 
     root_scope.add_initial_type("int".to_string(), Kind::Basic(BasicKind::Int));
