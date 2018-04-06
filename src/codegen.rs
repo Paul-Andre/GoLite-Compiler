@@ -6,6 +6,8 @@ use kind::*;
 
 struct CodeGenVisitor {
     indent: u32,
+    id_counter: u32,
+    init_functions: Vec<String>
 }
 
 impl CodeGenVisitor{
@@ -20,8 +22,54 @@ impl CodeGenVisitor{
     }
 
     fn visit_top_level_declaration(&mut self, decl: &TopLevelDeclarationNode) {
+        match decl {
+            TopLevelDeclaration::VarDeclarations { ref declarations } => {
+                for d in declarations.iter(){
+                    self.visit_top_level_var_spec(&d)
+                }
+            }
+
+            TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body} => {
+
+                let fun_name: String = name + self.create_id();
+
+                if name == "init" {
+                    self.init_functions.append(fun_name)
+                }
+
+                let params_string = parameterrs.join(" , ");
+
+                println!("function {} ( {} ) {{", fun_name, params_string);
+
+                self.indent += 1;
+                self.visit_statements(&body);
+                self.indent -= 1;
+
+                println!("}}");
+            }
+
+            _ => return
+        }
+    }
+
+    fn visit_top_level_var_spec(&mut self, var_spec: &VarSpec){
+        match var_spec.rhs {
+            &Some(ref values) => {
+                let pre_string = "";
+                let post_string = "let " + name + " = " ;
+
+                for (name, rhs) in var_spec.names.iter().zip(values.iter_mut()) {
+                    self.visit_expression(&rhs, &pre_string, &post_string)
+                }
+            }
+            &None => {
+
+            }
+        }
+
 
     }
+
 
     fn visit_variable_declarations(&mut self, declarations: &mut [VarSpec]) {
         for spec in declarations {
@@ -170,6 +218,11 @@ impl CodeGenVisitor{
             Expression::TypeCast { .. } => {
             }
         }
+    }
+
+    fn create_id(&mut self) -> String{
+        self.id_counter += 1;
+        return self.id_counter.to_string()
     }
 }
 
