@@ -2,13 +2,43 @@ use ast::*;
 
 struct CodeGenVisitor {
     indent: u32,
-
+    id_counter: u32,
+    init_functions: Vec<String>
 }
 
 impl CodeGenVisitor{
 
     fn visit_top_level_declaration(&mut self, decl: &TopLevelDeclarationNode){
+        match decl {
+            TopLevelDeclaration::VarDeclarations { ref declarations } => {
+                for d in declarations.iter(){
+
+                }
+            }
+
+            TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body} => {
+
+                let fun_name: String = name + self.get_id();
+
+                if name == "init" {
+                    self.init_functions.append(fun_name)
+                }
+
+                let params_string = parameterrs.join(" , ");
+
+                println!("function {} ( {} ) {{");
+
+                self.indent += 1;
+                self.visit_statements(&body);
+                self.indent -= 1;
+
+                println!("}}");
+            }
+
+            _ => return
+        }
     }
+
 
     fn visit_variable_declarations(&mut self, declarations: &mut [VarSpec]) {
         for spec in declarations {
@@ -94,6 +124,11 @@ impl CodeGenVisitor{
             Expression::TypeCast { .. } => {
             }
         }
+    }
+
+    fn get_id(&mut self){
+        self.id_counter += 1;
+        return self.id_counter.to_string()
     }
 }
 
