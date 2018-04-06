@@ -7,7 +7,9 @@ struct CodeGenVisitor {
 
 impl CodeGenVisitor{
 
-    fn visitTopLevelDeclaration(&mut self, youriscuks)
+    fn visitTopLevelDeclaration(&mut self, decl: &TopLevelDeclarationNode) {
+
+    }
 
     fn visitStatement(&mut self, stmt: &StatementNode ){
 
@@ -17,4 +19,8 @@ impl CodeGenVisitor{
     fn visitExpression(&mut self, expr: &ExpressionNode){
 
     }
+}
+
+pub fn codegen(root: &Program) {
+
 }
