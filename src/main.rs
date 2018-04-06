@@ -67,6 +67,14 @@ fn main() {
         weed::weed_terminating_statements(&ast);
         typecheck::typecheck(&mut ast, false);
         print!("OK");
+    } else if &argv[1] == "codegen" {
+        let mut ast = unsafe { Box::from_raw(parse()) };
+        weed::weed_ast(&ast);
+        weed::weed_terminating_statements(&ast);
+        typecheck::typecheck(&mut ast, false);
+
+        codegen::codegen(&mut ast);
+
     } else {
         eprintln!("Error: invalid mode");
         exit(1);
