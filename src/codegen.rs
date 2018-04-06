@@ -12,13 +12,13 @@ impl CodeGenVisitor{
         match decl {
             TopLevelDeclaration::VarDeclarations { ref declarations } => {
                 for d in declarations.iter(){
-
+                    self.visit_top_level_var_spec(&d)
                 }
             }
 
             TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body} => {
 
-                let fun_name: String = name + self.get_id();
+                let fun_name: String = name + self.create_id();
 
                 if name == "init" {
                     self.init_functions.append(fun_name)
@@ -26,7 +26,7 @@ impl CodeGenVisitor{
 
                 let params_string = parameterrs.join(" , ");
 
-                println!("function {} ( {} ) {{");
+                println!("function {} ( {} ) {{", fun_name, params_string);
 
                 self.indent += 1;
                 self.visit_statements(&body);
@@ -37,6 +37,24 @@ impl CodeGenVisitor{
 
             _ => return
         }
+    }
+
+    fn visit_top_level_var_spec(&mut self, var_spec: &VarSpec){
+        match var_spec.rhs {
+            &Some(ref values) => {
+                let pre_string = "";
+                let post_string = "let " + name + " = " ;
+
+                for (name, rhs) in var_spec.names.iter().zip(values.iter_mut()) {
+                    self.visit_expression(&rhs, &pre_string, &post_string)
+                }
+            }
+            &None => {
+
+            }
+        }
+
+
     }
 
 
@@ -126,7 +144,7 @@ impl CodeGenVisitor{
         }
     }
 
-    fn get_id(&mut self){
+    fn create_id(&mut self) -> String{
         self.id_counter += 1;
         return self.id_counter.to_string()
     }
