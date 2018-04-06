@@ -22,7 +22,7 @@ impl CodeGenVisitor{
     }
 
     fn visit_top_level_declaration(&mut self, decl: &TopLevelDeclarationNode) {
-        match decl {
+        match decl.top_level_declaration {
             TopLevelDeclaration::VarDeclarations { ref declarations } => {
                 for d in declarations.iter(){
                     self.visit_top_level_var_spec(&d)
@@ -31,13 +31,20 @@ impl CodeGenVisitor{
 
             TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body} => {
 
-                let fun_name: String = name + self.create_id();
+                let func_name = name.clone()
 
                 if name == "init" {
-                    self.init_functions.append(fun_name)
+                    self.init_functions.push(fun_name.clone());
+                    func_name = format!("{}_{}", name, self.create_id());
                 }
 
-                let params_string = parameterrs.join(" , ");
+                let params_string = "";
+                for field in parameters {
+                    for id in field.identifiers {
+                        write!(params_string, "{}, ", id);
+                    }
+                }
+
 
                 println!("function {} ( {} ) {{", fun_name, params_string);
 
@@ -56,14 +63,16 @@ impl CodeGenVisitor{
         match var_spec.rhs {
             &Some(ref values) => {
                 let pre_string = "";
-                let post_string = "let " + name + " = " ;
+                let post_string = "";
 
                 for (name, rhs) in var_spec.names.iter().zip(values.iter_mut()) {
-                    self.visit_expression(&rhs, &pre_string, &post_string)
+                    write!(post_string, "let {} = ", name);
+                    self.visit_expression(&rhs, &pre_string, &post_string);
+                    write!(post_string, "\n");
                 }
             }
             &None => {
-
+                // TODO initialize to zero value or something
             }
         }
 
@@ -71,13 +80,13 @@ impl CodeGenVisitor{
     }
 
 
-    fn visit_variable_declarations(&mut self, declarations: &mut [VarSpec]) {
+    fn visit_variable_declarations(&mut self, declarations: &[VarSpec]) {
         for spec in declarations {
 
         }
     }
 
-    fn visit_statements(&mut self, statements: &mut [StatementNode]) {
+    fn visit_statements(&mut self, statements: &[StatementNode]) {
         for s in statements {
             self.visit_statement(s);
         }
@@ -85,8 +94,8 @@ impl CodeGenVisitor{
 
     fn visit_function_declaration(&mut self,
                                   name: &str,
-                                  params: &mut [ast::Field],
-                                  body: &mut [StatementNode]) {
+                                  params: &[ast::Field],
+                                  body: &[StatementNode]) {
 
     }
 
