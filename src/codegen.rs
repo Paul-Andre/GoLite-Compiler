@@ -96,3 +96,7 @@ impl CodeGenVisitor{
         }
     }
 }
+
+pub fn codegen(root: &Program) {
+
+}
