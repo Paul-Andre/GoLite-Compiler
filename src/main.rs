@@ -9,6 +9,7 @@ mod kind;
 mod symbol_table;
 mod typecheck;
 mod util;
+mod codegen;
 
 pub use ast_constructors::*;
 pub use weed::*;
