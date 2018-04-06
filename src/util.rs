@@ -1,4 +1,4 @@
-gituse std::u32;
+use std::u32;
 
 pub fn string_to_int(s: &str) -> u32 {
     assert_ne!(s, "");
