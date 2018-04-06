@@ -1,17 +1,31 @@
+use std::fmt::Write;
+use ast;
 use ast::*;
+use kind;
+use kind::*;
 
 struct CodeGenVisitor {
     indent: u32,
-
 }
 
 impl CodeGenVisitor{
+    fn visit_program(&mut self, root: &Program) {
+        print_header();
+        for decl in root.declarations {
+            self.visit_top_level_declaration(&decl);
+        }
+        print_out_the_call_to_init_functions();
 
-    fn visit_top_level_declaration(&mut self, decl: &TopLevelDeclarationNode){
+        println!("main();")
+    }
+
+    fn visit_top_level_declaration(&mut self, decl: &TopLevelDeclarationNode) {
+
     }
 
     fn visit_variable_declarations(&mut self, declarations: &mut [VarSpec]) {
         for spec in declarations {
+
         }
     }
 
@@ -23,7 +37,7 @@ impl CodeGenVisitor{
 
     fn visit_function_declaration(&mut self,
                                   name: &str,
-                                  params: &mut [Field],
+                                  params: &mut [ast::Field],
                                   body: &mut [StatementNode]) {
 
     }
@@ -31,26 +45,49 @@ impl CodeGenVisitor{
     fn visit_statement(&mut self, stmt: &mut StatementNode) {
         match stmt.statement {
             Statement::Empty => {},
-            Statement::Break => {},
-            Statement::Continue => {},
+            Statement::Break => {
+                indent(self.indent);
+                println!("break;")
+            },
+            Statement::Continue => {
+                indent(self.indent);
+                println!("continue;")
+            },
             Statement::Expression(ref mut exp) => {
+                
             },
             Statement::Return(ref mut exp) => {
+                match exp {
+                    &mut Some(..) => {
+                        // DO SOMETHING
+                    },
+                    &mut None => {
+                        indent(self.indent);
+                        println!("return;");
+                    }
+                }
             },
             Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
             },
             Statement::VarDeclarations { ref mut declarations } => {
             },
             Statement::TypeDeclarations { ref mut declarations } => {
+                // Nothing
             },
             Statement::Assignment { ref mut lhs, ref mut rhs } => {
             },
             Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
             },
             Statement::Block(ref mut statements) => {
+                for stmt in statements {
+                    self.visit_statement(stmt);
+                }
             },
-            Statement::Print { ref mut exprs } |
+            Statement::Print { ref mut exprs } => {
+
+            },
             Statement::Println { ref mut exprs } => {
+
             },
             Statement::For { ref mut init, ref mut condition, ref mut post, ref mut body } => {
             },
@@ -63,32 +100,71 @@ impl CodeGenVisitor{
         }
     }
 
-    fn visit_expression(exp: &mut ExpressionNode,
-                            from_expression_statement: bool){
+    fn visit_expression(&mut self,
+                        exp: &ExpressionNode,
+                        pre_string: &mut String,
+                        post_string: &mut String) {
 
         match exp.expression {
             Expression::RawLiteral{..} => {
             }
 
             Expression::Identifier { ref name } => {
+                write!(post_string, "{}", name);
             }
 
-            Expression::UnaryOperation { ref op, ref mut rhs } => {
+            Expression::UnaryOperation { ref op, ref rhs } => {
+                write!(post_string, "{}(", print_unary_op(op));
+                self.visit_expression(rhs, pre_string, post_string);
+                write!(post_string, ")");
             }
 
-            Expression::BinaryOperation { ref op, ref mut lhs, ref mut rhs } => {
+            Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
+                match exp.kind.resolve() { // TODO: take care of && or ||
+                    Kind::Basic(kind::BasicKind::Int) |
+                    Kind::Basic(kind::BasicKind::Rune) => {
+                        write!(post_string, "{}_int(", print_binary_op(op));
+                        self.visit_expression(lhs, pre_string, post_string);
+                        write!(post_string, ",");
+                        self.visit_expression(lhs, pre_string, post_string);
+                        write!(post_string, ")");
+                    },
+                    _ => {
+                        write!(post_string, "{}(", print_binary_op(op));
+                        self.visit_expression(lhs, pre_string, post_string);
+                        write!(post_string, ",");
+                        self.visit_expression(lhs, pre_string, post_string);
+                        write!(post_string, ")");
+                    }
+                }
             }
 
             Expression::FunctionCall { .. } => {
+                write!(post_string, "tmp_{}_", self.get_id());
+                // Execute function call outside: append to prestring
+                // print the name of the temp variable
+                //
             }
 
-            Expression::Index { ref mut primary, ref mut index } => {
+            Expression::Index { ref primary, ref index } => {
+                write!(post_string, "index("); // RENAME THIS MAYBE?
+                self.visit_expression(primary, pre_string, post_string);
+                write!(post_string, ",");
+                self.visit_expression(index, pre_string, post_string);
+                write!(post_string, ")");
             }
 
-            Expression::Selector { ref mut primary, ref name } => {
+            Expression::Selector { ref primary, ref name } => {
+                self.visit_expression(primary, pre_string, post_string);
+                write!(post_string, ".{}", name);
             }
 
-            Expression::Append { ref mut lhs, ref mut rhs } => {
+            Expression::Append { ref lhs, ref rhs } => {
+                write!(post_string, "append(");
+                self.visit_expression(lhs, pre_string, post_string);
+                write!(post_string, ",");
+                self.visit_expression(rhs, pre_string, post_string);
+                write!(post_string, ")");
             }
 
             Expression::TypeCast { .. } => {
@@ -98,5 +174,26 @@ impl CodeGenVisitor{
 }
 
 pub fn codegen(root: &Program) {
+    let visitor = CodeGenVisitor{ indent: 0 };
 
+    visitor.visit_program(root);
+
+}
+
+fn print_header() {
+
+}
+
+fn indent(size: u32) {
+
+}
+
+fn print_unary_op(op: &UnaryOperator) -> String {
+
+    "".to_string()
+}
+
+fn print_binary_op(op: &BinaryOperator) -> String {
+
+    "".to_string()
 }
