@@ -206,9 +206,20 @@ fn typecheck_statement(stmt: &mut StatementNode,
             let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
             let mut new_count = 0;
+            let mut vars_to_add = Vec::new();
 
             for it in identifier_list.iter().zip(rhs_kinds.iter()){
                 let (id, exp_kind) = it;
+
+                // Check identifier doesn't appear twice in lhs
+                for name in vars_to_add.clone() {
+                    if name == id {
+                        eprintln!("Error: line {}: variable name {} used twice in lhs of assignment",
+                                  stmt.line_number, id);
+                        exit(1);
+                    }
+                }
+                vars_to_add.push(id);
 
                 if symbol_table.is_in_current_scope(&id) {
 
@@ -229,7 +240,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                         }
                     }
                 } else {
-                    if (&*id != "_") {
+                    if &*id != "_" {
                         symbol_table.add_variable(id.clone(),
                                                      stmt.line_number,
                                                      exp_kind.clone(),
@@ -405,8 +416,10 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
         }
         Statement::IncDec { ref mut expr, .. } => {
-            // TODO: check if is addressable
-            // or do we need to do it? I beleive we did it in the weed phase
+            if !is_exp_addressable(expr, symbol_table) {
+                eprintln!("Error: line {}: expression is not addressable", expr.line_number);
+                exit(1);
+            }
             let exp_type = typecheck_expression(expr, symbol_table, false);
             let base = exp_type.resolve();
             if !base.is_numeric() {

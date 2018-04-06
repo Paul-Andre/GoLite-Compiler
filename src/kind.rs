@@ -133,7 +133,7 @@ impl Kind {
 
     pub fn is_ordered(&self) -> bool {
         match self.resolve() {
-            Kind::Basic(BasicKind::Bool) | Kind::Slice(..)
+            Kind::Basic(BasicKind::Bool) | Kind::Slice(..) | Kind::Array(..)
             | Kind::Struct(..) => false,
             _ => true
         }
