@@ -186,10 +186,10 @@ impl CodeGenVisitor{
 
                 if exp.kind.is_integer() { // TODO: take care of && or ||
                     match op {
-                        BinaryOperator::Add ||
-                        BinaryOperator::Sub ||
-                        BinaryOperator::Mul ||
-                        BinaryOperator::Div => {
+                        &BinaryOperator::Add |
+                        &BinaryOperator::Sub |
+                        &BinaryOperator::Mul |
+                        &BinaryOperator::Div => {
                             write!(post_string, "_int");
                         }
                         _ => {}
