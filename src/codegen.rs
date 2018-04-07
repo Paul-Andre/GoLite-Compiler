@@ -252,11 +252,88 @@ fn indent(size: u32) {
 }
 
 fn print_unary_op(op: &UnaryOperator) -> String {
+    match op {
+        Plus => {
+            return "unary_plus".to_string()
+        },
+        Neg => {
+            return "unary_neg".to_string()
+        },
+        BwCompl => {
+            return "unary_bwcompl".to_string()
+        },
+        Not => {
+            return "unary_not".to_string()
+        }
+    }
 
-    "".to_string()
 }
 
 fn print_binary_op(op: &BinaryOperator) -> String {
+    match op {
+        Or => {
+            return "binary_or".to_string()
+        },
+        And => {
+            return "binary_and".to_string()
+        },
 
-    "".to_string()
+
+
+        Eq => {
+            return "binary_eq".to_string()
+        },
+        Neq => {
+            return "binary_neq".to_string()
+        },
+        Lt => {
+            return "binary_lt".to_string()
+        },
+        Leq => {
+            return "binary_leq".to_string()
+        },
+        Gt => {
+            return "binary_gt".to_string()
+        },
+        Geq => {
+            return "binary_geq".to_string()
+        },
+        Add => {
+            return "binary_add".to_string()
+        },
+        Sub => {
+            return "binary_sub".to_string()
+        },
+        Mul => {
+            return "binary_mul".to_string()
+        },
+        Div => {
+            return "binary_div".to_string()
+        },
+
+
+
+        BwOr => {
+            return "binary_bwor".to_string()
+        },
+        BwXor => {
+            return "binary_bwxor".to_string()
+        },
+        Mod => {
+            return "binary_mod".to_string()
+        },
+        BwAnd => {
+            return "binary_bwand".to_string()
+        },
+        BwAndNot => {
+            return "binary_bwandnot".to_string()
+        },
+        LShift => {
+            return "binary_lshift".to_string()
+        },
+        RShift => {
+            return "binary_rshift".to_string()
+        },
+    }
+
 }
