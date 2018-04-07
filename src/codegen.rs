@@ -29,16 +29,17 @@ impl CodeGenVisitor{
                 }
             }
 
-            TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body} => {
+            TopLevelDeclaration::FunctionDeclaration 
+            { ref name, ref parameters, ref return_kind, ref body } => {
 
-                let func_name = name.clone()
+                let func_name = name.clone();
 
                 if name == "init" {
-                    self.init_functions.push(fun_name.clone());
+                    self.init_functions.push(func_name.clone());
                     func_name = format!("{}_{}", name, self.create_id());
                 }
 
-                let params_string = "";
+                let params_string = "".to_string();
                 for field in parameters {
                     for id in field.identifiers {
                         write!(params_string, "{}, ", id);
@@ -46,14 +47,14 @@ impl CodeGenVisitor{
                 }
 
 
-                println!("function {} ( {} ) {{", fun_name, params_string);
+                println!("function {} ( {} ) {{", func_name, params_string);
 
                 self.indent += 1;
                 self.visit_statements(&body);
                 self.indent -= 1;
 
                 println!("}}");
-            }
+            },
 
             _ => return
         }
@@ -61,17 +62,17 @@ impl CodeGenVisitor{
 
     fn visit_top_level_var_spec(&mut self, var_spec: &VarSpec){
         match var_spec.rhs {
-            &Some(ref values) => {
-                let pre_string = "";
-                let post_string = "";
+            Some(ref values) => {
+                let pre_string = "".to_string();
+                let post_string = "".to_string();
 
                 for (name, rhs) in var_spec.names.iter().zip(values.iter_mut()) {
                     write!(post_string, "let {} = ", name);
-                    self.visit_expression(&rhs, &pre_string, &post_string);
+                    self.visit_expression(&rhs, &mut pre_string, &mut post_string);
                     write!(post_string, "\n");
                 }
             }
-            &None => {
+            None => {
                 // TODO initialize to zero value or something
             }
         }
@@ -99,7 +100,7 @@ impl CodeGenVisitor{
 
     }
 
-    fn visit_statement(&mut self, stmt: &mut StatementNode) {
+    fn visit_statement(&mut self, stmt: &StatementNode) {
         match stmt.statement {
             Statement::Empty => {},
             Statement::Break => {
@@ -197,7 +198,7 @@ impl CodeGenVisitor{
             }
 
             Expression::FunctionCall { .. } => {
-                write!(post_string, "tmp_{}_", self.get_id());
+                write!(post_string, "tmp_{}_", self.create_id());
                 // Execute function call outside: append to prestring
                 // print the name of the temp variable
                 //
@@ -236,7 +237,7 @@ impl CodeGenVisitor{
 }
 
 pub fn codegen(root: &Program) {
-    let visitor = CodeGenVisitor{ indent: 0 };
+    let visitor = CodeGenVisitor{ indent: 0, id_counter: 0, init_functions: Vec::new()  };
 
     visitor.visit_program(root);
 
