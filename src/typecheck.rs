@@ -103,6 +103,7 @@ fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut
                 _ => panic!("This type should have been a type definition")
             }
             symbol_table.print_type_definition(&spec.name, &kind);
+            spec.name = renamed;
         }
     }
 
@@ -119,7 +120,7 @@ fn typecheck_function_declaration(name: &str,
                                    return_kind: &mut Option<Box<AstKindNode>>,
                                    body: &mut [StatementNode],
                                    line: u32,
-                                   symbol_table: &mut SymbolTable) {
+                                   symbol_table: &mut SymbolTable) -> String {
 
     let renamed = symbol_table.add_dummy(name.to_string(), line);
 
@@ -151,6 +152,8 @@ fn typecheck_function_declaration(name: &str,
     }
 
     typecheck_statements(body, new_scope);
+
+    renamed
 }
 
 fn typecheck_statement(stmt: &mut StatementNode,
@@ -202,28 +205,30 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
         },
-        Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
+        Statement::ShortVariableDeclaration { ref mut identifier_list, ref mut expression_list } => {
             let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
             let mut new_count = 0;
-            let mut vars_to_add = Vec::new();
+            let mut vars_to_add = Vec::<String>::new();
 
-            for it in identifier_list.iter().zip(rhs_kinds.iter()){
-                let (id, exp_kind) = it;
+            for (id, exp_kind) in identifier_list.iter_mut().zip(rhs_kinds.iter()){
 
                 // Check identifier doesn't appear twice in lhs
                 for name in vars_to_add.clone() {
-                    if name == id {
+                    if &name == id {
                         eprintln!("Error: line {}: variable name {} used twice in lhs of assignment",
                                   stmt.line_number, id);
                         exit(1);
                     }
                 }
-                vars_to_add.push(id);
+                vars_to_add.push(id.clone());
+
+                let renamed: String;
 
                 if symbol_table.is_in_current_scope(&id) {
 
                     let sym = symbol_table.get_symbol(id, stmt.line_number);
+                    renamed = sym.new_name.clone();
 
                     match sym.declaration {
                         Declaration::Variable(ref k) =>{
@@ -235,20 +240,25 @@ fn typecheck_statement(stmt: &mut StatementNode,
                             }
                         },
                         _ => {
-                            eprintln!("Error: line {}: Trying to declare non-variable in short variable assignment.", stmt.line_number);
+                            eprintln!("Error: line {}: Trying to redeclare non-variable in short variable assignment.", stmt.line_number);
                             exit(1);
                         }
                     }
                 } else {
                     if &*id != "_" {
-                        let renamed = symbol_table.add_variable(id.clone(),
+                        renamed = symbol_table.add_variable(id.clone(),
                                                      stmt.line_number,
                                                      exp_kind.clone(),
                                                      true);
                         new_count += 1;
-
+                    }
+                    else {
+                        renamed = "_".to_string();
                     }
                 }
+
+                *id = renamed;
+
             }
             if new_count == 0 {
                 eprintln!("Error: line {}: no new variable on lhs.", stmt.line_number);

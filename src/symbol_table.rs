@@ -198,10 +198,10 @@ impl<'a> SymbolTable<'a>{
 
     }
 
-    pub fn add_dummy(&mut self, name: String, line_number: u32) {
+    pub fn add_dummy(&mut self, name: String, line_number: u32) -> String {
 
         self.add_declaration(name, line_number,
-                             Declaration::Dummy, true);
+                             Declaration::Dummy, true)
 
     }
 
