@@ -64,20 +64,20 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                                  spec.line_number, spec.names[i], declared_kind, init_kind);
                         exit(1);
                     }
-                    symbol_table.add_variable(spec.names[i].clone(),
+                    let renamed = symbol_table.add_variable(spec.names[i].clone(),
                             spec.line_number,
                             declared_kind.clone(),
                             /*inferred*/ false);
                 },
                 (&Some(ref rhs_kinds), &None) => {
                     let init_kind = &rhs_kinds[i];
-                    symbol_table.add_variable(spec.names[i].clone(),
+                    let renamed = symbol_table.add_variable(spec.names[i].clone(),
                             spec.line_number,
                             init_kind.clone(),
                             /*inferred*/ true);
                 },
                 (&None, &Some(ref declared_kind)) => {
-                    symbol_table.add_variable(spec.names[i].clone(),
+                    let renamed = symbol_table.add_variable(spec.names[i].clone(),
                     spec.line_number,
                     declared_kind.clone(),
                     /*inferred*/ false);
@@ -91,7 +91,7 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
 fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
 
     for spec in declarations {
-        symbol_table.define_type(spec.name.clone(),
+        let renamed = symbol_table.define_type(spec.name.clone(),
                                  spec.line_number,
                                  Kind::Undefined);
         let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
@@ -100,7 +100,7 @@ fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut
                 &Symbol{ declaration: Declaration::Type(Kind::Defined(ref r)), ..} => {
                     r.borrow_mut().kind = kind.clone()
                 },
-                _ => panic!("This type should have been a dummy definition")
+                _ => panic!("This type should have been a type definition")
             }
             symbol_table.print_type_definition(&spec.name, &kind);
         }
@@ -121,7 +121,7 @@ fn typecheck_function_declaration(name: &str,
                                    line: u32,
                                    symbol_table: &mut SymbolTable) {
 
-    symbol_table.add_dummy(name.to_string(), line);
+    let renamed = symbol_table.add_dummy(name.to_string(), line);
 
     let mut param_tuples = Vec::new();
     for f in params.iter_mut() {
@@ -137,7 +137,7 @@ fn typecheck_function_declaration(name: &str,
             &mut None => None
         };
 
-    symbol_table.add_function(name.to_string(),
+    symbol_table.replace_dummy_by_function(name.to_string(),
                                  line,
                                  param_tuples.iter().map(|x| x.2.clone()).collect(),
                                  real_return_kind.clone());
@@ -147,7 +147,7 @@ fn typecheck_function_declaration(name: &str,
     new_scope.in_function = true;
 
     for f in param_tuples {
-        new_scope.add_variable(f.0.to_string(), f.1, f.2, false);
+        let renamed = new_scope.add_variable(f.0.to_string(), f.1, f.2, false);
     }
 
     typecheck_statements(body, new_scope);
@@ -241,7 +241,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                     }
                 } else {
                     if &*id != "_" {
-                        symbol_table.add_variable(id.clone(),
+                        let renamed = symbol_table.add_variable(id.clone(),
                                                      stmt.line_number,
                                                      exp_kind.clone(),
                                                      true);

@@ -17,6 +17,8 @@ pub struct SymbolTable<'a> {
     pub id_counter: Rc<Cell<u32>>,
 }
 
+
+
 impl<'a> SymbolTable<'a>{
     pub fn get_symbol<'b>(&'b self, identifier: &str, line_number: u32) -> &'b Symbol{
 
@@ -85,7 +87,7 @@ impl<'a> SymbolTable<'a>{
             None => {},
         }
 
-        let new_name = if rename {
+        let new_name = if rename && !(&name == "main" && self.level == 1) {
             self.id_counter.set(self.id_counter.get() + 1);
             format!("{}_{}", name, &self.id_counter.get().to_string())
         } else {
@@ -99,11 +101,11 @@ impl<'a> SymbolTable<'a>{
         return new_name;
     }
 
-    pub fn define_type(&mut self, name: String, line_number: u32, kind: Kind) {
+    pub fn define_type(&mut self, name: String, line_number: u32, kind: Kind) -> String {
         self.add_declaration( name.clone(), line_number, Declaration::Type(
                 Kind::Defined(Rc::new(RefCell::new(
                         kind::Definition { line_number, name, kind } ) ))),
-                /*rename*/ true);
+                /*rename*/ true)
     }
 
     pub fn print_type_definition(&mut self, name: &str, kind: &Kind) {
@@ -123,8 +125,8 @@ impl<'a> SymbolTable<'a>{
         self.add_declaration(name.clone(), 0, Declaration::Type(kind), /*rename*/ false);
     }
 
-    pub fn add_function(&mut self, name: String, line_number: u32,
-                        params: Vec<Kind>, return_kind: Option<Kind>) -> String {
+    pub fn replace_dummy_by_function(&mut self, name: String, line_number: u32,
+                        params: Vec<Kind>, return_kind: Option<Kind>) {
 
 
         if self.print_table {
@@ -161,13 +163,12 @@ impl<'a> SymbolTable<'a>{
             exit(1);
         }
 
-        self.add_declaration(name.clone(),
-                             line_number,
-                             Declaration::Function{
+        if let Some(sym) = self.symbols.get_mut(&name){
+            sym.declaration = Declaration::Function{
                                  params: params,
                                  return_kind: return_kind.clone()
-                             },
-                             /*rename*/ true)
+                             };
+        };
     }
 
     pub fn add_variable(&mut self, name: String, line_number: u32, kind: Kind, is_inferred: bool)  -> String {
