@@ -12,7 +12,7 @@ use util;
 
 pub fn typecheck(root: &mut Program, print_table: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
-    let universe_block = create_root_symbol_table(print_table);
+    let mut universe_block = create_root_symbol_table(print_table);
     let symbol_table = &mut universe_block.new_scope();
 
     for decl in &mut root.declarations {

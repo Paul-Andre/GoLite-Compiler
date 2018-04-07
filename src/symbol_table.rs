@@ -39,7 +39,7 @@ impl<'a> SymbolTable<'a>{
     pub fn is_in_current_scope<'b>(&'b self, identifier: &str) -> bool {
         self.symbols.get(identifier).is_some()
     }
-    pub fn new_scope<'b>(&'b self) -> SymbolTable<'b> {
+    pub fn new_scope<'b>(&'b mut self) -> SymbolTable<'b> {
         if self.print_table {
             indent(self.level + 1);
             println!("{{");
