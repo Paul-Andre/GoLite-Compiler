@@ -171,7 +171,22 @@ impl CodeGenVisitor{
                         post_string: &mut String) {
 
         match exp.expression {
-            Expression::RawLiteral{..} => {
+            Expression::RawLiteral{ ref value } => {
+                match exp.kind {
+                    Kind::Basic(BasicKind::Int) | 
+                    Kind::Basic(BasicKind::Float) => {
+                        write!(post_string, "{}", value);
+                    },
+                    Kind::Basic(BasicKind::Rune) => {
+                        // TODO: parse rune and print out integer value
+                    },
+                    Kind::Basic(BasicKind::String) => {
+                        // TODO: raw vs interpreted strings
+                    }
+                    _ => {
+                        panic!("Invalid type of typecasted expression");
+                    }
+                }
             }
 
             Expression::Identifier { ref name } => {
@@ -259,7 +274,15 @@ impl CodeGenVisitor{
                 write!(post_string, ")");
             }
 
-            Expression::TypeCast { .. } => {
+            Expression::TypeCast { ref expr } => {
+                if exp.kind.is_string() && expr.kind.is_integer() {
+                    write!(post_string, "String.fromCharCode(");
+                    self.visit_expression(expr, pre_string, post_string);
+                    write!(post_string, ")");
+                } else {
+                    // Do nothing at all
+                    self.visit_expression(expr, pre_string, post_string);
+                }
             }
         }
     }
@@ -274,7 +297,6 @@ pub fn codegen(root: &Program) {
     let mut visitor = CodeGenVisitor{ indent: 0, id_counter: 0, init_functions: Vec::new()  };
 
     visitor.visit_program(root);
-
 }
 
 fn print_header() {
