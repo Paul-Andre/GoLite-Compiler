@@ -1,4 +1,5 @@
 use std::u32;
+use std::fmt::Write;
 
 pub fn string_to_int(s: &str) -> u32 {
     assert_ne!(s, "");
@@ -14,6 +15,15 @@ pub fn string_to_int(s: &str) -> u32 {
     }
     return u32::from_str_radix(s, 10).unwrap();
 }
+
+pub fn indent(size: u32) -> String {
+    let mut ret = "".to_string();
+    for _ in 1..size {
+        write!(ret, "\t");
+    }
+    ret
+}
+
 
 
 #[cfg(test)]

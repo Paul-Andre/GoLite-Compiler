@@ -1,8 +1,11 @@
 use std::fmt::Write;
 use ast;
+use util::*;
 use ast::*;
 use kind;
 use kind::*;
+use std::fs::File;
+use std::io::prelude::*;
 
 struct CodeGenVisitor {
     indent: u32,
@@ -275,16 +278,13 @@ pub fn codegen(root: &Program) {
 }
 
 fn print_header() {
+    let mut f = File::open("header.txt").expect("Header file not found");
+    let mut contents = String::new();
+    f.read_to_string(&mut contents).expect("Error when reading header file");
 
+    println!("{}", contents);
 }
 
-fn indent(size: u32) -> String {
-    let mut ret = "".to_string();
-    for _ in 1..size {
-        write!(ret, "\t");
-    }
-    ret
-}
 
 fn print_unary_op(op: &UnaryOperator) -> String {
     let mut op_name = "".to_string();
