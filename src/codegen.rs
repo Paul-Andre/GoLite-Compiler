@@ -16,10 +16,14 @@ impl CodeGenVisitor{
         for decl in root.declarations {
             self.visit_top_level_declaration(&decl);
         }
-        print_out_the_call_to_init_functions();
 
-        println!("main();")
+        for init_func_name in self.init_functions {
+            println!("{}();",init_func_name);
+        }
+
+        println!("main();");
     }
+
 
     fn visit_top_level_declaration(&mut self, decl: &TopLevelDeclarationNode) {
         match decl.top_level_declaration {
