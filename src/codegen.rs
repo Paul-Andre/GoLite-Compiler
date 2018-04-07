@@ -182,23 +182,25 @@ impl CodeGenVisitor{
             }
 
             Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
-                match exp.kind.resolve() { // TODO: take care of && or ||
-                    Kind::Basic(kind::BasicKind::Int) |
-                    Kind::Basic(kind::BasicKind::Rune) => {
-                        write!(post_string, "{}_int(", print_binary_op(op));
-                        self.visit_expression(lhs, pre_string, post_string);
-                        write!(post_string, ",");
-                        self.visit_expression(lhs, pre_string, post_string);
-                        write!(post_string, ")");
-                    },
-                    _ => {
-                        write!(post_string, "{}(", print_binary_op(op));
-                        self.visit_expression(lhs, pre_string, post_string);
-                        write!(post_string, ",");
-                        self.visit_expression(lhs, pre_string, post_string);
-                        write!(post_string, ")");
+                write!(post_string, "{}", print_binary_op(op));
+
+                if exp.kind.is_integer() { // TODO: take care of && or ||
+                    match op {
+                        BinaryOperator::Add ||
+                        BinaryOperator::Sub ||
+                        BinaryOperator::Mul ||
+                        BinaryOperator::Div => {
+                            write!(post_string, "_int");
+                        }
+                        _ => {}
                     }
                 }
+
+                write!(post_string, "(");
+                self.visit_expression(lhs, pre_string, post_string);
+                write!(post_string, ",");
+                self.visit_expression(lhs, pre_string, post_string);
+                write!(post_string, ")");
             }
 
             Expression::FunctionCall { ref primary, ref arguments } => {
