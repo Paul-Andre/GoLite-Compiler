@@ -108,11 +108,11 @@ impl CodeGenVisitor{
         match stmt.statement {
             Statement::Empty => {},
             Statement::Break => {
-                indent(self.indent);
+                print!("{}", indent(self.indent));
                 println!("break;")
             },
             Statement::Continue => {
-                indent(self.indent);
+                print!("{}", indent(self.indent));
                 println!("continue;")
             },
             Statement::Expression(ref exp) => {
@@ -124,7 +124,7 @@ impl CodeGenVisitor{
                         // DO SOMETHING
                     },
                     &None => {
-                        indent(self.indent);
+                        print!("{}", indent(self.indent));
                         println!("return;");
                     }
                 }
@@ -208,7 +208,6 @@ impl CodeGenVisitor{
                 let mut new_pre_string = "".to_string();
                 let mut new_post_string = "".to_string();
 
-                // TODO: take care of indentation when writing to pre_string
                 // Print the name of the temp variable in the post_string
                 write!(post_string, "tmp_{}_", tmp_id.clone());
 
@@ -227,7 +226,11 @@ impl CodeGenVisitor{
                 write!(new_post_string, ")");
 
                 // Add all hoisted calls, and the new func call to pre_string.
-                write!(pre_string, "{}{}\n", &mut new_pre_string, &mut new_post_string);
+                write!(pre_string, 
+                       "{}{}{}\n", 
+                       &mut new_pre_string, 
+                       indent(self.indent), 
+                       &mut new_post_string);
             }
 
             Expression::Index { ref primary, ref index } => {
@@ -275,8 +278,12 @@ fn print_header() {
 
 }
 
-fn indent(size: u32) {
-
+fn indent(size: u32) -> String {
+    let mut ret = "".to_string();
+    for _ in 1..size {
+        write!(ret, "\t");
+    }
+    ret
 }
 
 fn print_unary_op(op: &UnaryOperator) -> String {
