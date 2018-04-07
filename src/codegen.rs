@@ -214,26 +214,26 @@ impl CodeGenVisitor{
                 write!(new_post_string, "tmp_{}_ = ", tmp_id.clone());
 
                 // Print primary to new_post_string
-                self.visit_expression(primary, new_pre_string, new_post_string);
+                self.visit_expression(primary, &mut new_pre_string, &mut new_post_string);
 
                 // Print arguments to new_post_string
                 write!(new_post_string, "(");
                 for arg in arguments {
-                    self.visit_expression(arg, new_pre_string, new_post_string);
+                    self.visit_expression(arg, &mut new_pre_string, &mut new_post_string);
                     write!(new_post_string, ", ");
                 }
                 write!(new_post_string, ")");
 
                 // Add all hoisted calls, and the new func call to pre_string.
-                write!(pre_string, "{}{}\n", new_pre_string, new_post_string);
+                write!(pre_string, "{}{}\n", &mut new_pre_string, &mut new_post_string);
             }
 
             Expression::Index { ref primary, ref index } => {
 
                 let mut primary_value = "".to_string();
                 let mut index_value = "".to_string();
-                self.visit_expression(primary, pre_string, primary_value);
-                self.visit_expression(index, pre_string, index_value);
+                self.visit_expression(primary, pre_string, &mut primary_value);
+                self.visit_expression(index, pre_string, &mut index_value);
 
                 write!(post_string, "{}[check_bounds({},{}.lenght)]", primary_value, index_value, primary_value);
             }
