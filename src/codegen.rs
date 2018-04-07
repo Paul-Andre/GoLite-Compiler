@@ -13,11 +13,11 @@ struct CodeGenVisitor {
 impl CodeGenVisitor{
     fn visit_program(&mut self, root: &Program) {
         print_header();
-        for decl in root.declarations {
+        for decl in &root.declarations {
             self.visit_top_level_declaration(&decl);
         }
 
-        for init_func_name in self.init_functions {
+        for init_func_name in &self.init_functions {
             println!("{}();",init_func_name);
         }
 
@@ -36,16 +36,16 @@ impl CodeGenVisitor{
             TopLevelDeclaration::FunctionDeclaration 
             { ref name, ref parameters, ref return_kind, ref body } => {
 
-                let func_name = name.clone();
+                let mut func_name = name.clone();
 
                 if name == "init" {
                     self.init_functions.push(func_name.clone());
                     func_name = format!("{}_{}", name, self.create_id());
                 }
 
-                let params_string = "".to_string();
+                let mut params_string = "".to_string();
                 for field in parameters {
-                    for id in field.identifiers {
+                    for id in &field.identifiers {
                         write!(params_string, "{}, ", id);
                     }
                 }
@@ -67,10 +67,10 @@ impl CodeGenVisitor{
     fn visit_top_level_var_spec(&mut self, var_spec: &VarSpec){
         match var_spec.rhs {
             Some(ref values) => {
-                let pre_string = "".to_string();
-                let post_string = "".to_string();
+                let mut pre_string = "".to_string();
+                let mut post_string = "".to_string();
 
-                for (name, rhs) in var_spec.names.iter().zip(values.iter_mut()) {
+                for (name, rhs) in var_spec.names.iter().zip(values.iter()) {
                     write!(post_string, "let {} = ", name);
                     self.visit_expression(&rhs, &mut pre_string, &mut post_string);
                     write!(post_string, "\n");
@@ -115,49 +115,49 @@ impl CodeGenVisitor{
                 indent(self.indent);
                 println!("continue;")
             },
-            Statement::Expression(ref mut exp) => {
+            Statement::Expression(ref exp) => {
                 
             },
-            Statement::Return(ref mut exp) => {
+            Statement::Return(ref exp) => {
                 match exp {
-                    &mut Some(..) => {
+                    &Some(..) => {
                         // DO SOMETHING
                     },
-                    &mut None => {
+                    &None => {
                         indent(self.indent);
                         println!("return;");
                     }
                 }
             },
-            Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
+            Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
             },
-            Statement::VarDeclarations { ref mut declarations } => {
+            Statement::VarDeclarations { ref declarations } => {
             },
-            Statement::TypeDeclarations { ref mut declarations } => {
+            Statement::TypeDeclarations { ref declarations } => {
                 // Nothing
             },
-            Statement::Assignment { ref mut lhs, ref mut rhs } => {
+            Statement::Assignment { ref lhs, ref rhs } => {
             },
-            Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
+            Statement::OpAssignment { ref lhs, ref rhs, ref operator } => {
             },
-            Statement::Block(ref mut statements) => {
+            Statement::Block(ref statements) => {
                 for stmt in statements {
                     self.visit_statement(stmt);
                 }
             },
-            Statement::Print { ref mut exprs } => {
+            Statement::Print { ref exprs } => {
 
             },
-            Statement::Println { ref mut exprs } => {
+            Statement::Println { ref exprs } => {
 
             },
-            Statement::For { ref mut init, ref mut condition, ref mut post, ref mut body } => {
+            Statement::For { ref init, ref condition, ref post, ref body } => {
             },
-            Statement::If { ref mut init, ref mut condition, ref mut if_branch, ref mut else_branch } => {
+            Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
             },
-            Statement::Switch { ref mut init, ref mut expr, ref mut body } => {
+            Statement::Switch { ref init, ref expr, ref body } => {
             },
-            Statement::IncDec { ref mut expr, .. } => {
+            Statement::IncDec { ref expr, .. } => {
             }
         }
     }
@@ -241,7 +241,7 @@ impl CodeGenVisitor{
 }
 
 pub fn codegen(root: &Program) {
-    let visitor = CodeGenVisitor{ indent: 0, id_counter: 0, init_functions: Vec::new()  };
+    let mut visitor = CodeGenVisitor{ indent: 0, id_counter: 0, init_functions: Vec::new()  };
 
     visitor.visit_program(root);
 
@@ -256,13 +256,13 @@ fn indent(size: u32) {
 }
 
 fn print_unary_op(op: &UnaryOperator) -> String {
-    let op_name = "".to_string();
+    let mut op_name = "".to_string();
     write!(op_name, "unary_{:?}", op);
     op_name
 }
 
 fn print_binary_op(op: &BinaryOperator) -> String {
-    let op_name = "".to_string();
+    let mut op_name = "".to_string();
     write!(op_name, "binary_{:?}", op);
     op_name
 }
