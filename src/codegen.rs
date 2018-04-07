@@ -201,11 +201,31 @@ impl CodeGenVisitor{
                 }
             }
 
-            Expression::FunctionCall { .. } => {
-                write!(post_string, "tmp_{}_", self.create_id());
-                // Execute function call outside: append to prestring
-                // print the name of the temp variable
-                //
+            Expression::FunctionCall { ref primary, ref arguments } => {
+                let tmp_id = self.create_id();
+                let mut new_pre_string = "".to_string();
+                let mut new_post_string = "".to_string();
+
+                // TODO: take care of indentation when writing to pre_string
+                // Print the name of the temp variable in the post_string
+                write!(post_string, "tmp_{}_", tmp_id.clone());
+
+                // Execute function call outside using different post/prestrings
+                write!(new_post_string, "tmp_{}_ = ", tmp_id.clone());
+
+                // Print primary to new_post_string
+                self.visit_expression(primary, new_pre_string, new_post_string);
+
+                // Print arguments to new_post_string
+                write!(new_post_string, "(");
+                for arg in arguments {
+                    self.visit_expression(arg, new_pre_string, new_post_string);
+                    write!(new_post_string, ", ");
+                }
+                write!(new_post_string, ")");
+
+                // Add all hoisted calls, and the new func call to pre_string.
+                write!(pre_string, "{}{}\n", new_pre_string, new_post_string);
             }
 
             Expression::Index { ref primary, ref index } => {
