@@ -1,0 +1,77 @@
+// Might want to rename this file.
+
+
+// Binary operations
+
+function binary_or {
+
+}
+function binary_and {
+
+}
+function binary_eq {
+
+}
+function binary_neq {
+
+}
+function binary_lt {
+
+}
+function binary_leq {
+
+}
+function binary_gt {
+
+}
+function binary_geq {
+
+}
+function binary_add {
+
+}
+function binary_sub {
+
+}
+function binary_mul {
+
+}
+function binary_div {
+
+}
+function binary_bwor {
+
+}
+function binary_bwxor {
+
+}
+function binary_mod {
+
+}
+function binary_bwand {
+
+}
+function binary_bwandnot {
+
+}
+function binary_lshift {
+
+}
+function binary_rshift {
+
+}
+
+
+// Unary Operations
+function unary_plus {
+
+}
+function unary_neg {
+
+}
+function unary_bwcompl {
+
+}
+function unary_not {
+
+}
