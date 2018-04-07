@@ -112,3 +112,18 @@ function deepEq(a,b) {
     console.log("Error: doing comparison of things that aren't number/string/boolean/object");
     process.exit(1);
 }
+
+//------------------------------------------------
+// Expressions
+
+function append(a,b) {
+
+}
+
+function check_bounds(a, lenght) {
+
+}
+
+
+
+
