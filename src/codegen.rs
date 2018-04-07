@@ -209,11 +209,13 @@ impl CodeGenVisitor{
             }
 
             Expression::Index { ref primary, ref index } => {
-                write!(post_string, "index("); // RENAME THIS MAYBE?
-                self.visit_expression(primary, pre_string, post_string);
-                write!(post_string, ",");
-                self.visit_expression(index, pre_string, post_string);
-                write!(post_string, ")");
+
+                let mut primary_value = "".to_string();
+                let mut index_value = "".to_string();
+                self.visit_expression(primary, pre_string, primary_value);
+                self.visit_expression(index, pre_string, index_value);
+
+                write!(post_string, "{}[check_bounds({},{}.lenght)]", primary_value, index_value, primary_value);
             }
 
             Expression::Selector { ref primary, ref name } => {
