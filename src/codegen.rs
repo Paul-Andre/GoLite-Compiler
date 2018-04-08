@@ -189,7 +189,7 @@ impl CodeGenVisitor{
                 }
             }
 
-            Expression::Identifier { ref name } => {
+            Expression::Identifier { ref name, .. } => {
                 write!(post_string, "{}", name);
             }
 
@@ -274,7 +274,7 @@ impl CodeGenVisitor{
                 write!(post_string, ")");
             }
 
-            Expression::TypeCast { ref expr } => {
+            Expression::TypeCast { ref expr, .. } => {
                 if exp.kind.is_string() && expr.kind.is_integer() {
                     write!(post_string, "String.fromCharCode(");
                     self.visit_expression(expr, pre_string, post_string);
