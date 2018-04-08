@@ -91,7 +91,7 @@ impl<'a> SymbolTable<'a>{
 
         let new_name = if rename && !(&name == "main" && self.level == 1) {
             self.id_counter.set(self.id_counter.get() + 1);
-            if (!self.obfuscate) {
+            if !self.obfuscate {
                 format!("{}_{}", name, &self.id_counter.get().to_string())
             } else {
                 format!("_{}", &self.id_counter.get().to_string())
