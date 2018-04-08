@@ -410,7 +410,7 @@ fn pretty_print_expression_list(exprs: &Vec<ExpressionNode>) {
 
 fn pretty_print_expression(expr: &ExpressionNode){
     match expr.expression {
-        Expression::Identifier { ref name } => print!("{}", name),
+        Expression::Identifier { ref name, .. } => print!("{}", name),
         Expression::RawLiteral { ref value } => print!("{}", value),
         Expression::BinaryOperation { op, ref lhs, ref rhs} => {
             print!("( ");

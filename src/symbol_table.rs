@@ -122,7 +122,7 @@ impl<'a> SymbolTable<'a>{
             println!("{} [type] = {}", name, kind);
         }
 
-        self.add_declaration(name.clone(), 0, Declaration::Type(kind), /*rename*/ false);
+        self.add_declaration(name.clone(), 0, Declaration::Type(kind), /*rename*/ true);
     }
 
     pub fn replace_dummy_by_function(&mut self, name: String, line_number: u32,

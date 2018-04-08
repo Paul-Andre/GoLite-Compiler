@@ -62,7 +62,7 @@ pub struct Field {
 
 #[derive(Debug)]
 pub enum Expression {
-    Identifier { name: String },
+    Identifier { name: String, original_name: String },
     RawLiteral { value: String },
     BinaryOperation {
         op: BinaryOperator,
