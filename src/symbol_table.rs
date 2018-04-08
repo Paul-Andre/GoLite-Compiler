@@ -15,6 +15,7 @@ pub struct SymbolTable<'a> {
     pub level: u32,
     pub print_table: bool,
     pub id_counter: Rc<Cell<u32>>,
+    pub obfuscate: bool,
 }
 
 
@@ -53,7 +54,8 @@ impl<'a> SymbolTable<'a>{
             in_function: self.in_function,
             level: self.level + 1,
             print_table: self.print_table,
-            id_counter: self.id_counter.clone()
+            id_counter: self.id_counter.clone(),
+            obfuscate: self.obfuscate,
         }
     }
 
@@ -89,7 +91,11 @@ impl<'a> SymbolTable<'a>{
 
         let new_name = if rename && !(&name == "main" && self.level == 1) {
             self.id_counter.set(self.id_counter.get() + 1);
-            format!("{}_{}", name, &self.id_counter.get().to_string())
+            if (!self.obfuscate) {
+                format!("{}_{}", name, &self.id_counter.get().to_string())
+            } else {
+                format!("_{}", &self.id_counter.get().to_string())
+            }
         } else {
             name.clone()
         };
@@ -122,7 +128,7 @@ impl<'a> SymbolTable<'a>{
             println!("{} [type] = {}", name, kind);
         }
 
-        self.add_declaration(name.clone(), 0, Declaration::Type(kind), /*rename*/ true);
+        self.add_declaration(name.clone(), 0, Declaration::Type(kind), /*rename*/ false);
     }
 
     pub fn replace_dummy_by_function(&mut self, name: String, line_number: u32,
@@ -241,19 +247,20 @@ pub enum Declaration {
 
 
 /// Populates the symbol table with the Go default variables and types
-pub fn create_root_symbol_table<'a>(print_table: bool) -> SymbolTable<'a>{
+pub fn create_root_symbol_table<'a>(print_table: bool, obfuscate: bool) -> SymbolTable<'a>{
     if print_table {
         indent(0);
         println!("{{");
     }
-    let mut root_scope = SymbolTable{
+    let mut root_scope = SymbolTable {
         parent_scope: None,
         symbols: HashMap::new(),
         return_kind: None,
         in_function: false,
         level: 0,
         print_table,
-        id_counter: Rc::new(Cell::new(0))
+        id_counter: Rc::new(Cell::new(0)),
+        obfuscate: obfuscate
     };
 
     root_scope.add_initial_type("int".to_string(), Kind::Basic(BasicKind::Int));
