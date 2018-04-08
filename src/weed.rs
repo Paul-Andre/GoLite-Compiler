@@ -459,7 +459,7 @@ fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
             traverse_exp_for_invalid_blank( &*lhs);
             traverse_exp_for_invalid_blank( &*rhs);
         }
-        Expression::TypeCast { ref expr } => {
+        Expression::TypeCast { ref expr, .. } => {
             traverse_exp_for_invalid_blank( &*expr);
         }
     }

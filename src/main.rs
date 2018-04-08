@@ -57,6 +57,12 @@ fn main() {
         let ast = unsafe { Box::from_raw(parse()) };
         weed::weed_ast(&ast);
         pretty::pretty_print_program(&ast)
+    } else if &argv[1] == "rename" {
+        let mut ast = unsafe { Box::from_raw(parse()) };
+        weed::weed_ast(&ast);
+        weed::weed_terminating_statements(&ast);
+        typecheck::typecheck(&mut ast, false);
+        pretty::pretty_print_program(&ast)
     } else if &argv[1] == "symbol" {
         let mut ast = unsafe { Box::from_raw(parse()) };
         weed::weed_ast(&ast);

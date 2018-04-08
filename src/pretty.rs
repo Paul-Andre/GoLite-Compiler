@@ -468,8 +468,10 @@ fn pretty_print_expression(expr: &ExpressionNode){
             pretty_print_expression(&*rhs);
             print!(" )");
         },
-        Expression::TypeCast {..} => {
-            panic!("There should not be type casts in the AST at this point.")
+        Expression::TypeCast {ref name, ref expr} => {
+            print!("{}( ",name);
+            pretty_print_expression(expr);
+            print!(" )");
         }
     }
 }

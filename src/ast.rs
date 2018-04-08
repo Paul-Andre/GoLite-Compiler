@@ -89,7 +89,7 @@ pub enum Expression {
         lhs: Box<ExpressionNode>,
         rhs: Box<ExpressionNode>,
     },
-    TypeCast { expr: Box<ExpressionNode> },
+    TypeCast { name:String, expr: Box<ExpressionNode> },
 }
 
 #[derive(Debug)]

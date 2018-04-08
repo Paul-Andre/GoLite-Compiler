@@ -619,7 +619,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
                         }
 
                         exp.kind = cast_kind.clone();
-                        Expression::TypeCast{ expr: Box::new(inner_expr) }
+                        Expression::TypeCast{name:renamed, expr: Box::new(inner_expr) }
                     },
                     Declaration::Function{ref params, ref return_kind} => {
 
