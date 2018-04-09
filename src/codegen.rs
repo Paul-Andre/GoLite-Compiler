@@ -154,10 +154,10 @@ impl CodeGenVisitor{
                 }
             },
             Statement::Print { ref exprs } => {
-
+                self.codegen_print(exprs, false);
             },
             Statement::Println { ref exprs } => {
-
+                self.codegen_print(exprs, true);
             },
             Statement::For { ref init, ref condition, ref post, ref body } => {
                 self.visit_statement(init);
@@ -254,6 +254,30 @@ impl CodeGenVisitor{
 
             }
         }
+    }
+
+    fn codegen_print(&mut self,
+                     exprs: &Vec<ExpressionNode>,
+                     is_println: bool) {
+        let mut pre = String::new();
+        let mut post = String::new();
+        for expr in exprs {
+            let function = 
+                match expr.kind.resolve() {
+                    Kind::Basic( BasicKind::Float) => "print_float",
+                    _ => "print_not_float",
+                };
+            write!(post,"{}{}(", indent(self.indent), function);
+            self.visit_expression(expr, &mut pre, &mut post);
+            write!(post,");\n");
+            if is_println { // TODO: probably not do this on the last space
+                write!(post,"{}print_not_float(\" \");\n", indent(self.indent));
+            }
+        }
+        if is_println {
+            write!(post,"{}print_not_float(\"\\n\");\n", indent(self.indent));
+        }
+        println!("{}{}", pre, post);
     }
 
     fn codegen_expression_iife(&mut self,

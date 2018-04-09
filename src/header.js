@@ -91,6 +91,16 @@ function unary_Not(a) {
 }
 
 
+function print_float(a) {
+  // TODO: get the correct format
+  process.stdout.write(a.toExponential());
+}
+function print_not_float(a) {
+  // TODO: check if this needs further splitting
+  process.stdout.write(a);
+}
+
+
 // DeepEq
 
 function deepEq(a,b) {
