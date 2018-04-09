@@ -228,12 +228,30 @@ impl CodeGenVisitor{
                     }
                     self.indent+=1;
                     self.visit_statements(&case_clause.statements);
-                    self.indent-=1;
                     println!("{}break;", indent(self.indent));
+                    self.indent-=1;
                 }
                 self.indent-=1;
+                println!("{}}}",indent(self.indent));
             },
-            Statement::IncDec { ref expr, .. } => {
+            Statement::IncDec { ref expr, is_dec } => {
+                let mut pre = String::new();
+                let mut post = String::new();
+                self.visit_expression(expr, &mut pre, &mut post);
+                print!("{}",pre);
+                let function = 
+                match (is_dec, expr.kind.is_integer()) {
+                    (true, true) => "binary_Add_int",
+                    (false, true) => "binary_Sub_int",
+                    (true, false) => "binary_Add",
+                    (false, false) => "binary_Sub",
+                };
+                print!("{}{} = {}({},1);\n",
+                        indent(self.indent),
+                        post,
+                        function,
+                        post);
+
             }
         }
     }
