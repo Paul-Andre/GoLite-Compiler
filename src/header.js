@@ -92,8 +92,23 @@ function unary_Not(a) {
 
 
 function print_float(a) {
-    // TODO: get the correct format
-    process.stdout.write(a.toExponential());
+    var out = a.toExponential(6);
+    if (out[0] != '-') {
+        out = "+"+out;
+    }
+    var beforeExponent = "";
+    var exponent = "0";
+    for (var i=1; i<out.length; i++) {
+        if (out[i] == '-' || out[i] == '+') {
+            exponent = out.substring(i+1);
+            beforeExponent = out.substring(0,i+1);
+            break;
+        }
+    }
+    while (exponent.length < 3) {
+        exponent = "0" + exponent;
+    }
+    process.stdout.write(beforeExponent + exponent);
 }
 function print_not_float(a) {
     // TODO: check if this needs further splitting
@@ -191,3 +206,8 @@ function makeArray(length, example) {
 }
 
 var _;
+
+
+//============================== END OF HEADER ================================//
+
+
