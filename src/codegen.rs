@@ -122,9 +122,9 @@ impl CodeGenVisitor{
             Statement::Expression(ref exp) => {
                 let mut pre = String::new();
                 let mut post = String::new();
-                self.visit_expression(exp, pre, post);
-                print!(pre);
-                println!("{}{};", indent(self.indent), post);
+                self.visit_expression(exp, &mut pre, &mut post);
+                print!("{}",pre);
+                println!("{}{};", indent(self.indent), &mut post);
             },
             Statement::Return(ref exp) => {
                 match exp {

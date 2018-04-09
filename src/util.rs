@@ -18,7 +18,7 @@ pub fn string_to_int(s: &str) -> u32 {
 
 pub fn indent(size: u32) -> String {
     let mut ret = "".to_string();
-    for _ in 1..size {
+    for _ in 0..size {
         write!(ret, "\t");
     }
     ret
