@@ -120,7 +120,11 @@ impl CodeGenVisitor{
                 println!("continue;")
             },
             Statement::Expression(ref exp) => {
-                
+                let mut pre = String::new();
+                let mut post = String::new();
+                self.visit_expression(exp, pre, post);
+                print!(pre);
+                println!("{}{};", indent(self.indent), post);
             },
             Statement::Return(ref exp) => {
                 match exp {
