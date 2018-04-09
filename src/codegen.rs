@@ -43,8 +43,8 @@ impl CodeGenVisitor{
                 let mut func_name = name.clone();
 
                 if name == "init" {
-                    self.init_functions.push(func_name.clone());
                     func_name = format!("{}_{}", name, self.create_id());
+                    self.init_functions.push(func_name.clone());
                 }
 
                 let mut params_string = "".to_string();
@@ -349,7 +349,7 @@ impl CodeGenVisitor{
                 write!(post_string, "ⴵ_{}", tmp_id);
 
                 // Execute function call outside using different post/prestrings
-                write!(new_post_string, "ⴵ_{} = ", tmp_id);
+                write!(new_post_string, "var ⴵ_{} = ", tmp_id);
 
                 // Print primary to new_post_string
                 self.visit_expression(primary, &mut new_pre_string, &mut new_post_string);
