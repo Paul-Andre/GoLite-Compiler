@@ -220,6 +220,9 @@ impl CodeGenVisitor{
             new_post);
     }
 
+    // Convention:
+    // each line in pre_string is indented and ends with a semicolon and a newline
+    // post_string is not indented or anything
     fn visit_expression(&mut self,
                         exp: &ExpressionNode,
                         pre_string: &mut String,
@@ -265,7 +268,7 @@ impl CodeGenVisitor{
                 } else {
                     write!(post_string, "{}", print_binary_op(op));
 
-                    if exp.kind.is_integer() { // TODO: take care of && or ||
+                    if exp.kind.is_integer() {
                         match op {
                             &BinaryOperator::Add |
                                 &BinaryOperator::Sub |
@@ -280,7 +283,7 @@ impl CodeGenVisitor{
                     write!(post_string, "(");
                     self.visit_expression(lhs, pre_string, post_string);
                     write!(post_string, ",");
-                    self.visit_expression(lhs, pre_string, post_string);
+                    self.visit_expression(rhs, pre_string, post_string);
                     write!(post_string, ")");
                 }
             }
@@ -291,10 +294,10 @@ impl CodeGenVisitor{
                 let mut new_post_string = "".to_string();
 
                 // Print the name of the temp variable in the post_string
-                write!(post_string, "ⴵ_{}", tmp_id.clone());
+                write!(post_string, "ⴵ_{}", tmp_id);
 
                 // Execute function call outside using different post/prestrings
-                write!(new_post_string, "ⴵ_{} = ", tmp_id.clone());
+                write!(new_post_string, "ⴵ_{} = ", tmp_id);
 
                 // Print primary to new_post_string
                 self.visit_expression(primary, &mut new_pre_string, &mut new_post_string);
@@ -302,10 +305,11 @@ impl CodeGenVisitor{
                 // Print arguments to new_post_string
                 write!(new_post_string, "(");
                 for arg in arguments {
+                    write!(new_post_string, "deepCopy(");
                     self.visit_expression(arg, &mut new_pre_string, &mut new_post_string);
-                    write!(new_post_string, ", ");
+                    write!(new_post_string, "), ");
                 }
-                write!(new_post_string, ")");
+                write!(new_post_string, ");");
 
                 // Add all hoisted calls, and the new func call to pre_string.
                 write!(pre_string, 
@@ -327,7 +331,7 @@ impl CodeGenVisitor{
 
             Expression::Selector { ref primary, ref name } => {
                 self.visit_expression(primary, pre_string, post_string);
-                write!(post_string, ".{}", name);
+                write!(post_string, ".ㆭ{}", name);
             }
 
             Expression::Append { ref lhs, ref rhs } => {
