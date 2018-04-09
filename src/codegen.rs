@@ -264,7 +264,7 @@ impl CodeGenVisitor{
                      is_println: bool) {
         let mut pre = String::new();
         let mut post = String::new();
-        for expr in exprs {
+        for (i,expr) in exprs.iter().enumerate() {
             let function = 
                 match expr.kind.resolve() {
                     Kind::Basic( BasicKind::Float) => "print_float",
@@ -273,7 +273,7 @@ impl CodeGenVisitor{
             write!(post,"{}{}(", indent(self.indent), function);
             self.visit_expression(expr, &mut pre, &mut post);
             write!(post,");\n");
-            if is_println { // TODO: probably not do this on the last space
+            if is_println && i < exprs.len()-1 { 
                 write!(post,"{}print_not_float(\" \");\n", indent(self.indent));
             }
         }
@@ -315,10 +315,49 @@ impl CodeGenVisitor{
                         write!(post_string, "{}", value);
                     },
                     Kind::Basic(BasicKind::Rune) => {
-                        // TODO: parse rune and print out integer value
+                        let letter : &str;
+                        if value.len() == 4 {
+                            letter = &value[1..3];
+                        } else {
+                            letter = &value[1..2];
+                        }
+
+                        let code_no = match letter {
+                            "\\a" => 7,
+                            "\\b" => 8,
+                            "\\f" => 12,
+                            "\\n" => 10,
+                            "\\r" => 13,
+                            "\\t" => 9,
+                            "\\v" => 11,
+                            "\\\\" => 92,
+                            "\\'" => 39,
+                            _ => letter.chars().next().unwrap() as u32 // Will this work?
+                        };
+                        write!(post_string, "{}", code_no);
                     },
                     Kind::Basic(BasicKind::String) => {
-                        // TODO: raw vs interpreted strings
+                        let letter = &value[0..1];
+                        match letter {
+                            "`" => { // Raw
+                                let mut new_string = String::new();
+                                for c in letter.chars() {
+                                    if c == '\\' {
+                                        new_string = format!("{}{}", new_string, "\\");
+                                    }
+                                    new_string = format!("{}{}", new_string, c);
+                                }
+                                write!(post_string, "{}", new_string);
+                            },
+                            "\"" => { // Interpreted
+                                write!(post_string, 
+                                       "\"{}\"", 
+                                       &value[1..(value.len()-1)]);
+                            }
+                            _ => {
+                                panic!("A string should be either interpreted or raw");
+                            }
+                        }
                     }
                     _ => {
                         panic!("Invalid type of typecasted expression");
@@ -369,8 +408,8 @@ impl CodeGenVisitor{
 
             Expression::FunctionCall { ref primary, ref arguments } => {
                 let tmp_id = self.create_id();
-                let mut new_pre_string = "".to_string();
-                let mut new_post_string = "".to_string();
+                let mut new_pre_string = String::new();
+                let mut new_post_string = String::new();
 
                 // Print the name of the temp variable in the post_string
                 write!(post_string, "ⴵ_{}", tmp_id);
