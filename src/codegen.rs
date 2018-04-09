@@ -1,5 +1,6 @@
 use std::fmt::Write;
 use ast;
+use env;
 use util::*;
 use ast::*;
 use kind;
@@ -165,6 +166,22 @@ impl CodeGenVisitor{
         }
     }
 
+    fn codegen_expression_iife(&mut self,
+                               exp: &ExpressionNode,
+                               post_string: &mut String) {
+        let mut new_pre = String::new();
+        let mut new_post = String::new();
+        self.indent+= 1;
+        self.visit_expression(exp, &mut new_pre, &mut new_post);
+        self.indent-= 1;
+        write!(post_string, "(function() {{\n\
+            {}\
+            {}return {};}}())",
+            new_pre,
+            indent(self.indent + 1),
+            new_post);
+    }
+
     fn visit_expression(&mut self,
                         exp: &ExpressionNode,
                         pre_string: &mut String,
@@ -200,25 +217,34 @@ impl CodeGenVisitor{
             }
 
             Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
-                write!(post_string, "{}", print_binary_op(op));
+                if *op == BinaryOperator::Or || *op == BinaryOperator::And {
+                    write!(post_string, "(");
+                    self.visit_expression(lhs, pre_string, post_string);
+                    write!(post_string, " {} ",
+                           if *op==BinaryOperator::Or { "||" } else { "&&" });
+                    self.codegen_expression_iife(rhs,  post_string);
+                    write!(post_string, ")");
+                } else {
+                    write!(post_string, "{}", print_binary_op(op));
 
-                if exp.kind.is_integer() { // TODO: take care of && or ||
-                    match op {
-                        &BinaryOperator::Add |
-                        &BinaryOperator::Sub |
-                        &BinaryOperator::Mul |
-                        &BinaryOperator::Div => {
-                            write!(post_string, "_int");
+                    if exp.kind.is_integer() { // TODO: take care of && or ||
+                        match op {
+                            &BinaryOperator::Add |
+                                &BinaryOperator::Sub |
+                                &BinaryOperator::Mul |
+                                &BinaryOperator::Div => {
+                                    write!(post_string, "_int");
+                                }
+                            _ => {}
                         }
-                        _ => {}
                     }
-                }
 
-                write!(post_string, "(");
-                self.visit_expression(lhs, pre_string, post_string);
-                write!(post_string, ",");
-                self.visit_expression(lhs, pre_string, post_string);
-                write!(post_string, ")");
+                    write!(post_string, "(");
+                    self.visit_expression(lhs, pre_string, post_string);
+                    write!(post_string, ",");
+                    self.visit_expression(lhs, pre_string, post_string);
+                    write!(post_string, ")");
+                }
             }
 
             Expression::FunctionCall { ref primary, ref arguments } => {
@@ -300,7 +326,7 @@ pub fn codegen(root: &Program) {
 }
 
 fn print_header() {
-    let mut f = File::open("header.txt").expect("Header file not found");
+    let mut f = File::open("src/header.js").expect("Header file not found");
     let mut contents = String::new();
     f.read_to_string(&mut contents).expect("Error when reading header file");
 
