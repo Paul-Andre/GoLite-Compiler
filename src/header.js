@@ -46,7 +46,7 @@ function binary_BwXor(a,b) {
     return a ^ b
 }
 function binary_Mod(a,b) {
-    return a%b
+    return (a%b) | 0 // Note: modulo is only performed on ints in Go
 }
 function binary_BwAnd(a,b) {
     return a & b
