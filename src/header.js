@@ -92,12 +92,12 @@ function unary_Not(a) {
 
 
 function print_float(a) {
-  // TODO: get the correct format
-  process.stdout.write(a.toExponential());
+    // TODO: get the correct format
+    process.stdout.write(a.toExponential());
 }
 function print_not_float(a) {
-  // TODO: check if this needs further splitting
-  process.stdout.write(a);
+    // TODO: check if this needs further splitting
+    process.stdout.write(""+a);
 }
 
 
@@ -106,8 +106,8 @@ function print_not_float(a) {
 function deepEq(a,b) {
     var type = typeof(a);
     if (type === 'number' || 
-        type === 'string' ||
-        type === 'boolean') {
+            type === 'string' ||
+            type === 'boolean') {
         return a === b;
     }
     if (type === 'object') {
@@ -127,66 +127,67 @@ function deepEq(a,b) {
 // Expressions
 
 function append(slice, object) {
-  let ret = {
-    length: slice.length,
-    capacity: slice.capactity, // I "simulate" the capacity
-    contents: slice.contents,
-  };
-  if (ret.length+1 > ret.capacity) {
-    ret.contents = deepCopy(ret.contents);
-    ret.capacity = (ret.capacity + 1) * 2;
-  }
-  ret.contents.push(deepCopy(object));
-  ret.size++;
-  return ret;
+    let ret = {
+        length: slice.length,
+        capacity: slice.capactity, // I "simulate" the capacity
+        contents: slice.contents,
+    };
+    if (ret.length+1 > ret.capacity) {
+        ret.contents = deepCopy(ret.contents);
+        ret.capacity = (ret.capacity + 1) * 2;
+    }
+    ret.contents.push(deepCopy(object));
+    ret.size++;
+    return ret;
 }
 
 function check_bounds(a, length, line_number) {
-  if (a < 0) {
-    console.error("Error: line "+line_number+": trying to index an array or slice with negative number.");
-    process.exit(1);
-  }
-  if (a > length) {
-    console.error("Error: line "+line_number+": index out of range.");
-    process.exit(1);
-  }
-  return a;
+    if (a < 0) {
+        console.error("Error: line "+line_number+": trying to index an array or slice with negative number.");
+        process.exit(1);
+    }
+    if (a > length) {
+        console.error("Error: line "+line_number+": index out of range.");
+        process.exit(1);
+    }
+    return a;
 }
 
 function deepCopy(a) {
     var type = typeof(a);
     if (type === 'number' || 
-        type === 'string' ||
-        type === 'boolean') {
+            type === 'string' ||
+            type === 'boolean') {
         return a;
     }
     if (type === 'object') {
-      if (Array.isArray(a) {
-        var b = [];
-        for (var i=0; i<a.length; i++) {
-          b.push(deepCopy(a[i]));
-        }
-        return b;
-      } else {
-        var b = {};
-        for (field in a) {
-            if (field === "values") {
-                b.values = a.values
-            } else {
-                b[field] = deepCopy(a[field])
+        if (Array.isArray(a)) {
+            var b = [];
+            for (var i=0; i<a.length; i++) {
+                b.push(deepCopy(a[i]));
             }
+            return b;
+        } else {
+            var b = {};
+            for (field in a) {
+                if (field === "values") {
+                    b.values = a.values
+                } else {
+                    b[field] = deepCopy(a[field])
+                }
+            }
+            return b;
         }
-        return b;
     }
 }
 
 
 function makeArray(length, example) {
-  let ret = [];
-  for (var i=0; i<length; i++) {
-    ret.push(deepCopy(example));
-  }
-  return ret;
+    let ret = [];
+    for (var i=0; i<length; i++) {
+        ret.push(deepCopy(example));
+    }
+    return ret;
 }
 
 var _;

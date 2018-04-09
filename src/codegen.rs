@@ -48,9 +48,12 @@ impl CodeGenVisitor{
                 }
 
                 let mut params_string = "".to_string();
-                for field in parameters {
-                    for id in &field.identifiers {
-                        write!(params_string, "{}, ", id);
+                for (i,field) in parameters.iter().enumerate() {
+                    for (j,id) in field.identifiers.iter().enumerate() {
+                        write!(params_string, "{}", id);
+                        if i < parameters.len() - 1 || j < field.identifiers.len() - 1 {
+                            write!(params_string, ", ");
+                        }
                     }
                 }
 
@@ -403,7 +406,7 @@ impl CodeGenVisitor{
                 self.visit_expression(index, pre_string, &mut index_value);
 
                 write!(post_string, "{}[check_bounds({},{}.length,{})]",
-                primary_value, index_value, primary_value, expr.line_number);
+                primary_value, index_value, primary_value, exp.line_number);
             }
 
             Expression::Selector { ref primary, ref name } => {
