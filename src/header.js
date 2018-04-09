@@ -124,6 +124,31 @@ function check_bounds(a, lenght) {
 
 }
 
+function deepCopy(a) {
+    var type = typeof(a);
+    if (type === 'number' || 
+        type === 'string' ||
+        type === 'boolean') {
+        return a;
+    }
+    // Horrible: not differentiating objects from arrays.
+    // It will work in our case, but the copied arrays will loose their array properties and access to them might be slow
+    if (type === 'object') {
+        var b = {};
+        for (field in a) {
+            if (field === "values") {
+                b.values = a.values
+            } else {
+                b[field] = deepCopy(a[field])
+            }
+        }
+        return b;
+    }
+}
 
 
+function makeArray(length, example) {
 
+}
+
+var _;
