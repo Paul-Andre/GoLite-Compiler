@@ -261,7 +261,7 @@ impl CodeGenVisitor{
                      is_println: bool) {
         let mut pre = String::new();
         let mut post = String::new();
-        for expr in exprs {
+        for (i,expr) in exprs.iter().enumerate() {
             let function = 
                 match expr.kind.resolve() {
                     Kind::Basic( BasicKind::Float) => "print_float",
@@ -270,7 +270,7 @@ impl CodeGenVisitor{
             write!(post,"{}{}(", indent(self.indent), function);
             self.visit_expression(expr, &mut pre, &mut post);
             write!(post,");\n");
-            if is_println { // TODO: probably not do this on the last space
+            if is_println && i < exprs.len()-1 { 
                 write!(post,"{}print_not_float(\" \");\n", indent(self.indent));
             }
         }
@@ -313,7 +313,7 @@ impl CodeGenVisitor{
                     },
                     Kind::Basic(BasicKind::Rune) => {
                         let letter : &str;
-                        if value.chars().count() == 4 {
+                        if value.len() == 4 {
                             letter = &value[1..3];
                         } else {
                             letter = &value[1..2];
@@ -349,7 +349,7 @@ impl CodeGenVisitor{
                             "\"" => { // Interpreted
                                 write!(post_string, 
                                        "\"{}\"", 
-                                       value[1..value.chars().count()].to_string());
+                                       &value[1..(value.len()-1)]);
                             }
                             _ => {
                                 panic!("A string should be either interpreted or raw");
