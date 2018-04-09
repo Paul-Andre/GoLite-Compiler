@@ -160,6 +160,23 @@ impl CodeGenVisitor{
 
             },
             Statement::For { ref init, ref condition, ref post, ref body } => {
+                self.visit_statement(init);
+                let mut condition_string;
+                if let &Some(ref condition) = condition {
+                    condition_string = String::new();
+                    self.codegen_expression_iife(condition, &mut condition_string);
+                } else {
+                    condition_string = "true".to_string();
+                }
+
+                println!("{}while ({}) {{",indent(self.indent), condition_string);
+                self.indent+=1;
+                self.visit_statements(body);
+                println!("{}// post:",indent(self.indent));
+                self.visit_statement(post);
+                self.indent-=1;
+                println!("{}}}",indent(self.indent));
+
             },
             Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
                 self.visit_statement(init);
@@ -274,10 +291,10 @@ impl CodeGenVisitor{
                 let mut new_post_string = "".to_string();
 
                 // Print the name of the temp variable in the post_string
-                write!(post_string, "tmp_{}_", tmp_id.clone());
+                write!(post_string, "ⴵ_{}", tmp_id.clone());
 
                 // Execute function call outside using different post/prestrings
-                write!(new_post_string, "tmp_{}_ = ", tmp_id.clone());
+                write!(new_post_string, "ⴵ_{} = ", tmp_id.clone());
 
                 // Print primary to new_post_string
                 self.visit_expression(primary, &mut new_pre_string, &mut new_post_string);
@@ -305,7 +322,7 @@ impl CodeGenVisitor{
                 self.visit_expression(primary, pre_string, &mut primary_value);
                 self.visit_expression(index, pre_string, &mut index_value);
 
-                write!(post_string, "{}[check_bounds({},{}.lenght)]", primary_value, index_value, primary_value);
+                write!(post_string, "{}[check_bounds({},{}.length)]", primary_value, index_value, primary_value);
             }
 
             Expression::Selector { ref primary, ref name } => {
