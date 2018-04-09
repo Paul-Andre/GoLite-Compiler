@@ -1,5 +1,5 @@
-#/bin/bash
-#
+#!/bin/bash
+
 # Usage: ./run.sh <mode> <file>
 # 	mode: scan|tokens|parse|pretty|symbol|typecheck|codegen
                                 
@@ -28,6 +28,11 @@ fi
 #
 # You MUST replace the following command with the command for invoking your compiler
 
+if [[ "$1" == codegen ]]
+then
+    ./target/debug/golite "$1" < "$2" > "${2%.*}.js" && echo OK
+else 
+    ./target/debug/golite "$1" < "$2"
+fi
 #cargo run --quiet "$1" < "$2"
-./target/debug/golite "$1" < "$2"
 #~cs520/golitec "$1" < "$2"
