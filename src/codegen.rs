@@ -162,6 +162,23 @@ impl CodeGenVisitor{
             Statement::For { ref init, ref condition, ref post, ref body } => {
             },
             Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
+                self.visit_statement(init);
+                let mut pre = String::new();
+                let mut post = String::new();
+                self.visit_expression(condition, &mut pre, &mut post);
+                print!("{}",pre);
+                println!("{}if ({}) {{",indent(self.indent),post);
+                self.indent+=1;
+                self.visit_statements(if_branch);
+                self.indent-=1;
+                println!("{}}} else {{",indent(self.indent));
+                if let &Some(ref else_branch) = else_branch {
+                    self.indent+=1;
+                    self.visit_statement(else_branch);
+                    self.indent-=1;
+                }
+                println!("{}}}",indent(self.indent));
+
             },
             Statement::Switch { ref init, ref expr, ref body } => {
             },
