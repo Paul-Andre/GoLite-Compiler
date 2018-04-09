@@ -198,6 +198,40 @@ impl CodeGenVisitor{
 
             },
             Statement::Switch { ref init, ref expr, ref body } => {
+                // TODO write tests for this
+                self.visit_statement(init);
+
+                    let mut pre;
+                    let mut post;
+                if let &Some(ref expr) = expr {
+                    pre = String::new();
+                    post = String::new();
+                    self.visit_expression(expr, &mut pre, &mut post);
+                    print!("{}",pre);
+                } else {
+                    post = "true".to_string();
+                }
+                println!("{}switch ({}) {{",indent(self.indent),post);
+                self.indent+=1;
+                for case_clause in body {
+                    match &case_clause.switch_case {
+                        &SwitchCase::Default => {
+                            println!("{}default:", indent(self.indent));
+                        }
+                        &SwitchCase::Cases(ref cases) => {
+                            for case in cases {
+                                let mut case_code = String::new();
+                                self.codegen_expression_iife(&case, &mut case_code);
+                                println!("{}case {}:", indent(self.indent), case_code);
+                            }
+                        }
+                    }
+                    self.indent+=1;
+                    self.visit_statements(&case_clause.statements);
+                    self.indent-=1;
+                    println!("{}break;", indent(self.indent));
+                }
+                self.indent-=1;
             },
             Statement::IncDec { ref expr, .. } => {
             }
