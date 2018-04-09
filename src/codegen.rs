@@ -201,7 +201,6 @@ impl CodeGenVisitor{
 
             },
             Statement::Switch { ref init, ref expr, ref body } => {
-                // TODO write tests for this
                 self.visit_statement(init);
 
                     let mut pre;
