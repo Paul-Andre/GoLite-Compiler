@@ -402,7 +402,8 @@ impl CodeGenVisitor{
                 self.visit_expression(primary, pre_string, &mut primary_value);
                 self.visit_expression(index, pre_string, &mut index_value);
 
-                write!(post_string, "{}[check_bounds({},{}.length)]", primary_value, index_value, primary_value);
+                write!(post_string, "{}[check_bounds({},{}.length,{})]",
+                primary_value, index_value, primary_value, expr.line_number);
             }
 
             Expression::Selector { ref primary, ref name } => {

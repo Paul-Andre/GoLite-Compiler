@@ -2,6 +2,7 @@
 //~0 123
 //~0 123
 //~0
+//~0 1245
 //~743 634
 package main
 
@@ -36,6 +37,13 @@ func main() {
 		var local1 S
 		mutateParameter(local1)
 		println(local1.a)
+	}
+	{
+		var local1 S
+    var slice []S
+    slice = append(slice, local1);
+    slice[0].a = 1245
+		println(local1.a,slice[0].a)
 	}
 	{
 		global1.a = 743
