@@ -161,7 +161,7 @@ impl CodeGenVisitor{
                         let mut post = String::new();
                         self.visit_expression(e, &mut pre, &mut post);
                         print!("{}",pre);
-                        println!("{}{};", indent(self.indent), &mut post);
+                        println!("{}return {};", indent(self.indent), &mut post);
                     },
                     &None => {
                         print!("{}", indent(self.indent));
@@ -345,10 +345,10 @@ impl CodeGenVisitor{
                 print!("{}",pre);
                 let function = 
                 match (is_dec, expr.kind.is_integer()) {
-                    (true, true) => "binary_Add_int",
-                    (false, true) => "binary_Sub_int",
-                    (true, false) => "binary_Add",
-                    (false, false) => "binary_Sub",
+                    (false, true) => "binary_Add_int",
+                    (true, true) => "binary_Sub_int",
+                    (false, false) => "binary_Add",
+                    (true, false) => "binary_Sub",
                 };
                 print!("{}{} = {}({},1);\n",
                         indent(self.indent),
@@ -442,18 +442,36 @@ impl CodeGenVisitor{
                         match letter {
                             "`" => { // Raw
                                 let mut new_string = String::new();
-                                for c in letter.chars() {
-                                    if c == '\\' {
+                                for c in value.chars() {
+                                    if c == '`' {
+                                        continue;
+                                    }
+                                    if c == '\\' || c == '"' {
                                         new_string = format!("{}{}", new_string, "\\");
                                     }
                                     new_string = format!("{}{}", new_string, c);
                                 }
-                                write!(post_string, "{}", new_string);
+                                write!(post_string, "\"{}\"", new_string);
                             },
                             "\"" => { // Interpreted
-                                write!(post_string, 
-                                       "\"{}\"", 
-                                       &value[1..(value.len()-1)]);
+                                let mut new_string = String::new();
+                                let mut char_vec: Vec<_> = value.chars().collect::<Vec<_>>();
+                                let mut skip_next_char = false;
+                                for (id, &c) in char_vec.iter().enumerate() {
+                                    if skip_next_char {
+                                        skip_next_char = false;
+                                        continue;
+                                    }
+                                    if c == '\\' 
+                                        && id < char_vec.len()-2
+                                        && char_vec[id+1] == 'a' {
+                                        new_string = format!("{}\\007", new_string);
+                                        skip_next_char = true;
+                                    } else {
+                                        new_string = format!("{}{}", new_string, c);
+                                    }
+                                }
+                                write!(post_string, "{}", new_string);
                             }
                             _ => {
                                 panic!("A string should be either interpreted or raw");
