@@ -240,7 +240,7 @@ impl CodeGenVisitor{
                 println!("{}", pre_lhs);
                 println!("{}", pre_rhs);
                 print!("{}{} = ", indent(self.indent), post_lhs);
-                print_binary_op(&operator);
+                print!("{}",generate_binary_op(&operator));
                 println!("({}, {});", post_lhs, post_rhs);
             },
             Statement::Block(ref statements) => {
@@ -479,7 +479,7 @@ impl CodeGenVisitor{
             }
 
             Expression::UnaryOperation { ref op, ref rhs } => {
-                write!(post_string, "{}(", print_unary_op(op));
+                write!(post_string, "{}(", generate_unary_op(op));
                 self.visit_expression(rhs, pre_string, post_string);
                 write!(post_string, ")");
             }
@@ -493,7 +493,7 @@ impl CodeGenVisitor{
                     self.codegen_expression_iife(rhs,  post_string);
                     write!(post_string, ")");
                 } else {
-                    write!(post_string, "{}", print_binary_op(op));
+                    write!(post_string, "{}", generate_binary_op(op));
 
                     if exp.kind.is_integer() {
                         match op {
@@ -617,13 +617,13 @@ fn print_header() {
 }
 
 
-fn print_unary_op(op: &UnaryOperator) -> String {
+fn generate_unary_op(op: &UnaryOperator) -> String {
     let mut op_name = "".to_string();
     write!(op_name, "unary_{:?}", op);
     op_name
 }
 
-fn print_binary_op(op: &BinaryOperator) -> String {
+fn generate_binary_op(op: &BinaryOperator) -> String {
     let mut op_name = "".to_string();
     write!(op_name, "binary_{:?}", op);
     op_name
