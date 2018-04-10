@@ -95,9 +95,9 @@ impl CodeGenVisitor{
 
     fn visit_var_initialization(&mut self, var_kind: &Kind){
         match var_kind {
-            &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float) => print!("0"),
+            &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float)| &Kind::Basic(BasicKind::Rune) => print!("0"),
             &Kind::Basic(BasicKind::Bool) => print!("false"),
-            &Kind::Basic(BasicKind::Rune) | &Kind::Basic(BasicKind::String) => print!("''"),
+            &Kind::Basic(BasicKind::String) => print!("''"),
             &Kind::Array(ref kind, ref length) => {
                 print!("[");
                 for x in 0..*length {
@@ -120,7 +120,7 @@ impl CodeGenVisitor{
             &Kind::Struct(ref fields) => {
                 println!("{{");
                 for field in fields.iter(){
-                    print!("\t {}: ", field.name);
+                    print!("\t ㆭ{}: ", field.name, );
                     self.visit_var_initialization(&field.kind);
                     println!(",");
                 }
@@ -170,14 +170,17 @@ impl CodeGenVisitor{
                 }
             },
             Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
-                for (id, expr) in identifier_list.iter().zip(expression_list.iter()) {
-                    let mut pre = String::new();
-                    let mut post = String::new();
+                let mut pre = String::new();
+                let mut post = String::new();
+
+                for expr in identifier_list.iter().zip(expression_list.iter()) {
                     write!(post, "let {} = ", id);
                     self.visit_expression(&expr, &mut pre, &mut post);
-                    print!("{}",pre);
-                    println!("{}{};", indent(self.indent), &mut post);
+                    write!(post, "; \n ");
                 }
+
+                print!("{}",pre);
+                println!("{}{};", indent(self.indent), &mut post);
             },
             Statement::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
