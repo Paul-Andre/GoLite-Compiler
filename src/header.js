@@ -208,8 +208,8 @@ function deepCopy(a) {
         } else {
             b = {};
             for (let field in a) {
-                if (field === "values") {
-                    b.values = a.values
+                if (field === "contents") {
+                    b.contents = a.contents
                 } else {
                     b[field] = deepCopy(a[field])
                 }
