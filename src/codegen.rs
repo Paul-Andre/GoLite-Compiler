@@ -190,9 +190,9 @@ impl CodeGenVisitor{
 
                 for x in 0..identifier_list.len() {
                     if is_assigning[x] {
-                        write!(global_post, "{} = {}; \n", identifier_list[x], temps[x]);
+                        write!(global_post, "{} = deepCopy({}); \n", identifier_list[x], temps[x]);
                     } else {
-                        write!(global_post, "let {} = {}; \n", identifier_list[x], temps[x]);
+                        write!(global_post, "let {} = deepCopy({}); \n", identifier_list[x], temps[x]);
                     }
                 }
 
@@ -206,21 +206,37 @@ impl CodeGenVisitor{
             },
             Statement::TypeDeclarations { ref declarations } => {},
             Statement::Assignment { ref lhs, ref rhs } => {
-                for (l, r) in lhs.iter().zip(rhs.iter()) {
-                    let mut pre_lhs = String::new();
-                    let mut post_lhs = String::new();
-                    self.visit_expression(&l, &mut pre_lhs, &mut post_lhs);
-                    write!(post_lhs, " = ");
 
-                    let mut pre_rhs = String::new();
-                    let mut post_rhs = String::new();
-                    self.visit_expression(&r, &mut pre_rhs, &mut post_rhs);
+                let mut global_pre = String::new();
+                let mut global_post = String::new();
+                let mut temps = Vec::new();
 
-                    println!("{}", pre_lhs);
-                    println!("{}", pre_rhs);
-                    print!("{}{}", indent(self.indent), post_lhs);
-                    println!("{}", post_rhs);
+                for expr in rhs.iter() {
+                    let mut temp_string = String::new();
+                    write!(temp_string, "temp_{}", self.create_id());
+                    temps.push(temp_string.clone());
+
+                    let mut temp_pre = String::new();
+                    let mut temp_post = String::new();
+
+                    write!(temp_post, "let {} = ", temp_string.clone());
+                    self.visit_expression(&expr, &mut temp_pre, &mut temp_post);
+
+                    write!(global_pre, "{} ; \n {} ; ", temp_pre, temp_post );
                 }
+
+                for x in 0..lhs.len() {
+
+                    let mut temp_pre = String::new();
+                    let mut temp_post = String::new();
+
+                    self.visit_expression(&lhs[x], &mut temp_pre, &mut temp_post);
+
+                    write!(global_post, "{}; \n {} = deepCopy({}); \n", temp_pre, temp_post, temps[x]);
+                }
+
+                println!("{}", global_pre);
+                println!("{}{};", indent(self.indent), &mut global_post);
             },
             Statement::OpAssignment { ref lhs, ref rhs, ref operator } => {
                 let mut pre_lhs = String::new();
