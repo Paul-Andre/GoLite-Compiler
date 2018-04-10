@@ -125,6 +125,9 @@ impl CodeGenVisitor{
                     println!(",");
                 }
             }
+            &Kind::Defined(ref definition) => {
+                self.visit_var_initialization(*definition.kind);
+            }
             _ => {panic!("initializing value not supported")}
         }
     }
