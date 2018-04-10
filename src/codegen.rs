@@ -88,8 +88,7 @@ impl CodeGenVisitor{
                 for name in var_spec.names.iter() {
                     print!("let {} = deepCopy(", name);
                     self.visit_var_initialization(&var_spec.evaluated_kind);
-                    print!(post_string, ")");
-                    println!(";");
+                    println!(");");
                 }
             }
         }
