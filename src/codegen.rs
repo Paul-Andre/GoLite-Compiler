@@ -418,9 +418,24 @@ impl CodeGenVisitor{
                                 write!(post_string, "\"{}\"", new_string);
                             },
                             "\"" => { // Interpreted
-                                write!(post_string, 
-                                       "\"{}\"", 
-                                       &value[1..(value.len()-1)]);
+                                let mut new_string = String::new();
+                                let mut char_vec: Vec<_> = value.chars().collect::<Vec<_>>();
+                                let mut skip_next_char = false;
+                                for (id, &c) in char_vec.iter().enumerate() {
+                                    if skip_next_char {
+                                        skip_next_char = false;
+                                        continue;
+                                    }
+                                    if c == '\\' 
+                                        && id < char_vec.len()-2
+                                        && char_vec[id+1] == 'a' {
+                                        new_string = format!("{}\\007", new_string);
+                                        skip_next_char = true;
+                                    } else {
+                                        new_string = format!("{}{}", new_string, c);
+                                    }
+                                }
+                                write!(post_string, "{}", new_string);
                             }
                             _ => {
                                 panic!("A string should be either interpreted or raw");
