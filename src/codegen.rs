@@ -1,9 +1,6 @@
 use std::fmt::Write;
-use ast;
-use env;
 use util::*;
 use ast::*;
-use kind;
 use kind::*;
 use std::fs::File;
 use std::io::prelude::*;
@@ -34,7 +31,7 @@ impl CodeGenVisitor{
         match decl.top_level_declaration {
             TopLevelDeclaration::VarDeclarations { ref declarations } => {
                 for d in declarations.iter(){
-                    self.visit_top_level_var_spec(&d)
+                    self.visit_var_spec(&d)
                 }
             }
 
@@ -71,7 +68,7 @@ impl CodeGenVisitor{
         }
     }
 
-    fn visit_top_level_var_spec(&mut self, var_spec: &VarSpec){
+    fn visit_var_spec(&mut self, var_spec: &VarSpec){
         match var_spec.rhs {
             Some(ref values) => {
                 let mut pre_string = "".to_string();
@@ -87,46 +84,56 @@ impl CodeGenVisitor{
             }
             None => {
                 let mut pre_string = "".to_string();
-                for (name, kind) in var_spec.names.iter().zip(evaluated_kinds.iter_mut()) {
-                    self.visit_var_initialization(&name, &kind);
+                for name in var_spec.names.iter() {
+                    println!("let {} = ", name);
+                    self.visit_var_initialization(&var_spec.evaluated_kind);
+                    println!(";");
                 }
             }
         }
     }
 
-    fn visit_var_initialization(&mut self, name: &String, kind: &Kind){
-        match kind {
-            Kind::Basic(BasicKind::Int) => {}
-            Kind::Basic(BasicKind::Float) => {}
-            Kind::Array(ref kind, ref length) => {
-                // TODO: add make array function in javascript
+    fn visit_var_initialization(&mut self, var_kind: &Kind){
+        match var_kind {
+            &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float) => print!("0"),
+            &Kind::Basic(BasicKind::Bool) => print!("false"),
+            &Kind::Basic(BasicKind::Rune) | &Kind::Basic(BasicKind::String) => print!("''"),
+            &Kind::Array(ref kind, ref length) => {
+                print!("[");
+                for x in 0..*length {
+                    self.visit_var_initialization(&kind);
+                    if x != length - 1 {
+                        print!(", ");
+                    }
+                }
+                print!("]");
             }
-            Kind::Slice(..) => {
-                // TODO: create struct for
+            &Kind::Slice(ref kind) => {
+                println!("{{");
+                println!("\t length: 0,");
+                println!("\t capacity: 0,");
+                print!("\t contents: ");
+                self.visit_var_initialization(&kind);
+                println!();
+                print!("}}");
             }
-
-
+            &Kind::Struct(ref fields) => {
+                println!("{{");
+                for field in fields.iter(){
+                    print!("\t {}: ", field.name);
+                    self.visit_var_initialization(&field.kind);
+                    println!(",");
+                }
+            }
+            _ => {}
         }
     }
 
-
-    fn visit_variable_declarations(&mut self, declarations: &[VarSpec]) {
-        for spec in declarations {
-
-        }
-    }
 
     fn visit_statements(&mut self, statements: &[StatementNode]) {
         for s in statements {
             self.visit_statement(s);
         }
-    }
-
-    fn visit_function_declaration(&mut self,
-                                  name: &str,
-                                  params: &[ast::Field],
-                                  body: &[StatementNode]) {
-
     }
 
     fn visit_statement(&mut self, stmt: &StatementNode) {
@@ -149,8 +156,12 @@ impl CodeGenVisitor{
             },
             Statement::Return(ref exp) => {
                 match exp {
-                    &Some(..) => {
-                        // DO SOMETHING
+                    &Some(ref e) => {
+                        let mut pre = String::new();
+                        let mut post = String::new();
+                        self.visit_expression(e, &mut pre, &mut post);
+                        print!("{}",pre);
+                        println!("{}{};", indent(self.indent), &mut post);
                     },
                     &None => {
                         print!("{}", indent(self.indent));
@@ -159,15 +170,52 @@ impl CodeGenVisitor{
                 }
             },
             Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
+                for (id, expr) in identifier_list.iter().zip(expression_list.iter()) {
+                    let mut pre = String::new();
+                    let mut post = String::new();
+                    write!(post, "let {} = ", id);
+                    self.visit_expression(&expr, &mut pre, &mut post);
+                    print!("{}",pre);
+                    println!("{}{};", indent(self.indent), &mut post);
+                }
             },
             Statement::VarDeclarations { ref declarations } => {
+                for decl in declarations.iter() {
+                    self.visit_var_spec(decl);
+                }
             },
-            Statement::TypeDeclarations { ref declarations } => {
-                // Nothing
-            },
+            Statement::TypeDeclarations { ref declarations } => {},
             Statement::Assignment { ref lhs, ref rhs } => {
+                for (l, r) in lhs.iter().zip(rhs.iter()) {
+                    let mut pre_lhs = String::new();
+                    let mut post_lhs = String::new();
+                    self.visit_expression(&l, &mut pre_lhs, &mut post_lhs);
+                    write!(post_lhs, " = ");
+
+                    let mut pre_rhs = String::new();
+                    let mut post_rhs = String::new();
+                    self.visit_expression(&r, &mut pre_rhs, &mut post_rhs);
+
+                    println!("{}", pre_lhs);
+                    println!("{}", pre_rhs);
+                    print!("{}{}", indent(self.indent), post_lhs);
+                    println!("{}", post_rhs);
+                }
             },
             Statement::OpAssignment { ref lhs, ref rhs, ref operator } => {
+                let mut pre_lhs = String::new();
+                let mut post_lhs = String::new();
+                self.visit_expression(&lhs, &mut pre_lhs, &mut post_lhs);
+
+                let mut pre_rhs = String::new();
+                let mut post_rhs = String::new();
+                self.visit_expression(&rhs, &mut pre_rhs, &mut post_rhs);
+
+                println!("{}", pre_lhs);
+                println!("{}", pre_rhs);
+                print!("{}{} = ", indent(self.indent), post_lhs);
+                print_binary_op(&operator);
+                println!("({}, {});", post_lhs, post_rhs);
             },
             Statement::Block(ref statements) => {
                 for stmt in statements {
@@ -488,12 +536,6 @@ impl CodeGenVisitor{
                     self.visit_expression(expr, pre_string, post_string);
                 }
             }
-        }
-    }
-
-    fn print_init_calls(&mut self){
-        for init in self.init_functions.iter(){
-            println!(init + "();");
         }
     }
 
