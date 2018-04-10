@@ -8,8 +8,8 @@ type chull struct {
     size int;
 }
 
-var window = 10000000;
-var no_points = 500000;
+var window = 100000;
+var no_points = 50000;
 var point_set []point;
 
 func ccw(a point, b point, c point) bool {
@@ -39,6 +39,7 @@ func convex_hull(set []point) chull {
     for  {
         ch.points = append(ch.points, set[cur])
         ch.size++
+        println(ch.size);
         prev = cur;
         cur = (prev+1)%no_points
         for j := 0; j<no_points; j++ {
@@ -56,13 +57,16 @@ func convex_hull(set []point) chull {
 func init() {
     for i := 0; i<no_points; i++ {
         var new_point point;
-        new_point.x = ((i*1028+i*5%7)%(47*window/10))*((i*360+i*7%5)%13) % window;
-        new_point.y = ((i*344+i*5%7)%(47*(window/10)))*((i*45*7*2*9 + i*7%5)%13) % window;
+        new_point.x = ((i*1028+i*5%7)%(19993))*((i*360+i*7%5)%13) % window;
+        new_point.y = ((i*344+i*5%7)%(19993))*((i*45*7*2*9 + i*7%5)%13) % window;
         point_set = append(point_set, new_point);
     }
 }
 
 func main() {
+    for j :=0 ; j<50; j++ {
+    println("============================================================");
+    println(j)
     println("Convex hull of a set of points.");
     println("============================================================");
     println("# of points:", no_points);
@@ -78,4 +82,5 @@ func main() {
         print("(", ch.points[i].x, ", ", ch.points[i].y, "), ");
     }
     println("")
+}
 }
