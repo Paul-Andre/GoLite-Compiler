@@ -17,6 +17,7 @@ struct CodeGenVisitor {
 impl CodeGenVisitor{
     fn visit_program(&mut self, root: &Program) {
         print_header();
+
         for decl in &root.declarations {
             self.visit_top_level_declaration(&decl);
         }

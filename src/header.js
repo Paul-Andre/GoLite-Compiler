@@ -61,13 +61,14 @@ function binary_RShift(a,b) {
     return a >> b
 }
 
-
 function binary_Add_int(a,b) {
     return (a+b) | 0
 }
+
 function binary_Sub_int(a,b) {
     return (a-b) | 0
 }
+
 function binary_Mul_int(a,b) {
     return Math.imul(a,b)
 }
@@ -80,26 +81,29 @@ function binary_Div_int(a,b) {
 function unary_Plus(a) {
     return a
 }
+
 function unary_Neg(a) {
     return -a
 }
+
 function unary_BwCompl(a) {
     return ~a
 }
+
 function unary_Not(a) {
     return !a
 }
 
 
 function print_float(a) {
-    var out = a.toExponential(6);
-    if (out[0] != '-') {
+    let out = a.toExponential(6);
+    if (out[0] !== '-') {
         out = "+"+out;
     }
-    var beforeExponent = "";
-    var exponent = "0";
-    for (var i=1; i<out.length; i++) {
-        if (out[i] == '-' || out[i] == '+') {
+    let beforeExponent = "";
+    let exponent = "0";
+    for (let i=1; i<out.length; i++) {
+        if (out[i] === '-' || out[i] === '+') {
             exponent = out.substring(i+1);
             beforeExponent = out.substring(0,i+1);
             break;
@@ -110,6 +114,7 @@ function print_float(a) {
     }
     process.stdout.write(beforeExponent + exponent);
 }
+
 function print_not_float(a) {
     // TODO: check if this needs further splitting
     process.stdout.write(""+a);
@@ -120,13 +125,15 @@ function print_not_float(a) {
 
 function deepEq(a,b) {
     var type = typeof(a);
+
     if (type === 'number' || 
             type === 'string' ||
             type === 'boolean') {
         return a === b;
     }
+
     if (type === 'object') {
-        for (field in a) {
+        for (let field in a) {
             if (!deepEq(a[field], b[field])) {
                 return false;
             }
@@ -169,7 +176,8 @@ function check_bounds(a, length, line_number) {
 }
 
 function deepCopy(a) {
-    var type = typeof(a);
+    let b;
+    const type = typeof(a);
     if (type === 'number' || 
             type === 'string' ||
             type === 'boolean') {
@@ -177,14 +185,14 @@ function deepCopy(a) {
     }
     if (type === 'object') {
         if (Array.isArray(a)) {
-            var b = [];
-            for (var i=0; i<a.length; i++) {
+            b = [];
+            for (let i=0; i<a.length; i++) {
                 b.push(deepCopy(a[i]));
             }
             return b;
         } else {
-            var b = {};
-            for (field in a) {
+            b = {};
+            for (let field in a) {
                 if (field === "values") {
                     b.values = a.values
                 } else {
@@ -199,13 +207,13 @@ function deepCopy(a) {
 
 function makeArray(length, example) {
     let ret = [];
-    for (var i=0; i<length; i++) {
+    for (let i=0; i<length; i++) {
         ret.push(deepCopy(example));
     }
     return ret;
 }
 
-var _;
+let _;
 
 
 //============================== END OF HEADER ================================//
