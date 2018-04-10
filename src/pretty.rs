@@ -240,7 +240,7 @@ fn pretty_print_statement(stmt: &StatementNode, indent: i32) {
             }
             indent_print(")", indent);
         },
-        Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
+        Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list, ref is_assigning } => {
             let len = identifier_list.len();
             let mut count = 0;
 

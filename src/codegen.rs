@@ -169,18 +169,35 @@ impl CodeGenVisitor{
                     }
                 }
             },
-            Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list } => {
-                let mut pre = String::new();
-                let mut post = String::new();
+            Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list, ref is_assigning } => {
+                let mut global_pre = String::new();
+                let mut global_post = String::new();
+                let mut temps = Vec::new();
 
-                for expr in identifier_list.iter().zip(expression_list.iter()) {
-                    write!(post, "let {} = ", id);
-                    self.visit_expression(&expr, &mut pre, &mut post);
-                    write!(post, "; \n ");
+                for expr in expression_list.iter() {
+                    let mut temp_string = String::new();
+                    write!(temp_string, "temp_{}", self.create_id());
+                    temps.push(temp_string.clone());
+
+                    let mut temp_pre = String::new();
+                    let mut temp_post = String::new();
+
+                    write!(temp_post, "let {} = ", temp_string.clone());
+                    self.visit_expression(&expr, &mut temp_pre, &mut temp_post);
+
+                    write!(global_pre, "{} ; \n {} ; ", temp_pre, temp_post );
                 }
 
-                print!("{}",pre);
-                println!("{}{};", indent(self.indent), &mut post);
+                for x in 0..identifier_list.len() {
+                    if is_assigning[x] {
+                        write!(global_post, "{} = {}; \n", identifier_list[x], temps[x]);
+                    } else {
+                        write!(global_post, "let {} = {}; \n", identifier_list[x], temps[x]);
+                    }
+                }
+
+                println!("{}", global_pre);
+                println!("{}{};", indent(self.indent), &mut global_post);
             },
             Statement::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
