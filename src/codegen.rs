@@ -532,10 +532,13 @@ impl CodeGenVisitor{
 
                 // Print arguments to new_post_string
                 write!(new_post_string, "(");
-                for arg in arguments {
+                for (i,arg) in arguments.iter().enumerate() {
                     write!(new_post_string, "deepCopy(");
                     self.visit_expression(arg, &mut new_pre_string, &mut new_post_string);
-                    write!(new_post_string, "), ");
+                    write!(new_post_string, ")");
+                    if i < arguments.len() - 1 {
+                        write!(new_post_string, ", ");
+                    }
                 }
                 write!(new_post_string, ");");
 
@@ -554,8 +557,18 @@ impl CodeGenVisitor{
                 self.visit_expression(primary, pre_string, &mut primary_value);
                 self.visit_expression(index, pre_string, &mut index_value);
 
-                write!(post_string, "{}[check_bounds({},{}.length,{})]",
-                primary_value, index_value, primary_value, exp.line_number);
+                match primary.kind {
+                    Kind::Slice(..) =>  {
+                        write!(post_string, "{}.contents", primary_value);
+                    },
+                    Kind::Array(..) =>  {
+                        write!(post_string, "{}", primary_value);
+                    },
+                    _ => panic!("codegening index of something other than slice or array")
+                };
+
+                write!(post_string, "[check_bounds({},{}.length,{})]",
+                index_value, primary_value, exp.line_number);
             }
 
             Expression::Selector { ref primary, ref name } => {
