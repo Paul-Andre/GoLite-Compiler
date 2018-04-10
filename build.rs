@@ -27,5 +27,5 @@ fn main() {
     //println!("cargo:rustc-link-search=native={}", out_dir);
     println!("cargo:rustc-link-search=native=src");
     println!("cargo:rustc-link-lib=static=bisonparser");
-    println!("cargo:rustc-link-lib=fl");
+    println!("cargo:rustc-link-lib=l");
 }
