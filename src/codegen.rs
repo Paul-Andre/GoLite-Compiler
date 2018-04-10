@@ -85,7 +85,7 @@ impl CodeGenVisitor{
             None => {
                 let mut pre_string = "".to_string();
                 for name in var_spec.names.iter() {
-                    println!("let {} = ", name);
+                    print!("let {} = ", name);
                     self.visit_var_initialization(&var_spec.evaluated_kind);
                     println!(";");
                 }
@@ -117,7 +117,7 @@ impl CodeGenVisitor{
                 print!("}}");
             }
             &Kind::Struct(ref fields) => {
-                print!("{{");
+                println!("{{");
                 for field in fields.iter(){
                     print!("\t ㆭ{}: ", field.name, );
                     self.visit_var_initialization(&field.kind);
