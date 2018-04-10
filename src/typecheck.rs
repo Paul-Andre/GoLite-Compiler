@@ -74,6 +74,7 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                 },
                 (&Some(ref rhs_kinds), &None) => {
                     let init_kind = &rhs_kinds[i];
+                    spec.evaluated_kind = rhs_kinds[i].clone();
                     renamed = symbol_table.add_variable(spec.names[i].clone(),
                             spec.line_number,
                             init_kind.clone(),
