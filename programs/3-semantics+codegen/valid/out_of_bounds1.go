@@ -3,6 +3,5 @@ package main
 
 func main() {
 	var a []int;
-	print(a[0])
-
+	println(a[0])
 }
