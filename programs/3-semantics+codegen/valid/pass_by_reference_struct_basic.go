@@ -4,6 +4,8 @@
 //~0
 //~0 1245
 //~743 634
+//~743 634
+//~743 634
 package main
 
 type S struct {
@@ -51,5 +53,21 @@ func main() {
 		g.a = 634
 		println(global1.a,g.a)
 	}
+	{
+		global1.a = 743
+		var g S;
+        g = passGlobal()
+		g.a = 634
+		println(global1.a,g.a)
+	}
+	{
+		global1.a = 743
+		var g S;
+        asdf,g 	:= 0,passGlobal()
+	_ =	asdf
+		g.a = 634
+		println(global1.a,g.a)
+	}
 }
+
 
