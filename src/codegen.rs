@@ -94,7 +94,7 @@ impl CodeGenVisitor{
     }
 
     fn visit_var_initialization(&mut self, var_kind: &Kind){
-        match var_kind {
+        match &var_kind.resolve() {
             &Kind::Basic(BasicKind::Int) | &Kind::Basic(BasicKind::Float)| &Kind::Basic(BasicKind::Rune) => print!("0"),
             &Kind::Basic(BasicKind::Bool) => print!("false"),
             &Kind::Basic(BasicKind::String) => print!("''"),
@@ -112,8 +112,7 @@ impl CodeGenVisitor{
                 println!("{{");
                 println!("\t length: 0,");
                 println!("\t capacity: 0,");
-                print!("\t contents: ");
-                self.visit_var_initialization(&kind);
+                print!("\t contents: []");
                 println!();
                 print!("}}");
             }
