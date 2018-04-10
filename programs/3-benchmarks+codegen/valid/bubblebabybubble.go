@@ -12,7 +12,7 @@ func randomPerson() person {
 	age := rngState % 100000
 
 	var p person
-	person.age = age
+	p.age = age
 
 	return p
 }
