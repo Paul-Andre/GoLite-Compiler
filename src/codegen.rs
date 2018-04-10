@@ -75,7 +75,7 @@ impl CodeGenVisitor{
                 let mut post_string = "".to_string();
 
                 for (name, rhs) in var_spec.names.iter().zip(values.iter()) {
-                    write!(post_string, "let {} = deepCopy(", name);
+                    write!(post_string, "{}let {} = deepCopy(", indent(self.indent), name);
                     self.visit_expression(&rhs, &mut pre_string, &mut post_string);
                     write!(post_string, ")");
                     write!(post_string, "\n");
@@ -86,7 +86,7 @@ impl CodeGenVisitor{
             None => {
                 let mut pre_string = "".to_string();
                 for name in var_spec.names.iter() {
-                    print!("let {} = deepCopy(", name);
+                    print!("{}let {} = deepCopy(", indent(self.indent), name);
                     self.visit_var_initialization(&var_spec.evaluated_kind);
                     println!(");");
                 }
@@ -110,20 +110,24 @@ impl CodeGenVisitor{
                 print!("]");
             }
             &Kind::Slice(ref kind) => {
-                println!("{{");
-                println!("\t length: 0,");
-                println!("\t capacity: 0,");
-                print!("\t contents: []");
-                println!();
-                print!("}}");
+                println!("{{", );
+
+                self.indent+=1;
+                println!("{} length: 0,", indent(self.indent));
+                println!("{}capacity: 0,", indent(self.indent));
+                println!("{} contents: []", indent(self.indent));
+                self.indent-=1;
+                print!("{}}}", indent(self.indent));
             }
             &Kind::Struct(ref fields) => {
                 println!("{{");
+                self.indent+=1;
                 for field in fields.iter(){
-                    print!("\t ㆭ{}: ", field.name, );
+                    print!("{}ㆭ{}:", indent(self.indent), field.name, );
                     self.visit_var_initialization(&field.kind);
                     println!(",");
                 }
+                self.indent-=1;
                 println!("}}");
             }
             _ => {panic!("initializing value not supported")}
