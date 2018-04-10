@@ -530,10 +530,13 @@ impl CodeGenVisitor{
 
                 // Print arguments to new_post_string
                 write!(new_post_string, "(");
-                for arg in arguments {
+                for (i,arg) in arguments.iter().enumerate() {
                     write!(new_post_string, "deepCopy(");
                     self.visit_expression(arg, &mut new_pre_string, &mut new_post_string);
-                    write!(new_post_string, "), ");
+                    write!(new_post_string, ")");
+                    if i < arguments.len() - 1 {
+                        write!(new_post_string, ", ");
+                    }
                 }
                 write!(new_post_string, ");");
 
