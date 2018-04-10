@@ -151,7 +151,7 @@ function deepEq(a,b) {
 function append(slice, object) {
     let ret = {
         length: slice.length,
-        capacity: slice.capactity, // I "simulate" the capacity
+        capacity: slice.capacity, // I "simulate" the capacity
         contents: slice.contents,
     };
     if (ret.length+1 > ret.capacity) {
