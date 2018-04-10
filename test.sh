@@ -146,7 +146,7 @@ do
 
                             if [[ $VERIFY == 1 && -f $DIR_TYPE/verify.sh ]]
                             then
-                                VERIFY_OUTPUT=$(./$DIR_TYPE/verify.sh $TEST 2>&1)
+                                VERIFY_OUTPUT="$(./$DIR_TYPE/verify.sh $TEST 2>&1)"
                                 VERIFY_STATUS=${PIPESTATUS[0]}
 
                                 if [[ $VERIFY_STATUS == 0 ]]
@@ -176,7 +176,7 @@ do
                         echo -n -e " \033[0;${STATUS_COLOUR}m[$STATUS_TEXT]\033[0m"
                         if [ ! -z "$VERIFY_OUTPUT" ]
                         then
-                            echo -e -n "\n$VERIFY_OUTPUT" | sed 's/^/  /'
+                            echo -n $'\n'"$VERIFY_OUTPUT" | sed 's/^/  /'
                         fi
 
                         if [ $LOG -eq 1 ]
