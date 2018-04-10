@@ -14,29 +14,29 @@ var v = 1
 func main() {
 
 	// Displays variables being able to reach within scopes of functions
-	print(v)
+	println(v)
 
 	// Displays shadowing
 	v := 2  // short variable declaration
-	print(v)
+	println(v)
 
 	// Displays more complex shadowing
 	c := "outer"
-	print(c)
+	println(c)
 	{
 		c := "inner"
-		print(c)
+		println(c)
 		{
-			print(c)
+			println(c)
 		}
 	}
 	{
-		print(c)
+		println(c)
 	}
-	print(c)
+	println(c)
 
 	if x:=10; true {
-		print(x)
+		println(x)
 	}
 
 	// Throws error!
