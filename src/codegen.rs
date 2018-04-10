@@ -117,12 +117,13 @@ impl CodeGenVisitor{
                 print!("}}");
             }
             &Kind::Struct(ref fields) => {
-                println!("{{");
+                print!("{{");
                 for field in fields.iter(){
                     print!("\t ㆭ{}: ", field.name, );
                     self.visit_var_initialization(&field.kind);
                     println!(",");
                 }
+                println!("}}");
             }
             _ => {panic!("initializing value not supported")}
         }
