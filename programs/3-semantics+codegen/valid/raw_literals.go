@@ -7,13 +7,12 @@
 //~11
 //~92
 //~39
-//~Interpreted (except f): 
-//~	\" END
+//~Interpreted (except f): ^G^H^K^M
+//~    \" END
 //~Raw: \a\b\f\n\r\t\v\\\'\" END
-//~  
-//~ 
-//~ 	  \ '
-//~ 127
+//~^G ^H
+//~ ^M      ^K \ '
+//~^? 127
 
 package main
 func main() {
