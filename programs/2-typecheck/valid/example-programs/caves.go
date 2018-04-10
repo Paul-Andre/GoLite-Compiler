@@ -2,11 +2,12 @@ package main
 // This programs procedurally generates a cave
 
 // First thing first, a (pretty bad) random number generator
-var rngState int =  2134123412
+var rngState int =  2134123413
 
 func randomBit() bool {
     rngState *= 79
     rngState >>= 1
+    rngState &= 0x8fffffff
     return rngState % 2 == 0
 }
 

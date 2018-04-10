@@ -1,5 +1,5 @@
-#/bin/bash
-#
+#!/bin/bash
+
 # Usage: ./run.sh <mode> <file>
 # 	mode: scan|tokens|parse|pretty|symbol|typecheck|codegen
                                 
@@ -9,12 +9,12 @@ if [ $# -lt 2 ]
 then
 	echo "Missing arguments"
 	echo "Usage: $0 <mode> <file>"
-	echo " + mode: scan|tokens|parse|pretty|symbol|typecheck|codegen"
+	echo " + mode: scan|tokens|parse|pretty|rename|obfuscate|symbol|typecheck|codegen"
 	echo " + file: path to file (absolute or relative)"
 	exit 1
 fi
 
-if [[ "|scan|tokens|parse|pretty|symbol|typecheck|codegen|" != *"|$1|"* ]]
+if [[ "|scan|tokens|parse|pretty|rename|obfuscate|symbol|typecheck|codegen|" != *"|$1|"* ]]
 then
 	echo "Unknown mode \"$1\""
 	echo "Usage: $0 <mode> <file>"
@@ -28,6 +28,11 @@ fi
 #
 # You MUST replace the following command with the command for invoking your compiler
 
+if [[ "$1" == codegen ]]
+then
+    ./target/debug/golite "$1" < "$2" > "${2%.*}.js" && echo OK
+else 
+    ./target/debug/golite "$1" < "$2"
+fi
 #cargo run --quiet "$1" < "$2"
-./target/debug/golite "$1" < "$2"
 #~cs520/golitec "$1" < "$2"

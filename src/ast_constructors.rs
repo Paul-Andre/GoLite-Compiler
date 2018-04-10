@@ -155,9 +155,10 @@ fn make_expr_ptr(line: u32, expr: Expression) -> *mut ExpressionNode {
 
 #[no_mangle]
 pub extern "C" fn make_identifier_expression(line: u32, string: *const c_char) -> *mut ExpressionNode {
+    let name: String = unsafe { from_c_string(string) };
     make_expr_ptr(
         line,
-        Expression::Identifier { name: unsafe { from_c_string(string) } },
+        Expression::Identifier { name: name.clone(), original_name: name }
     )
 }
 

@@ -10,9 +10,9 @@ use std::process::exit;
 use std::collections::HashSet;
 use util;
 
-pub fn typecheck(root: &mut Program, print_table: bool) {
+pub fn typecheck(root: &mut Program, print_table: bool, obfuscate: bool) {
     // Because of how we defined the back pointers for the symbol table, the parent should be
-    let universe_block = create_root_symbol_table(print_table);
+    let mut universe_block = create_root_symbol_table(print_table, obfuscate);
     let symbol_table = &mut universe_block.new_scope();
 
     for decl in &mut root.declarations {
@@ -28,8 +28,10 @@ fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbol_ta
         TopLevelDeclaration::TypeDeclarations { ref mut declarations } => {
             typecheck_type_declarations(declarations, symbol_table);
         }
-        TopLevelDeclaration::FunctionDeclaration { ref name, ref mut parameters, ref mut return_kind, ref mut body } => {
-            typecheck_function_declaration(name, parameters, return_kind, body, decl.line_number, symbol_table);
+        TopLevelDeclaration::FunctionDeclaration { ref mut name, ref mut parameters, ref mut return_kind, ref mut body } => {
+            let renamed = typecheck_function_declaration(name, parameters, return_kind, body, decl.line_number, symbol_table);
+
+            *name = renamed;
         }
     }
 }
@@ -55,6 +57,7 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
 
 
         for i in 0..spec.names.len() {
+            let renamed: String;
             match (&maybe_rhs_kinds, &maybe_declared_kind) {
                 (&Some(ref rhs_kinds), &Some(ref declared_kind)) => {
                     let init_kind = &rhs_kinds[i];
@@ -64,26 +67,27 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                                  spec.line_number, spec.names[i], declared_kind, init_kind);
                         exit(1);
                     }
-                    symbol_table.add_variable(spec.names[i].clone(),
+                    renamed = symbol_table.add_variable(spec.names[i].clone(),
                             spec.line_number,
                             declared_kind.clone(),
                             /*inferred*/ false);
                 },
                 (&Some(ref rhs_kinds), &None) => {
                     let init_kind = &rhs_kinds[i];
-                    symbol_table.add_variable(spec.names[i].clone(),
+                    renamed = symbol_table.add_variable(spec.names[i].clone(),
                             spec.line_number,
                             init_kind.clone(),
                             /*inferred*/ true);
                 },
                 (&None, &Some(ref declared_kind)) => {
-                    symbol_table.add_variable(spec.names[i].clone(),
+                    renamed = symbol_table.add_variable(spec.names[i].clone(),
                     spec.line_number,
                     declared_kind.clone(),
                     /*inferred*/ false);
                 },
                 (&None, &None) => unreachable!() // This would not have passed parsing
             }
+            spec.names[i] = renamed;
         }
     }
 }
@@ -91,7 +95,7 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
 fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut SymbolTable) {
 
     for spec in declarations {
-        symbol_table.define_type(spec.name.clone(),
+        let renamed = symbol_table.define_type(spec.name.clone(),
                                  spec.line_number,
                                  Kind::Undefined);
         let kind = typecheck_kind(&mut spec.kind, symbol_table, Some(&spec.name));
@@ -100,9 +104,10 @@ fn typecheck_type_declarations(declarations: &mut [TypeSpec], symbol_table: &mut
                 &Symbol{ declaration: Declaration::Type(Kind::Defined(ref r)), ..} => {
                     r.borrow_mut().kind = kind.clone()
                 },
-                _ => panic!("This type should have been a dummy definition")
+                _ => panic!("This type should have been a type definition")
             }
             symbol_table.print_type_definition(&spec.name, &kind);
+            spec.name = renamed;
         }
     }
 
@@ -119,16 +124,18 @@ fn typecheck_function_declaration(name: &str,
                                    return_kind: &mut Option<Box<AstKindNode>>,
                                    body: &mut [StatementNode],
                                    line: u32,
-                                   symbol_table: &mut SymbolTable) {
+                                   symbol_table: &mut SymbolTable) -> String {
 
-    symbol_table.add_dummy(name.to_string(), line);
+    let renamed = symbol_table.add_dummy(name.to_string(), line);
 
     let mut param_tuples = Vec::new();
-    for f in params.iter_mut() {
+    {
+    for (i,f) in params.iter_mut().enumerate() {
         let k = typecheck_kind(&mut f.kind, symbol_table, None);
-        for i in 0..f.identifiers.len() {
-            param_tuples.push((&f.identifiers[i], f.line_number, k.clone()))
+        for j in 0..f.identifiers.len() {
+            param_tuples.push((f.identifiers[j].clone(), f.line_number, k.clone(), (i,j) ))
         }
+    }
     }
 
     let real_return_kind = 
@@ -137,7 +144,7 @@ fn typecheck_function_declaration(name: &str,
             &mut None => None
         };
 
-    symbol_table.add_function(name.to_string(),
+    symbol_table.replace_dummy_by_function(name.to_string(),
                                  line,
                                  param_tuples.iter().map(|x| x.2.clone()).collect(),
                                  real_return_kind.clone());
@@ -147,10 +154,13 @@ fn typecheck_function_declaration(name: &str,
     new_scope.in_function = true;
 
     for f in param_tuples {
-        new_scope.add_variable(f.0.to_string(), f.1, f.2, false);
+        let renamed = new_scope.add_variable(f.0, f.1, f.2, false);
+        params[(f.3).0].identifiers[(f.3).1] = renamed;
     }
 
     typecheck_statements(body, new_scope);
+
+    renamed
 }
 
 fn typecheck_statement(stmt: &mut StatementNode,
@@ -202,28 +212,30 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
         },
-        Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
+        Statement::ShortVariableDeclaration { ref mut identifier_list, ref mut expression_list } => {
             let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
             let mut new_count = 0;
-            let mut vars_to_add = Vec::new();
+            let mut vars_to_add = Vec::<String>::new();
 
-            for it in identifier_list.iter().zip(rhs_kinds.iter()){
-                let (id, exp_kind) = it;
+            for (id, exp_kind) in identifier_list.iter_mut().zip(rhs_kinds.iter()){
 
                 // Check identifier doesn't appear twice in lhs
                 for name in vars_to_add.clone() {
-                    if name == id {
+                    if &name == id {
                         eprintln!("Error: line {}: variable name {} used twice in lhs of assignment",
                                   stmt.line_number, id);
                         exit(1);
                     }
                 }
-                vars_to_add.push(id);
+                vars_to_add.push(id.clone());
+
+                let renamed: String;
 
                 if symbol_table.is_in_current_scope(&id) {
 
                     let sym = symbol_table.get_symbol(id, stmt.line_number);
+                    renamed = sym.new_name.clone();
 
                     match sym.declaration {
                         Declaration::Variable(ref k) =>{
@@ -235,20 +247,25 @@ fn typecheck_statement(stmt: &mut StatementNode,
                             }
                         },
                         _ => {
-                            eprintln!("Error: line {}: Trying to declare non-variable in short variable assignment.", stmt.line_number);
+                            eprintln!("Error: line {}: Trying to redeclare non-variable in short variable assignment.", stmt.line_number);
                             exit(1);
                         }
                     }
                 } else {
                     if &*id != "_" {
-                        symbol_table.add_variable(id.clone(),
+                        renamed = symbol_table.add_variable(id.clone(),
                                                      stmt.line_number,
                                                      exp_kind.clone(),
                                                      true);
                         new_count += 1;
-
+                    }
+                    else {
+                        renamed = "_".to_string();
                     }
                 }
+
+                *id = renamed;
+
             }
             if new_count == 0 {
                 eprintln!("Error: line {}: no new variable on lhs.", stmt.line_number);
@@ -268,14 +285,16 @@ fn typecheck_statement(stmt: &mut StatementNode,
             for i in 0..lhs.len() {
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
+
+                let lhs_kind = typecheck_expression(lhs_exp, symbol_table, false);
+                let rhs_kind = typecheck_expression(rhs_exp, symbol_table, false);
+
                 if !is_exp_addressable(lhs_exp, symbol_table) {
                      eprintln!("Error: line {}: lvalue {} in list is not addressable.", 
                               stmt.line_number,
                               i + 1);
                      exit(1);
                 }
-                let lhs_kind = typecheck_expression(lhs_exp, symbol_table, false);
-                let rhs_kind = typecheck_expression(rhs_exp, symbol_table, false);
 
                 if !are_identical(&lhs_kind, &rhs_kind) {
                     eprintln!("Error: line {}: In position {} of assignment list, \
@@ -416,11 +435,11 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
         }
         Statement::IncDec { ref mut expr, .. } => {
+            let exp_type = typecheck_expression(expr, symbol_table, false);
             if !is_exp_addressable(expr, symbol_table) {
                 eprintln!("Error: line {}: expression is not addressable", expr.line_number);
                 exit(1);
             }
-            let exp_type = typecheck_expression(expr, symbol_table, false);
             let base = exp_type.resolve();
             if !base.is_numeric() {
                 eprintln!("Error: line {}: attempt to increment/decrement a non-numeric type \
@@ -437,7 +456,7 @@ fn typecheck_kind(ast: &mut AstKindNode,
                       top_name: Option<&str>) -> Kind { 
                     // top_name is to prevent recursive definitions in structs
     match ast.ast_kind {
-        AstKind::Identifier { ref name } => {
+        AstKind::Identifier { ref mut name } => {
             match top_name {
                 Some(ref top_name) => {
                     if name == top_name {
@@ -448,7 +467,11 @@ fn typecheck_kind(ast: &mut AstKindNode,
                 }
                 None => {},
             }
-            if let Declaration::Type(ref kind) = symbol_table.get_symbol(name, ast.line_number).declaration {
+
+            let symbol = symbol_table.get_symbol(&*name, ast.line_number);
+
+            if let Declaration::Type(ref kind) = symbol.declaration {
+                *name = symbol.new_name.clone();
                 return kind.clone();
             } else {
                 eprintln!("Error: line {}: `{}` is not a type.", ast.line_number, name);
@@ -492,7 +515,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
         Expression::RawLiteral{..} => {
         }
 
-        Expression::Identifier { ref name } => {
+        Expression::Identifier { ref mut name, .. } => {
             if name == "_" {
                 exp.kind = Kind::Underscore;
                 return exp.kind.clone();
@@ -501,6 +524,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             match symbol.declaration {
                 Declaration::Variable(ref kind) | Declaration::Constant(ref kind) => {
                     exp.kind = kind.clone();
+                    *name = symbol.new_name.clone();
                 }
                 _ => {
                     eprintln!("Error: line {}: `{}` is not a variable or a constant.", 
@@ -534,7 +558,8 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             
             // To move things out of a borrowed value, I need to put something in its place
             if let Expression::FunctionCall{ primary: p, arguments: a } = mem::replace(
-                a, Expression::Identifier{ name: "^ this is dumb ^".to_string()}) {
+                a, Expression::Identifier{ name: "^ this is dumb ^".to_string(),
+                original_name: "".to_string()}) {
                 primary = p;
                 arguments = a;
             } else {
@@ -544,7 +569,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             *a = 
             if let Some(ref name) =
                 // fml
-                if let Expression::Identifier{ref name} = primary.expression {
+                if let Expression::Identifier{ref name, ..} = primary.expression {
                     Some(name.clone())
                 }
                 else {
@@ -554,7 +579,12 @@ fn typecheck_expression(exp: &mut ExpressionNode,
                 // Note: we don't need to check if we're trying to call init because init is not
                 // going to be in scope anyway.
                 // And we can also have a type called `init`.
-
+                //
+                let renamed;
+                {
+                    let symbol = symbol_table.get_symbol(&name, exp.line_number);
+                    renamed = symbol.new_name.clone();
+                }
                 let decl = symbol_table.get_symbol(&name, exp.line_number).declaration.clone();
                 match decl { 
                     Declaration::Type(cast_kind) => {
@@ -589,7 +619,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
                         }
 
                         exp.kind = cast_kind.clone();
-                        Expression::TypeCast{ expr: Box::new(inner_expr) }
+                        Expression::TypeCast{name:renamed, expr: Box::new(inner_expr) }
                     },
                     Declaration::Function{ref params, ref return_kind} => {
 
@@ -617,7 +647,14 @@ fn typecheck_expression(exp: &mut ExpressionNode,
                                 exp.kind = Kind::Void;
                             }
                         }
-                        Expression::FunctionCall{ primary, arguments }
+                        Expression::FunctionCall{ primary: Box::new(ExpressionNode{
+                            kind: primary.kind.clone(),
+                            line_number: exp.line_number,
+                            expression: Expression::Identifier{
+                                name: renamed,
+                                original_name: name.to_string()
+                            }})
+                            , arguments }
                     },
                     _ => {
                         eprintln!("Error: line {}: `{}` is not a type or a function.",
@@ -728,27 +765,27 @@ Vec<Kind> {
     ret
 }
 
+// this will not typecheck and will not rename variables
 fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> bool {
     match exp.expression {
-        Expression::Identifier {ref name } => {
-            if name == "_" {
+        Expression::Identifier {ref original_name,.. } => {
+            if original_name == "_" {
                 return true
             }
-            let symbol = symbol_table.get_symbol(name, exp.line_number);
+            let symbol = symbol_table.get_symbol(original_name, exp.line_number);
             match symbol.declaration {
                 Declaration::Variable(..)  => {
                     return true;
                 }
                 _ => {
                     eprintln!("Error: line {}: Cannot assign to `{}`: is not a variable.",
-                              exp.line_number, name);
+                              exp.line_number, original_name);
                     exit(1);
                 }
             }
         },
         Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. } => {
-            let primary_kind = typecheck_expression(primary, symbol_table, false);
-            if let Kind::Slice(..) = primary_kind {
+            if let Kind::Slice(..) = primary.kind {
                 return true;
             } else {
                 return is_exp_addressable(primary, symbol_table);

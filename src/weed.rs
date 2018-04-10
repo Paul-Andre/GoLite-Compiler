@@ -416,7 +416,7 @@ fn traverse_assignable_exp_for_invalid_blank(exp: &ExpressionNode) {
 /// Recursively traverses expression in order to detect any invalid blank id usage
 fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
     match exp.expression {
-        Expression::Identifier { ref name } => {
+        Expression::Identifier { ref name, .. } => {
             if name == "_" {
                 eprintln!("Error: line {}: invalid use of blank identifier within expression.", exp.line_number);
                 exit(1);
@@ -459,7 +459,7 @@ fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
             traverse_exp_for_invalid_blank( &*lhs);
             traverse_exp_for_invalid_blank( &*rhs);
         }
-        Expression::TypeCast { ref expr } => {
+        Expression::TypeCast { ref expr, .. } => {
             traverse_exp_for_invalid_blank( &*expr);
         }
     }
