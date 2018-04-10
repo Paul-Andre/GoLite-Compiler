@@ -385,6 +385,7 @@ pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<
         Statement::ShortVariableDeclaration {
             identifier_list: lhs,
             expression_list: rhs,
+            is_assigning: Vec::new()
         }
     )
 }
