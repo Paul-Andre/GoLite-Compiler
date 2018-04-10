@@ -11,7 +11,11 @@ func randomPerson() person {
 	rngState &= 0x0fffffff
 	age := rngState % 100000
 
-	return person{age: age}
+	p := person {
+	    age: age
+	}
+
+	return p
 }
 
 func swap(a []person, i, j int) {

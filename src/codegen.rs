@@ -110,12 +110,14 @@ impl CodeGenVisitor{
                 print!("]");
             }
             &Kind::Slice(ref kind) => {
-                println!("{{");
-                println!("\t length: 0,");
-                println!("\t capacity: 0,");
-                print!("\t contents: []");
-                println!();
-                print!("}}");
+                println!("{{", );
+
+                self.indent+=1;
+                println!("{} length: 0,", indent(self.indent));
+                println!("{}capacity: 0,", indent(self.indent));
+                println!("{} contents: []", indent(self.indent));
+                self.indent-=1;
+                print!("{}}}", indent(self.indent));
             }
             &Kind::Struct(ref fields) => {
                 println!("{{");
