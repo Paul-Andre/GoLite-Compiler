@@ -172,8 +172,11 @@ function append(slice, object) {
     if (ret.length+1 > ret.capacity) {
         ret.contents = deepCopy(ret.contents);
         ret.capacity = (ret.capacity + 1) * 2;
+        while (ret.contents.length < ret.capacity) {
+            ret.contents.push(undefined);
+        }
     }
-    ret.contents.push(deepCopy(object));
+    ret.contents[ret.length] = deepCopy(object);
     ret.length++;
     return ret;
 }
