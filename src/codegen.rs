@@ -125,7 +125,7 @@ impl CodeGenVisitor{
                     println!(",");
                 }
             }
-            _ => {}
+            _ => {panic!("initializing value not supported")}
         }
     }
 
@@ -175,29 +175,23 @@ impl CodeGenVisitor{
                 let mut temps = Vec::new();
 
                 for expr in expression_list.iter() {
-                    let mut temp_string = String::new();
-                    write!(temp_string, "temp_{}", self.create_id());
+                    let mut temp_string = format!("temp_{}", self.create_id());
                     temps.push(temp_string.clone());
 
-                    let mut temp_pre = String::new();
-                    let mut temp_post = String::new();
-
-                    write!(temp_post, "let {} = ", temp_string.clone());
-                    self.visit_expression(&expr, &mut temp_pre, &mut temp_post);
-
-                    write!(global_pre, "{} ; \n {} ; ", temp_pre, temp_post );
+                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string);
+                    self.visit_expression(&expr, &mut global_pre, &mut global_post);
+                    write!(global_post, ";\n");
                 }
 
                 for x in 0..identifier_list.len() {
                     if is_assigning[x] {
-                        write!(global_post, "{} = deepCopy({}); \n", identifier_list[x], temps[x]);
+                        write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]);
                     } else {
-                        write!(global_post, "let {} = deepCopy({}); \n", identifier_list[x], temps[x]);
+                        write!(global_post, "{}let {} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]);
                     }
                 }
 
-                println!("{}", global_pre);
-                println!("{}{};", indent(self.indent), &mut global_post);
+                println!("{}{}", global_pre, global_post);
             },
             Statement::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
@@ -210,33 +204,28 @@ impl CodeGenVisitor{
                 let mut global_pre = String::new();
                 let mut global_post = String::new();
                 let mut temps = Vec::new();
+                let mut lhs_post_strings = Vec::new();
+
+                for expr in lhs.iter() {
+                    let mut post = String::new();
+                    self.visit_expression(&expr, &mut global_pre, &mut post);
+                    lhs_post_strings.push(post);
+                }
 
                 for expr in rhs.iter() {
-                    let mut temp_string = String::new();
-                    write!(temp_string, "temp_{}", self.create_id());
+                    let mut temp_string = format!("temp_{}", self.create_id());
                     temps.push(temp_string.clone());
 
-                    let mut temp_pre = String::new();
-                    let mut temp_post = String::new();
-
-                    write!(temp_post, "let {} = ", temp_string.clone());
-                    self.visit_expression(&expr, &mut temp_pre, &mut temp_post);
-
-                    write!(global_pre, "{} ; \n {} ; ", temp_pre, temp_post );
+                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string);
+                    self.visit_expression(&expr, &mut global_pre, &mut global_post);
+                    write!(global_post, ";\n");
                 }
 
-                for x in 0..lhs.len() {
-
-                    let mut temp_pre = String::new();
-                    let mut temp_post = String::new();
-
-                    self.visit_expression(&lhs[x], &mut temp_pre, &mut temp_post);
-
-                    write!(global_post, "{}; \n {} = deepCopy({}); \n", temp_pre, temp_post, temps[x]);
+                for x in 0..lhs_post_strings.len() {
+                    write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), lhs_post_strings[x], temps[x]);
                 }
 
-                println!("{}", global_pre);
-                println!("{}{};", indent(self.indent), &mut global_post);
+                println!("{}{}", global_pre, global_post);
             },
             Statement::OpAssignment { ref lhs, ref rhs, ref operator } => {
                 let mut pre_lhs = String::new();
