@@ -73,6 +73,10 @@ function binary_Mul_int(a,b) {
     return Math.imul(a,b)
 }
 function binary_Div_int(a,b) {
+    if (b == 0) {
+        console.error("Error: division by zero.");
+        exit(1);
+    }
     return (a/b) | 0
 }
 
@@ -96,23 +100,34 @@ function unary_Not(a) {
 
 
 function print_float(a) {
-    let out = a.toExponential(6);
-    if (out[0] !== '-') {
-        out = "+"+out;
-    }
-    let beforeExponent = "";
-    let exponent = "0";
-    for (let i=1; i<out.length; i++) {
-        if (out[i] === '-' || out[i] === '+') {
-            exponent = out.substring(i+1);
-            beforeExponent = out.substring(0,i+1);
-            break;
+    if (Number.isFinite(a)) {
+        let out = a.toExponential(6);
+        if (out[0] !== '-') {
+            out = "+"+out;
         }
+        let beforeExponent = "";
+        let exponent = "0";
+        for (let i=1; i<out.length; i++) {
+            if (out[i] === '-' || out[i] === '+') {
+                exponent = out.substring(i+1);
+                beforeExponent = out.substring(0,i+1);
+                break;
+            }
+        }
+        while (exponent.length < 3) {
+            exponent = "0" + exponent;
+        }
+        process.stdout.write(beforeExponent + exponent);
+    } else if (Number.isNaN(a)) {
+        process.stdout.write("NaN");
+    } else if (a == Infinity) {
+        process.stdout.write("+Inf");
+    } else if (a == -Infinity) {
+        process.stdout.write("-Inf");
+    } else {
+        console.error("Error: Trying to print out something that isn't a float as a float.");
+        exit(1);
     }
-    while (exponent.length < 3) {
-        exponent = "0" + exponent;
-    }
-    process.stdout.write(beforeExponent + exponent);
 }
 
 function print_not_float(a) {

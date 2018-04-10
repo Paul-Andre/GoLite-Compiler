@@ -161,7 +161,7 @@ impl CodeGenVisitor{
                         let mut post = String::new();
                         self.visit_expression(e, &mut pre, &mut post);
                         print!("{}",pre);
-                        println!("{}{};", indent(self.indent), &mut post);
+                        println!("{}return {};", indent(self.indent), &mut post);
                     },
                     &None => {
                         print!("{}", indent(self.indent));
