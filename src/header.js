@@ -186,7 +186,7 @@ function check_bounds(a, length, line_number) {
         console.error("Error: line "+line_number+": trying to index an array or slice with negative number.");
         process.exit(1);
     }
-    if (a > length) {
+    if (a >= length) {
         console.error("Error: line "+line_number+": index " + a +" out of range. Should be in range of "+length);
         process.exit(1);
     }
