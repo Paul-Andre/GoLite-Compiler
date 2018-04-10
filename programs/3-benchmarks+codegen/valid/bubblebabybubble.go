@@ -11,9 +11,8 @@ func randomPerson() person {
 	rngState &= 0x0fffffff
 	age := rngState % 100000
 
-	p := person {
-	    age: age
-	}
+	var p person
+	person.age = age
 
 	return p
 }
