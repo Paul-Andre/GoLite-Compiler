@@ -61,6 +61,7 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
             match (&maybe_rhs_kinds, &maybe_declared_kind) {
                 (&Some(ref rhs_kinds), &Some(ref declared_kind)) => {
                     let init_kind = &rhs_kinds[i];
+                    spec.evaluated_kind = rhs_kinds[i].clone();
                     if !kind::are_identical(&init_kind, &declared_kind) {
                         eprintln!("Error: line {}: trying to initialize variable `{}` \
                         of type {} with type {}.",
@@ -81,6 +82,7 @@ fn typecheck_variable_declarations(declarations: &mut [VarSpec], symbol_table: &
                             /*inferred*/ true);
                 },
                 (&None, &Some(ref declared_kind)) => {
+                    spec.evaluated_kind = declared_kind.clone();
                     renamed = symbol_table.add_variable(spec.names[i].clone(),
                     spec.line_number,
                     declared_kind.clone(),
@@ -213,7 +215,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
         },
-        Statement::ShortVariableDeclaration { ref mut identifier_list, ref mut expression_list } => {
+        Statement::ShortVariableDeclaration { ref mut identifier_list, ref mut expression_list, ref mut is_assigning } => {
             let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
             let mut new_count = 0;
@@ -237,6 +239,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
 
                     let sym = symbol_table.get_symbol(id, stmt.line_number);
                     renamed = sym.new_name.clone();
+                    is_assigning.push(true);
 
                     match sym.declaration {
                         Declaration::Variable(ref k) =>{
@@ -253,6 +256,9 @@ fn typecheck_statement(stmt: &mut StatementNode,
                         }
                     }
                 } else {
+
+                    is_assigning.push(false);
+
                     if &*id != "_" {
                         renamed = symbol_table.add_variable(id.clone(),
                                                      stmt.line_number,
