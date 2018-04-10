@@ -75,8 +75,9 @@ impl CodeGenVisitor{
                 let mut post_string = "".to_string();
 
                 for (name, rhs) in var_spec.names.iter().zip(values.iter()) {
-                    write!(post_string, "let {} = ", name);
+                    write!(post_string, "let {} = deepCopy(", name);
                     self.visit_expression(&rhs, &mut pre_string, &mut post_string);
+                    write!(post_string, ")");
                     write!(post_string, "\n");
                 }
 
@@ -85,8 +86,9 @@ impl CodeGenVisitor{
             None => {
                 let mut pre_string = "".to_string();
                 for name in var_spec.names.iter() {
-                    print!("let {} = ", name);
+                    print!("let {} = deepCopy(", name);
                     self.visit_var_initialization(&var_spec.evaluated_kind);
+                    print!(post_string, ")");
                     println!(";");
                 }
             }
