@@ -406,13 +406,16 @@ impl CodeGenVisitor{
                         match letter {
                             "`" => { // Raw
                                 let mut new_string = String::new();
-                                for c in letter.chars() {
-                                    if c == '\\' {
+                                for c in value.chars() {
+                                    if c == '`' {
+                                        continue;
+                                    }
+                                    if c == '\\' || c == '"' {
                                         new_string = format!("{}{}", new_string, "\\");
                                     }
                                     new_string = format!("{}{}", new_string, c);
                                 }
-                                write!(post_string, "{}", new_string);
+                                write!(post_string, "\"{}\"", new_string);
                             },
                             "\"" => { // Interpreted
                                 write!(post_string, 
