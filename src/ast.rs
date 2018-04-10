@@ -105,6 +105,7 @@ pub struct VarSpec {
     pub names: Vec<String>,
     pub kind: Option<Box<AstKindNode>>,
     pub rhs: Option<Vec<ExpressionNode>>,
+    pub evaluated_kind: Kind
 }
 
 #[derive(Debug)]

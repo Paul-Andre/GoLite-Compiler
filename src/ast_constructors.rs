@@ -1,5 +1,6 @@
 use ast::*;
 use kind;
+use kind::Kind;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::os::raw::c_int;
@@ -551,6 +552,7 @@ pub extern "C" fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut A
                     names,
                     kind: unsafe{ from_raw_or_none(kind) },
                     rhs: Some(rhs),
+                    evaluated_kind: Kind::Undefined
                 }))
     } else {
         Box::into_raw( Box::new(
@@ -559,6 +561,7 @@ pub extern "C" fn make_var_spec(line: u32, names: *mut Vec<String>, kind: *mut A
                     names,
                     kind: unsafe{ from_raw_or_none(kind) },
                     rhs: None,
+                    evaluated_kind: Kind::Undefined
                 }))
     }
 }
