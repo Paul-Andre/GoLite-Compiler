@@ -309,10 +309,10 @@ impl CodeGenVisitor{
                 print!("{}",pre);
                 let function = 
                 match (is_dec, expr.kind.is_integer()) {
-                    (true, true) => "binary_Add_int",
-                    (false, true) => "binary_Sub_int",
-                    (true, false) => "binary_Add",
-                    (false, false) => "binary_Sub",
+                    (false, true) => "binary_Add_int",
+                    (true, true) => "binary_Sub_int",
+                    (false, false) => "binary_Add",
+                    (true, false) => "binary_Sub",
                 };
                 print!("{}{} = {}({},1);\n",
                         indent(self.indent),
