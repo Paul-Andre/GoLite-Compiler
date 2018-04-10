@@ -36,7 +36,7 @@ impl CodeGenVisitor{
             }
 
             TopLevelDeclaration::FunctionDeclaration 
-            { ref name, ref parameters, ref return_kind, ref body } => {
+            { ref name, ref parameters, ref body, .. } => {
 
                 let mut func_name = name.clone();
 
@@ -48,9 +48,9 @@ impl CodeGenVisitor{
                 let mut params_string = "".to_string();
                 for (i,field) in parameters.iter().enumerate() {
                     for (j,id) in field.identifiers.iter().enumerate() {
-                        write!(params_string, "{}", id);
+                        write!(params_string, "{}", id).unwrap();
                         if i < parameters.len() - 1 || j < field.identifiers.len() - 1 {
-                            write!(params_string, ", ");
+                            write!(params_string, ", ").unwrap();
                         }
                     }
                 }
@@ -75,16 +75,15 @@ impl CodeGenVisitor{
                 let mut post_string = "".to_string();
 
                 for (name, rhs) in var_spec.names.iter().zip(values.iter()) {
-                    write!(post_string, "{}let {} = deepCopy(", indent(self.indent), name);
+                    write!(post_string, "{}let {} = deepCopy(", indent(self.indent), name).unwrap();
                     self.visit_expression(&rhs, &mut pre_string, &mut post_string);
-                    write!(post_string, ")");
-                    write!(post_string, "\n");
+                    write!(post_string, ")").unwrap();
+                    write!(post_string, "\n").unwrap();
                 }
 
                 println!("{} \n {}", pre_string, post_string);
             }
             None => {
-                let mut pre_string = "".to_string();
                 for name in var_spec.names.iter() {
                     print!("{}let {} = deepCopy(", indent(self.indent), name);
                     self.visit_var_initialization(&var_spec.evaluated_kind);
@@ -109,7 +108,7 @@ impl CodeGenVisitor{
                 }
                 print!("]");
             }
-            &Kind::Slice(ref kind) => {
+            &Kind::Slice(..) => {
                 println!("{{", );
 
                 self.indent+=1;
@@ -183,16 +182,16 @@ impl CodeGenVisitor{
                     let mut temp_string = format!("temp_{}", self.create_id());
                     temps.push(temp_string.clone());
 
-                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string);
+                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string).unwrap();
                     self.visit_expression(&expr, &mut global_pre, &mut global_post);
-                    write!(global_post, ";\n");
+                    write!(global_post, ";\n").unwrap();
                 }
 
                 for x in 0..identifier_list.len() {
                     if is_assigning[x] {
-                        write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]);
+                        write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]).unwrap();
                     } else {
-                        write!(global_post, "{}let {} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]);
+                        write!(global_post, "{}let {} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]).unwrap();
                     }
                 }
 
@@ -203,7 +202,7 @@ impl CodeGenVisitor{
                     self.visit_var_spec(decl);
                 }
             },
-            Statement::TypeDeclarations { ref declarations } => {},
+            Statement::TypeDeclarations { .. } => {},
             Statement::Assignment { ref lhs, ref rhs } => {
 
                 let mut global_pre = String::new();
@@ -221,13 +220,13 @@ impl CodeGenVisitor{
                     let mut temp_string = format!("temp_{}", self.create_id());
                     temps.push(temp_string.clone());
 
-                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string);
+                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string).unwrap();
                     self.visit_expression(&expr, &mut global_pre, &mut global_post);
-                    write!(global_post, ";\n");
+                    write!(global_post, ";\n").unwrap();
                 }
 
                 for x in 0..lhs_post_strings.len() {
-                    write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), lhs_post_strings[x], temps[x]);
+                    write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), lhs_post_strings[x], temps[x]).unwrap();
                 }
 
                 println!("{}{}", global_pre, global_post);
@@ -365,15 +364,15 @@ impl CodeGenVisitor{
                     Kind::Basic( BasicKind::Float) => "print_float",
                     _ => "print_not_float",
                 };
-            write!(post,"{}{}(", indent(self.indent), function);
+            write!(post,"{}{}(", indent(self.indent), function).unwrap();
             self.visit_expression(expr, &mut pre, &mut post);
-            write!(post,");\n");
+            write!(post,");\n").unwrap();
             if is_println && i < exprs.len()-1 { 
-                write!(post,"{}print_not_float(\" \");\n", indent(self.indent));
+                write!(post,"{}print_not_float(\" \");\n", indent(self.indent)).unwrap();
             }
         }
         if is_println {
-            write!(post,"{}print_not_float(\"\\n\");\n", indent(self.indent));
+            write!(post,"{}print_not_float(\"\\n\");\n", indent(self.indent)).unwrap();
         }
         println!("{}{}", pre, post);
     }
@@ -391,7 +390,7 @@ impl CodeGenVisitor{
             {}return {};}}())",
             new_pre,
             indent(self.indent + 1),
-            new_post);
+            new_post).unwrap();
     }
 
     // Convention:
@@ -407,7 +406,7 @@ impl CodeGenVisitor{
                 match exp.kind {
                     Kind::Basic(BasicKind::Int) | 
                     Kind::Basic(BasicKind::Float) => {
-                        write!(post_string, "{}", value);
+                        write!(post_string, "{}", value).unwrap();
                     },
                     Kind::Basic(BasicKind::Rune) => {
                         let letter : &str;
@@ -429,7 +428,7 @@ impl CodeGenVisitor{
                             "\\'" => 39,
                             _ => letter.chars().next().unwrap() as u32 // Will this work?
                         };
-                        write!(post_string, "{}", code_no);
+                        write!(post_string, "{}", code_no).unwrap();
                     },
                     Kind::Basic(BasicKind::String) => {
                         let letter = &value[0..1];
@@ -445,7 +444,7 @@ impl CodeGenVisitor{
                                     }
                                     new_string = format!("{}{}", new_string, c);
                                 }
-                                write!(post_string, "\"{}\"", new_string);
+                                write!(post_string, "\"{}\"", new_string).unwrap();
                             },
                             "\"" => { // Interpreted
                                 let mut new_string = String::new();
@@ -465,7 +464,7 @@ impl CodeGenVisitor{
                                         new_string = format!("{}{}", new_string, c);
                                     }
                                 }
-                                write!(post_string, "{}", new_string);
+                                write!(post_string, "{}", new_string).unwrap();
                             }
                             _ => {
                                 panic!("A string should be either interpreted or raw");
@@ -479,25 +478,25 @@ impl CodeGenVisitor{
             }
 
             Expression::Identifier { ref name, .. } => {
-                write!(post_string, "{}", name);
+                write!(post_string, "{}", name).unwrap();
             }
 
             Expression::UnaryOperation { ref op, ref rhs } => {
-                write!(post_string, "{}(", generate_unary_op(op));
+                write!(post_string, "{}(", generate_unary_op(op)).unwrap();
                 self.visit_expression(rhs, pre_string, post_string);
-                write!(post_string, ")");
+                write!(post_string, ")").unwrap();
             }
 
             Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
                 if *op == BinaryOperator::Or || *op == BinaryOperator::And {
-                    write!(post_string, "(");
+                    write!(post_string, "(").unwrap();
                     self.visit_expression(lhs, pre_string, post_string);
                     write!(post_string, " {} ",
-                           if *op==BinaryOperator::Or { "||" } else { "&&" });
+                           if *op==BinaryOperator::Or { "||" } else { "&&" }).unwrap();
                     self.codegen_expression_iife(rhs,  post_string);
-                    write!(post_string, ")");
+                    write!(post_string, ")").unwrap();
                 } else {
-                    write!(post_string, "{}", generate_binary_op(op));
+                    write!(post_string, "{}", generate_binary_op(op)).unwrap();
 
                     if exp.kind.is_integer() {
                         match op {
@@ -505,17 +504,17 @@ impl CodeGenVisitor{
                                 &BinaryOperator::Sub |
                                 &BinaryOperator::Mul |
                                 &BinaryOperator::Div => {
-                                    write!(post_string, "_int");
+                                    write!(post_string, "_int").unwrap();
                                 }
                             _ => {}
                         }
                     }
 
-                    write!(post_string, "(");
+                    write!(post_string, "(").unwrap();
                     self.visit_expression(lhs, pre_string, post_string);
-                    write!(post_string, ",");
+                    write!(post_string, ",").unwrap();
                     self.visit_expression(rhs, pre_string, post_string);
-                    write!(post_string, ")");
+                    write!(post_string, ")").unwrap();
                 }
             }
 
@@ -525,32 +524,32 @@ impl CodeGenVisitor{
                 let mut new_post_string = String::new();
 
                 // Print the name of the temp variable in the post_string
-                write!(post_string, "ⴵ_{}", tmp_id);
+                write!(post_string, "ⴵ_{}", tmp_id).unwrap();
 
                 // Execute function call outside using different post/prestrings
-                write!(new_post_string, "var ⴵ_{} = ", tmp_id);
+                write!(new_post_string, "var ⴵ_{} = ", tmp_id).unwrap();
 
                 // Print primary to new_post_string
                 self.visit_expression(primary, &mut new_pre_string, &mut new_post_string);
 
                 // Print arguments to new_post_string
-                write!(new_post_string, "(");
+                write!(new_post_string, "(").unwrap();
                 for (i,arg) in arguments.iter().enumerate() {
-                    write!(new_post_string, "deepCopy(");
+                    write!(new_post_string, "deepCopy(").unwrap();
                     self.visit_expression(arg, &mut new_pre_string, &mut new_post_string);
-                    write!(new_post_string, ")");
+                    write!(new_post_string, ")").unwrap();
                     if i < arguments.len() - 1 {
-                        write!(new_post_string, ", ");
+                        write!(new_post_string, ", ").unwrap();
                     }
                 }
-                write!(new_post_string, ");");
+                write!(new_post_string, ");").unwrap();
 
                 // Add all hoisted calls, and the new func call to pre_string.
                 write!(pre_string, 
                        "{}{}{}\n", 
                        &mut new_pre_string, 
                        indent(self.indent), 
-                       &mut new_post_string);
+                       &mut new_post_string).unwrap();
             }
 
             Expression::Index { ref primary, ref index } => {
@@ -562,36 +561,36 @@ impl CodeGenVisitor{
 
                 match primary.kind {
                     Kind::Slice(..) =>  {
-                        write!(post_string, "{}.contents", primary_value);
+                        write!(post_string, "{}.contents", primary_value).unwrap();
                     },
                     Kind::Array(..) =>  {
-                        write!(post_string, "{}", primary_value);
+                        write!(post_string, "{}", primary_value).unwrap();
                     },
                     _ => panic!("codegening index of something other than slice or array")
                 };
 
                 write!(post_string, "[check_bounds({},{}.length,{})]",
-                index_value, primary_value, exp.line_number);
+                index_value, primary_value, exp.line_number).unwrap();
             }
 
             Expression::Selector { ref primary, ref name } => {
                 self.visit_expression(primary, pre_string, post_string);
-                write!(post_string, ".ㆭ{}", name);
+                write!(post_string, ".ㆭ{}", name).unwrap();
             }
 
             Expression::Append { ref lhs, ref rhs } => {
-                write!(post_string, "append(");
+                write!(post_string, "append(").unwrap();
                 self.visit_expression(lhs, pre_string, post_string);
-                write!(post_string, ",");
+                write!(post_string, ",").unwrap();
                 self.visit_expression(rhs, pre_string, post_string);
-                write!(post_string, ")");
+                write!(post_string, ")").unwrap();
             }
 
             Expression::TypeCast { ref expr, .. } => {
                 if exp.kind.is_string() && expr.kind.is_integer() {
-                    write!(post_string, "String.fromCharCode(");
+                    write!(post_string, "String.fromCharCode(").unwrap();
                     self.visit_expression(expr, pre_string, post_string);
-                    write!(post_string, ")");
+                    write!(post_string, ")").unwrap();
                 } else {
                     // Do nothing at all
                     self.visit_expression(expr, pre_string, post_string);
@@ -623,12 +622,12 @@ fn print_header() {
 
 fn generate_unary_op(op: &UnaryOperator) -> String {
     let mut op_name = "".to_string();
-    write!(op_name, "unary_{:?}", op);
+    write!(op_name, "unary_{:?}", op).unwrap();
     op_name
 }
 
 fn generate_binary_op(op: &BinaryOperator) -> String {
     let mut op_name = "".to_string();
-    write!(op_name, "binary_{:?}", op);
+    write!(op_name, "binary_{:?}", op).unwrap();
     op_name
 }
