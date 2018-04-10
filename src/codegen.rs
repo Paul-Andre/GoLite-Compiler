@@ -16,7 +16,8 @@ impl CodeGenVisitor{
         for decl in root.declarations {
             self.visit_top_level_declaration(&decl);
         }
-        print_out_the_call_to_init_functions();
+
+        self.print_init_calls();
 
         println!("main();")
     }
@@ -32,11 +33,11 @@ impl CodeGenVisitor{
             TopLevelDeclaration::FunctionDeclaration 
             { ref name, ref parameters, ref return_kind, ref body } => {
 
-                let func_name = name.clone();
+                let mut func_name = name.clone();
 
-                if name == "init" {
+                if func_name == "init" {
+                    func_name = format!("init_{}", self.create_id());
                     self.init_functions.push(func_name.clone());
-                    func_name = format!("{}_{}", name, self.create_id());
                 }
 
                 let params_string = "".to_string();
@@ -45,7 +46,6 @@ impl CodeGenVisitor{
                         write!(params_string, "{}, ", id);
                     }
                 }
-
 
                 println!("function {} ( {} ) {{", func_name, params_string);
 
@@ -62,22 +62,40 @@ impl CodeGenVisitor{
 
     fn visit_top_level_var_spec(&mut self, var_spec: &VarSpec){
         match var_spec.rhs {
-            Some(ref values) => {
-                let pre_string = "".to_string();
-                let post_string = "".to_string();
+            Some(mut values) => {
+                let mut pre_string = "".to_string();
+                let mut post_string = "".to_string();
 
                 for (name, rhs) in var_spec.names.iter().zip(values.iter_mut()) {
                     write!(post_string, "let {} = ", name);
                     self.visit_expression(&rhs, &mut pre_string, &mut post_string);
                     write!(post_string, "\n");
                 }
+
+                println!("{} \n {}", pre_string, post_string);
             }
             None => {
-                // TODO initialize to zero value or something
+                let mut pre_string = "".to_string();
+                for (name, kind) in var_spec.names.iter().zip(evaluated_kinds.iter_mut()) {
+                    self.visit_var_initialization(&name, &kind);
+                }
             }
         }
+    }
+
+    fn visit_var_initialization(&mut self, name: &String, kind: &Kind){
+        match kind {
+            Kind::Basic(BasicKind::Int) => {}
+            Kind::Basic(BasicKind::Float) => {}
+            Kind::Array(ref kind, ref length) => {
+                // TODO: add make array function in javascript
+            }
+            Kind::Slice(..) => {
+                // TODO: create struct for
+            }
 
 
+        }
     }
 
 
@@ -126,6 +144,7 @@ impl CodeGenVisitor{
                 }
             },
             Statement::ShortVariableDeclaration { ref identifier_list, ref mut expression_list } => {
+
             },
             Statement::VarDeclarations { ref mut declarations } => {
             },
@@ -230,6 +249,12 @@ impl CodeGenVisitor{
         }
     }
 
+    fn print_init_calls(&mut self){
+        for init in self.init_functions.iter(){
+            println!(init + "();");
+        }
+    }
+
     fn create_id(&mut self) -> String{
         self.id_counter += 1;
         return self.id_counter.to_string()
@@ -237,10 +262,8 @@ impl CodeGenVisitor{
 }
 
 pub fn codegen(root: &Program) {
-    let visitor = CodeGenVisitor{ indent: 0, id_counter: 0, init_functions: Vec::new()  };
-
+    let mut visitor = CodeGenVisitor{ indent: 0, id_counter: 0, init_functions: Vec::new() };
     visitor.visit_program(root);
-
 }
 
 fn print_header() {
@@ -277,8 +300,6 @@ fn print_binary_op(op: &BinaryOperator) -> String {
         And => {
             return "binary_and".to_string()
         },
-
-
 
         Eq => {
             return "binary_eq".to_string()
