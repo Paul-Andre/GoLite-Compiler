@@ -174,7 +174,7 @@ function append(slice, object) {
         ret.capacity = (ret.capacity + 1) * 2;
     }
     ret.contents.push(deepCopy(object));
-    ret.size++;
+    ret.length++;
     return ret;
 }
 
@@ -184,7 +184,7 @@ function check_bounds(a, length, line_number) {
         process.exit(1);
     }
     if (a > length) {
-        console.error("Error: line "+line_number+": index out of range.");
+        console.error("Error: line "+line_number+": index " + a +" out of range. Should be in range of "+length);
         process.exit(1);
     }
     return a;
