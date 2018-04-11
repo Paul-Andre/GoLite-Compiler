@@ -231,7 +231,9 @@ fn typecheck_statement(stmt: &mut StatementNode,
                         exit(1);
                     }
                 }
-                vars_to_add.push(id.clone());
+                if id != "_" {
+                    vars_to_add.push(id.clone());
+                }
 
                 let renamed: String;
 

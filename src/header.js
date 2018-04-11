@@ -231,7 +231,7 @@ function makeArray(length, example) {
     return ret;
 }
 
-let _;
+var _;
 
 
 //============================== END OF HEADER ================================//

@@ -37,6 +37,9 @@ impl CodeGenVisitor{
 
             TopLevelDeclaration::FunctionDeclaration 
             { ref name, ref parameters, ref body, .. } => {
+                if name == "_" {
+                    return;
+                }
 
                 let mut func_name = name.clone();
 
@@ -64,7 +67,7 @@ impl CodeGenVisitor{
                 println!("}}");
             },
 
-            _ => return
+            _ => {}
         }
     }
 
@@ -75,19 +78,23 @@ impl CodeGenVisitor{
                 let mut post_string = "".to_string();
 
                 for (name, rhs) in var_spec.names.iter().zip(values.iter()) {
-                    write!(post_string, "{}let {} = deepCopy(", indent(self.indent), name).unwrap();
-                    self.visit_expression(&rhs, &mut pre_string, &mut post_string);
-                    write!(post_string, ")").unwrap();
-                    write!(post_string, "\n").unwrap();
+                    let mut new_post = String::new();
+                    self.visit_expression(&rhs, &mut pre_string, &mut new_post);
+                    if name != "_" {
+                        writeln!(post_string, "{}var {} = deepCopy({});",
+                            indent(self.indent), name, new_post).unwrap();
+                    }
                 }
 
                 println!("{} \n {}", pre_string, post_string);
             }
             None => {
                 for name in var_spec.names.iter() {
-                    print!("{}let {} = deepCopy(", indent(self.indent), name);
-                    self.visit_var_initialization(&var_spec.evaluated_kind);
-                    println!(");");
+                    if name != "_" {
+                        print!("{}var {} = ", indent(self.indent), name);
+                        self.visit_var_initialization(&var_spec.evaluated_kind);
+                        println!(";");
+                    }
                 }
             }
         }
@@ -177,16 +184,18 @@ impl CodeGenVisitor{
                     let mut temp_string = format!("temp_{}", self.create_id());
                     temps.push(temp_string.clone());
 
-                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string).unwrap();
+                    write!(global_post, "{}var {} = ",indent(self.indent), temp_string).unwrap();
                     self.visit_expression(&expr, &mut global_pre, &mut global_post);
                     write!(global_post, ";\n").unwrap();
                 }
 
                 for x in 0..identifier_list.len() {
-                    if is_assigning[x] {
-                        write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]).unwrap();
-                    } else {
-                        write!(global_post, "{}let {} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]).unwrap();
+                    if identifier_list[x] != "_" {
+                        if is_assigning[x] {
+                            write!(global_post, "{}{} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]).unwrap();
+                        } else {
+                            write!(global_post, "{}var {} = deepCopy({});\n", indent(self.indent), identifier_list[x], temps[x]).unwrap();
+                        }
                     }
                 }
 
@@ -215,7 +224,7 @@ impl CodeGenVisitor{
                     let mut temp_string = format!("temp_{}", self.create_id());
                     temps.push(temp_string.clone());
 
-                    write!(global_post, "{}let {} = ",indent(self.indent), temp_string).unwrap();
+                    write!(global_post, "{}var {} = ",indent(self.indent), temp_string).unwrap();
                     self.visit_expression(&expr, &mut global_pre, &mut global_post);
                     write!(global_post, ";\n").unwrap();
                 }

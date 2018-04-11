@@ -10,8 +10,6 @@ binaryOperators = [
 "|",
 "^ ",
 "&^",
-"<<",
-">>"
 ]
 
 unarayOperators = [
