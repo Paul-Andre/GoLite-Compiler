@@ -99,14 +99,9 @@ impl CodeGenVisitor{
             &Kind::Basic(BasicKind::Bool) => print!("false"),
             &Kind::Basic(BasicKind::String) => print!("''"),
             &Kind::Array(ref kind, ref length) => {
-                print!("[");
-                for x in 0..*length {
-                    self.visit_var_initialization(&kind);
-                    if x != length - 1 {
-                        print!(", ");
-                    }
-                }
-                print!("]");
+                print!("makeArray({}, ",length);
+                self.visit_var_initialization(&kind);
+                print!(")");
             }
             &Kind::Slice(..) => {
                 println!("{{", );
@@ -127,7 +122,7 @@ impl CodeGenVisitor{
                     println!(",");
                 }
                 self.indent-=1;
-                println!("}}");
+                print!("{}}}", indent(self.indent));
             }
             _ => {panic!("initializing value not supported")}
         }
