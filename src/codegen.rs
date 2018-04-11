@@ -181,7 +181,7 @@ impl CodeGenVisitor{
                 let mut temps = Vec::new();
 
                 for expr in expression_list.iter() {
-                    let mut temp_string = format!("temp_{}", self.create_id());
+                    let mut temp_string = format!("ㄭ{}", self.create_id());
                     temps.push(temp_string.clone());
 
                     write!(global_post, "{}var {} = ",indent(self.indent), temp_string).unwrap();
