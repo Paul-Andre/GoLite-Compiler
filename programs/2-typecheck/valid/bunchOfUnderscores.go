@@ -29,6 +29,19 @@ func _(a, b int) struct{ a, b int;} {
 }
 
 func _(_, _ int) {
+	var i struct {
+		_ int
+		_ float64
+	}
+	var j struct {
+		_,_,_,_,_ int
+	}
+	var _ struct {
+		_,_,_,_,_ int
+	}
+	var _ struct {
+		_,_,_,_,_ int
+	}
   var _, _ int
   var main, init int
   {
@@ -38,6 +51,8 @@ func _(_, _ int) {
       var _, _ int
       var main, init int
     }
+		_ = 3
+		_,_,_,_,_ = 3,4,5,6,7
   }
 }
 
