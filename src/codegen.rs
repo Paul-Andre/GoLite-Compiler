@@ -181,7 +181,7 @@ impl CodeGenVisitor{
                 let mut temps = Vec::new();
 
                 for expr in expression_list.iter() {
-                    let mut temp_string = format!("ㄭ{}", self.create_id());
+                    let temp_string = format!("ㄭ{}", self.create_id());
                     temps.push(temp_string.clone());
 
                     write!(global_post, "{}var {} = ",indent(self.indent), temp_string).unwrap();
@@ -221,7 +221,7 @@ impl CodeGenVisitor{
                 }
 
                 for expr in rhs.iter() {
-                    let mut temp_string = format!("temp_{}", self.create_id());
+                    let temp_string = format!("temp_{}", self.create_id());
                     temps.push(temp_string.clone());
 
                     write!(global_post, "{}var {} = ",indent(self.indent), temp_string).unwrap();
@@ -459,7 +459,7 @@ impl CodeGenVisitor{
                             },
                             "\"" => { // Interpreted
                                 let mut new_string = String::new();
-                                let mut char_vec: Vec<_> = value.chars().collect::<Vec<_>>();
+                                let char_vec: Vec<_> = value.chars().collect::<Vec<_>>();
                                 let mut skip_next_char = false;
                                 for (id, &c) in char_vec.iter().enumerate() {
                                     if skip_next_char {
