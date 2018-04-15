@@ -271,12 +271,19 @@ impl CodeGenVisitor{
                     condition_string = "true".to_string();
                 }
 
-                println!("{}while ({}) {{",indent(self.indent), condition_string);
+                println!("{}for (;{};(function() {{",indent(self.indent), condition_string);
+
                 self.indent+=1;
-                self.visit_statements(body);
                 println!("{}// post:",indent(self.indent));
                 self.visit_statement(post);
                 self.indent-=1;
+
+                println!("{}}}() ) ) {{", indent(self.indent));
+
+                self.indent+=1;
+                self.visit_statements(body);
+                self.indent-=1;
+
                 println!("{}}}",indent(self.indent));
 
             },
