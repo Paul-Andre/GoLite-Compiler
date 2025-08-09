@@ -11,6 +11,9 @@ mod typecheck;
 mod util;
 mod codegen;
 mod codegen_c;
+mod value;
+
+use value::Value;
 
 pub use ast_constructors::*;
 pub use weed::*;
@@ -81,6 +84,15 @@ fn main() {
         weed::weed_terminating_statements(&ast);
         typecheck::typecheck(&mut ast, false, false);
         print!("OK");
+    } else if &argv[1] == "interpret" {
+        let mut ast = unsafe { Box::from_raw(parse()) };
+        weed::weed_ast(&ast);
+        weed::weed_terminating_statements(&ast);
+        typecheck::typecheck(&mut ast, false, false);
+
+        println!("{}",Value::String("helloadsfad \n".to_string()));
+        println!("{}",util::parse_string_literal("\"hell\\\\o\""));
+
     } else if &argv[1] == "codegen" {
         let mut ast = unsafe { Box::from_raw(parse()) };
         weed::weed_ast(&ast);
@@ -88,6 +100,14 @@ fn main() {
         typecheck::typecheck(&mut ast, false, false);
 
         codegen::codegen(&mut ast);
+
+    } else if &argv[1] == "codegen_c" {
+        let mut ast = unsafe { Box::from_raw(parse()) };
+        weed::weed_ast(&ast);
+        weed::weed_terminating_statements(&ast);
+        typecheck::typecheck(&mut ast, false, false);
+
+        codegen_c::codegen(&mut ast);
 
     } else {
         eprintln!("Error: invalid mode");

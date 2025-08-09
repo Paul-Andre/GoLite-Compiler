@@ -420,25 +420,7 @@ impl CodeGenVisitor{
                         write!(post_string, "{}", value).unwrap();
                     },
                     Kind::Basic(BasicKind::Rune) => {
-                        let letter : &str;
-                        if value.len() == 4 {
-                            letter = &value[1..3];
-                        } else {
-                            letter = &value[1..2];
-                        }
-
-                        let code_no = match letter {
-                            "\\a" => 7,
-                            "\\b" => 8,
-                            "\\f" => 12,
-                            "\\n" => 10,
-                            "\\r" => 13,
-                            "\\t" => 9,
-                            "\\v" => 11,
-                            "\\\\" => 92,
-                            "\\'" => 39,
-                            _ => letter.chars().next().unwrap() as u32 // Will this work?
-                        };
+                        let code_no = parse_rune_literal(value);
                         write!(post_string, "{}", code_no).unwrap();
                     },
                     Kind::Basic(BasicKind::String) => {
