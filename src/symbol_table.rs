@@ -183,9 +183,10 @@ impl<'a> SymbolTable<'a>{
         if self.print_table && &name != "_" {
             indent(self.level + 1);
             if !is_inferred {
+
                 println!("{} [variable] = {}", name, kind);
             } else {
-                println!("{} [variable] = <infer>", name);
+                println!("{} [variable] = {} <inferred>", name, kind);
             }
         }
 
