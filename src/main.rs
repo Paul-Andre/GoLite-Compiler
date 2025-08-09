@@ -10,6 +10,7 @@ mod symbol_table;
 mod typecheck;
 mod util;
 mod codegen;
+mod codegen_c;
 
 pub use ast_constructors::*;
 pub use weed::*;
