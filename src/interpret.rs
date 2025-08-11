@@ -33,7 +33,9 @@ fn init_top_level<'a,'b>(env: &Env<'a, 'b>, root: &'b Program) -> Box<[&'b ast::
     let mut init_functions = Vec::<&'b ast::Function>::new();
     for decl in &root.declarations {
         match &decl.top_level_declaration {
-            TopLevelDeclaration::VarDeclarations{declarations} => {},
+            TopLevelDeclaration::VarDeclarations{declarations} => {
+                interpret_var_declarations(declarations, env);
+            },
             TopLevelDeclaration::TypeDeclarations{declarations} => {},
             TopLevelDeclaration::FunctionDeclaration(function) => {
                 let name = &function.name;
@@ -212,7 +214,19 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
 }
 
 
-//pub fn interpret_block(statement&[StatementNode
+pub fn interpret_var_declarations(declarations: &[VarSpec], env: &Env) {
+    for var_spec in declarations {
+        for (i,name) in var_spec.names.iter().enumerate() {
+            let rv;
+            if let Some(ref exprs) = var_spec.rhs {
+                rv = interpret_expression(&exprs[i], env);
+            } else {
+                rv = value::zero_value(&var_spec.evaluated_kind);
+            }
+            env_declare_var(&env, name, rv);
+        }
+    }
+}
 
 pub fn interpret_statement(statement: &Statement, env: & Env) {
     match statement {
@@ -270,18 +284,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
             todo!();
         },
         Statement::VarDeclarations{declarations} => {
-            //let new_env = create_child_env(env);
-            for var_spec in declarations {
-                for (i,name) in var_spec.names.iter().enumerate() {
-                    let rv;
-                    if let Some(ref exprs) = var_spec.rhs {
-                        rv = interpret_expression(&exprs[i], env);
-                    } else {
-                        rv = value::zero_value(&var_spec.evaluated_kind);
-                    }
-                    env_declare_var(&env, name, rv);
-                }
-            }
+            interpret_var_declarations(declarations, env);
         },
         Statement::TypeDeclarations{declarations} => {
             todo!();

@@ -13,6 +13,8 @@
 //~a prior 0
 //~a first if 10
 //~a second else 20
+//~b if 30
+//~c else 40
 package main
 
 func main() {
@@ -64,6 +66,18 @@ func main() {
     println("a second if", a);
   } else {
     println("a second else", a);
+  }
+
+  if b:=30; true {
+    println("b if", b);
+  } else {
+    println("b else", b);
+  }
+
+  if c:=40; false {
+    println("c if", c);
+  } else {
+    println("c else", c);
   }
 
 }
