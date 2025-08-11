@@ -228,11 +228,29 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
         },
         
         Statement::Assignment{lhs, rhs} => {
+            let mut temp: Vec<Value> = Vec::new();
             for (i,le) in lhs.iter().enumerate() {
                 let re = &rhs[i];
                 match &le.expression {
                     Expression::Identifier{ref name, ..} => {
                         let rv = interpret_expression(re, env);
+                        temp.push(rv);
+                    },
+                    Expression::Index{primary, index} => {
+                        todo!();
+                    }
+                    Expression::Selector{primary, name} => {
+                        todo!();
+                    },
+                    _ => {
+                        panic!("Invalid lhs of an assignment");
+                    },
+                }
+            }
+
+            for (i,(le, rv)) in lhs.iter().zip(temp.into_iter()).enumerate() {
+                match &le.expression {
+                    Expression::Identifier{ref name, ..} => {
                         let mut l_ref = env_get_ref(env, &name).unwrap();
                         *l_ref = rv;
                     },
@@ -248,6 +266,9 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
                 }
             }
         },
+        Statement::OpAssignment{lhs, rhs, operator} => {
+            todo!();
+        },
         Statement::VarDeclarations{declarations} => {
             //let new_env = create_child_env(env);
             for var_spec in declarations {
@@ -261,6 +282,30 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
                     env_declare_var(&env, name, rv);
                 }
             }
+        },
+        Statement::TypeDeclarations{declarations} => {
+            todo!();
+        },
+        Statement::ShortVariableDeclaration{identifier_list, expression_list, is_assigning} => {
+            let mut temp: Vec<Value> = Vec::new();
+            for ee in expression_list {
+                let ev = interpret_expression(ee, env);
+                temp.push(ev);
+            }
+            assert!(identifier_list.len() == temp.len());
+            assert!(is_assigning.len() == temp.len());
+            for (i,ev) in temp.into_iter().enumerate() {
+                let name = &identifier_list[i];
+                if is_assigning[i] {
+                    let mut l_ref = env_get_ref(env, name).unwrap();
+                    *l_ref = ev;
+                } else {
+                    env_declare_var(&env, name, ev);
+                }
+            }
+        },
+        Statement::IncDec{is_dec, expr} => {
+            todo!();
         },
         Statement::Print{exprs} => {
             for expression_node in exprs {
@@ -296,9 +341,25 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
                 panic!("Condition passed to if statement is not a boolean type.");
             }
 
-        }
-        _ => todo!(),
+        },
+        Statement::For{init, condition, post, body} => {
+            todo!();
+        },     
+        Statement::Switch{init, expr, body} => {
+            todo!();
+        },
 
+        Statement::Break => {
+            todo!();
+        },
+
+        Statement::Continue => {
+            todo!();
+        },
+
+        Statement::Return(expr) => {
+            todo!();
+        },
     }
 
 }
