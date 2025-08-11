@@ -142,39 +142,34 @@ pub fn env_set_var(env: &Env, s: &str, v: Value) {
 }
 */
 
-/*
-pub fn compute_binary_operation_int_calc(op:: BinaryOperator, l: i32, r: i32) -> i32 {
-    use BinaryOperator::*;
+pub fn compute_binary_operation_int(op: BinaryOperator, l: i32, r: i32) -> Value {
+    use self::BinaryOperator::*;
     match op {
-        /*
-        Eq
-        Neq,
+        Eq => Value::Bool(l == r),
+        Neq => Value::Bool(l != r),
 
-        Lt,
-        Leq,
-        Gt,
-        Geq,
-        */
+        Lt => Value::Bool(l < r),
+        Leq => Value::Bool(l <= r),
+        Gt => Value::Bool(l > r),
+        Geq => Value::Bool(l >= r),
 
-        Add,
-        Sub,
-        Mul,
-        Div,
+        Add => Value::Int(l.wrapping_add(r)),
+        Sub => Value::Int(l.wrapping_sub(r)),
+        Mul => Value::Int(l.wrapping_mul(r)),
+        Div => Value::Int(l.wrapping_div(r)),
 
-        BwOr,
-        BwXor,
-        Mod,
-        BwAnd,
-        BwAndNot,
+        BwOr => Value::Int(l | r),
+        BwXor => Value::Int(l ^ r),
+        Mod => Value::Int(l.wrapping_rem(r)),
+        BwAnd => Value::Int(l & r),
+        BwAndNot => Value::Int(l & (! r)),
 
-        LShift,
-        RShift,
+        LShift => Value::Int(l<<r),
+        RShift => Value::Int(l>>r),
 
         _ => panic!("Should not have been computing this, bc or/and are shortcircuiting"),
-
-
+    }
 }
-*/
 
 pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Value {
     match &expression_node.expression {
@@ -190,7 +185,13 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
                 let lv = interpret_expression(lhs, env);
                 let rv = interpret_expression(rhs, env);
 
-                todo!();
+                match (lv, rv) {
+                    (Value::Int(li), Value::Int(ri)) => {
+                        compute_binary_operation_int(*op, li, ri)
+                    },
+                    _ => todo!(),
+                }
+
             }
 
         }

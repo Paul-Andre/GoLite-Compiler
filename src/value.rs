@@ -224,10 +224,18 @@ pub mod builtins {
         }
     }
     pub fn bw_compl(v: &Value) -> Value {
-        todo!();
+        use value::Value::*;
+        match v {
+            Int(a) => Int(!a),
+            _ => panic!("Cannot take complement"),
+        }
     }
     pub fn not(v: &Value) -> Value {
-        todo!();
+        use value::Value::*;
+        match v {
+            Bool(a) => Bool(!a),
+            _ => panic!("Cannot take not"),
+        }
     }
 
     // Binary operators:
