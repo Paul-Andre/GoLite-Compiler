@@ -25,7 +25,7 @@ pub fn indent(size: u32) -> String {
 }
 
 // !!! This assumes it is a valid rune literal.
-pub fn parse_rune_literal(value: &str) -> u32 {
+pub fn parse_rune_literal(value: &str) -> i32 {
     let letter : &str;
     if value.len() == 4 {
         letter = &value[1..3];
@@ -43,7 +43,7 @@ pub fn parse_rune_literal(value: &str) -> u32 {
         "\\v" => 11,
         "\\\\" => 92,
         "\\'" => 39,
-        _ => letter.chars().next().unwrap() as u32 // Will this work?
+        _ => letter.chars().next().unwrap() as i32 // Will this work?
     };
     return code_no;
 }

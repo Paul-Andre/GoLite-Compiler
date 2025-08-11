@@ -144,12 +144,6 @@ pub fn env_set_var(env: &Env, s: &str, v: Value) {
 
 pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Value {
     match &expression_node.expression {
-        Expression::Identifier{name, ..} => {
-            //println!("{}", name);
-            //println!("{:?}", env);
-            let v = env_get(env, name).unwrap();
-            return v;
-        },
         Expression::RawLiteral{value} => {value::parse_with_kind(&value, &expression_node.kind)}
         Expression::BinaryOperation { op, lhs, rhs } => {
             todo!();
@@ -163,41 +157,11 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
                 UnaryOperator::Not => builtins::not(&rv),
             }
         }
-        Expression::Index { primary, index } => {
-            let mut pv = interpret_expression(primary, env);
-            let iv = interpret_expression(index, env);
-            match pv {
-                Value::Array(ref mut array) => {
-                    match iv {
-                        Value::Int(i) => {
-                            check_bounds(i, array.len(), expression_node.line_number);
-                            array_get_index_ref(&mut *array, i).clone()
-                        },
-                        _ => {
-                            panic!("Non integer as index")
-                        }
-                    }
-
-                }, 
-                Value::Slice(ref mut slice) => {
-                    match iv {
-                        Value::Int(i) => {
-                            check_bounds(i, slice.length, expression_node.line_number);
-                            slice_get_index_ref(slice, i).clone()
-                        },
-                        _ => {
-                            panic!("Non integer as index")
-                        }
-                    }
-                }, 
-                _ => {
-                    panic!("Non array or slice being indexed")
-
-                }
-            }
-        }
-        Expression::Selector { primary, name } => {
-            todo!()
+        Expression::Identifier{..} |
+        Expression::Index { .. } |
+        Expression::Selector { .. } => {
+            let r = interpret_reference_expr(expression_node, env);
+            r.get_value(env)
         }
         Expression::FunctionCall { primary, arguments } => {
             todo!()
@@ -228,6 +192,134 @@ pub fn interpret_var_declarations(declarations: &[VarSpec], env: &Env) {
     }
 }
 
+pub enum ReferenceBase {
+    Identifier(String),
+    Value(Value),
+
+}
+
+pub enum ReferenceModifier {
+    Selector(String),
+    Index(i32),
+}
+
+pub struct Reference {
+    base: ReferenceBase,
+    modifier_stack: Vec<ReferenceModifier>,
+}
+
+fn get_reference_value(base: &Value, modifier_stack: &[ReferenceModifier]) -> Value {
+    if modifier_stack.len() == 0 {
+        return base.clone();
+    }
+    match (base, &modifier_stack[0]) {
+        (Value::Array(ref array), ReferenceModifier::Index(ii))  => {
+            let i = *ii;
+            // TODO: display the correct line number
+            check_bounds(i, array.len(), 0);
+            get_reference_value(& array[i as usize], &modifier_stack[1..])
+        }
+        (Value::Slice(ref slice), ReferenceModifier::Index(ii))  => {
+            let i = *ii;
+            // TODO: display the correct line number
+            check_bounds(i, slice.length, 0);
+            get_reference_value(& *slice.contents[i as usize].borrow(), &modifier_stack[1..])
+        }
+        (_, ReferenceModifier::Index(s))  => panic!("Trying to index something that isn't an array or slice."),
+        (Value::Struct(ref hm), ReferenceModifier::Selector(s))  =>  {
+            get_reference_value(hm.get(s).unwrap(), &modifier_stack[1..])
+        }
+        (_, ReferenceModifier::Selector(s))  => panic!("Trying to get a field of something that isn't a struct."),
+        (_,_) => panic!("Invalid reference expression.")
+    }
+}
+
+fn set_reference_value(base: &mut Value, modifier_stack: &[ReferenceModifier], value: Value) {
+    if modifier_stack.len() == 0 {
+        *base = value;
+        return;
+    }
+    match (base, &modifier_stack[0]) {
+        (Value::Array(ref mut array), ReferenceModifier::Index(ii))  => {
+            let i = *ii;
+            // TODO: display the correct line number
+            check_bounds(i, array.len(), 0);
+            set_reference_value(&mut array[i as usize], &modifier_stack[1..], value)
+        }
+        (Value::Slice(ref mut slice), ReferenceModifier::Index(ii))  => {
+            let i = *ii;
+            // TODO: display the correct line number
+            check_bounds(i, slice.length, 0);
+            set_reference_value(&mut *slice.contents[i as usize].borrow_mut(), &modifier_stack[1..], value)
+        }
+        (_, ReferenceModifier::Index(s))  => panic!("Trying to index something that isn't an array or slice."),
+        (Value::Struct(ref mut hm), ReferenceModifier::Selector(s))  =>  {
+            set_reference_value(hm.get_mut(s).unwrap(), &modifier_stack[1..], value)
+        }
+        (_, ReferenceModifier::Selector(s))  => panic!("Trying to get a field of something that isn't a struct."),
+        (_,_) => panic!("Invalid reference expression.")
+    }
+}
+
+
+impl Reference {
+    pub fn get_value(self, env: &Env) -> Value {
+        let modifier_stack = &self.modifier_stack;
+        match self.base {
+            ReferenceBase::Identifier(ref s) => {
+                // TODO: perhaps cleaner if remove env_get_ref altogether
+                let mut moved = env_get(env, s).unwrap();
+                get_reference_value(&moved, modifier_stack)
+            },
+            ReferenceBase::Value(base) => {
+                let mut moved = base;
+                get_reference_value(&moved, modifier_stack)
+            }
+        }
+    }
+    pub fn set_value(self, env: &Env, value: Value) {
+        let modifier_stack = &self.modifier_stack;
+        match self.base {
+            ReferenceBase::Identifier(ref s) => {
+                // TODO: perhaps cleaner if remove env_get_ref altogether
+                set_reference_value(&mut *env_get_ref(env, s).unwrap(), modifier_stack, value);
+            },
+            ReferenceBase::Value(base) => {
+                let mut moved = base;
+                set_reference_value(&mut moved, modifier_stack, value);
+            }
+        }
+    }
+}
+
+pub fn interpret_reference_expr(expr: &ExpressionNode, env: &Env) -> Reference {
+    match expr.expression {
+        Expression::Identifier{ref name, ..} => {
+            Reference {
+                base: ReferenceBase::Identifier(name.clone()),
+                modifier_stack: Vec::new(),
+            }
+        },
+        Expression::Index{ref primary,ref  index} => {
+            let mut reference = interpret_reference_expr(&primary, env);
+            let i = interpret_expression(&*index, env).get_integer().unwrap();
+            reference.modifier_stack.push(ReferenceModifier::Index(i));
+            reference
+        }
+        Expression::Selector{ref primary,ref name} => {
+            let mut reference = interpret_reference_expr(&primary, env);
+            reference.modifier_stack.push(ReferenceModifier::Selector(name.clone()));
+            reference
+        },
+        _ => {
+            Reference {
+                base: ReferenceBase::Value(interpret_expression(expr, env)),
+                modifier_stack: Vec::new(),
+            }
+        }
+    }
+}
+
 pub fn interpret_statement(statement: &Statement, env: & Env) {
     match statement {
         Statement::Empty => {},
@@ -242,42 +334,21 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
         },
         
         Statement::Assignment{lhs, rhs} => {
-            let mut temp: Vec<Value> = Vec::new();
-            for (i,le) in lhs.iter().enumerate() {
-                let re = &rhs[i];
-                match &le.expression {
-                    Expression::Identifier{ref name, ..} => {
-                        let rv = interpret_expression(re, env);
-                        temp.push(rv);
-                    },
-                    Expression::Index{primary, index} => {
-                        todo!();
-                    }
-                    Expression::Selector{primary, name} => {
-                        todo!();
-                    },
-                    _ => {
-                        panic!("Invalid lhs of an assignment");
-                    },
-                }
+            let mut references: Vec<Reference> = Vec::new();
+            for le in lhs {
+                let l_ref = interpret_reference_expr(le, env);
+                references.push(l_ref);
             }
 
-            for (i,(le, rv)) in lhs.iter().zip(temp.into_iter()).enumerate() {
-                match &le.expression {
-                    Expression::Identifier{ref name, ..} => {
-                        let mut l_ref = env_get_ref(env, &name).unwrap();
-                        *l_ref = rv;
-                    },
-                    Expression::Index{primary, index} => {
-                        todo!();
-                    }
-                    Expression::Selector{primary, name} => {
-                        todo!();
-                    },
-                    _ => {
-                        panic!("Invalid lhs of an assignment");
-                    },
-                }
+            let mut values: Vec<Value> = Vec::new();
+            for re in rhs {
+                let r_val = interpret_expression(re, env);
+                values.push(r_val);
+            }
+            assert!(references.len() == values.len());
+
+            for (l_ref, r_val) in references.into_iter().zip(values.into_iter()) {
+                l_ref.set_value(env, r_val);
             }
         },
         Statement::OpAssignment{lhs, rhs, operator} => {

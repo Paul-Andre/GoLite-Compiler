@@ -1,8 +1,9 @@
-//~+1.000123e+003 1000
+//~+1.090000e+001 10 -10
 package main
 
 func main() {
-	var a = 1000.123
-	var b int = int(a)
-	println(a, b)
+	var a = 10.9
+	var b = int(a)
+  var c = int(-a)
+	println(a, b, c)
 }

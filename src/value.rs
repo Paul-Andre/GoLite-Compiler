@@ -11,7 +11,7 @@ use util;
 
 use std::fmt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Slice {
     pub length: usize,
     pub contents: Rc<[RefCell<Value>]>,
@@ -20,11 +20,11 @@ pub struct Slice {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Value {
     Int(i32),
     Float(f64),
-    Rune(u32),
+    Rune(i32),
     String(String),
     Bool(bool),
     
@@ -34,6 +34,16 @@ pub enum Value {
     Void,
 
     Undefined, // Used for initializing Slices (although maybe it shouldn't and I should just use the zero type?
+}
+
+impl Value {
+    pub fn get_integer(&self) -> Option<i32> {
+        match self {
+            Value::Int(i) |
+            Value::Rune(i) => Some(*i),
+            _ => None
+        }
+    }
 }
 
 
@@ -83,15 +93,23 @@ pub fn parse_with_kind(s: &str,k: &Kind) -> Value {
 }
 
 pub fn zero_array(k: &Kind, len: u32) -> Value {
-    let v: Vec<Value> = Vec::new();
-    Value::Array(v.into());
-    todo!();
+    let mut v: Vec<Value> = Vec::new();
+    for _ in 0..len {
+        v.push(zero_value(k));
+    }
+    Value::Array(v.into())
 }
 
 pub fn zero_slice(k: &Kind) -> Value {
-    let v: Vec<RefCell<Value>> = Vec::new();
+    let mut v: Vec<RefCell<Value>> = Vec::new();
     Value::Slice(Slice{length:0, contents:v.into()})
-
+}
+pub fn zero_struct(fields: &[kind::Field]) -> Value {
+    let mut ret = HashMap::<String, Value>::new();
+    for kind::Field{name, kind} in fields {
+        ret.insert(name.clone(), zero_value(kind));
+    }
+    Value::Struct(ret)
 }
 
 pub fn zero_value(k: &Kind) -> Value {
@@ -123,10 +141,7 @@ pub fn zero_value(k: &Kind) -> Value {
             zero_slice(k)
         }
         Struct(ref fields) => {
-            for &kind::Field{ref name, ref kind} in fields {
-
-            }
-            todo!();
+            zero_struct(fields)
         },
         Underscore => panic!("It does not make sense to instantiate the underscore type"),
         Void => Value::Void,
@@ -186,6 +201,15 @@ pub mod builtins {
     }
     pub fn not(v: &Value) -> Value {
         todo!();
+    }
+
+    // Binary operators:
+    
+    pub fn eq(l: &Value, r: &Value) -> Value {
+        Value::Bool(l == r)
+    }
+    pub fn neq(l: &Value, r: &Value) -> Value {
+        Value::Bool(l != r)
     }
 
 }
