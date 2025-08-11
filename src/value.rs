@@ -44,6 +44,45 @@ impl Value {
     }
 }
 
+fn format_float(a: f64, f: &mut fmt::Formatter) -> fmt::Result {
+    if a.is_finite() {
+        let base = format!("{:.6e}", a);
+
+        let parts = base.split("e").collect::<Vec<_>>();
+        assert!(parts.len() == 2);
+
+        let mut mantissa = parts[0];
+        let mut exponent = parts[1];
+
+        let neg_mant = &mantissa[0..1] == "-";
+        mantissa = if neg_mant {&mantissa[1..]} else {mantissa};
+
+        let neg_exp = &exponent[0..1] == "-";
+        exponent = if neg_exp {&exponent[1..]} else {exponent};
+
+        let mut len_exp = exponent.len();
+
+        write!(f, "{}", if neg_mant { "-" } else {"+"});
+        write!(f, "{}", mantissa);
+
+        write!(f, "e");
+
+        write!(f, "{}", if neg_exp { "-" } else {"+"});
+        while(len_exp<3) {
+            write!(f, "0");
+            len_exp += 1;
+        }
+        write!(f, "{}", exponent)
+    } else if (a.is_nan()) {
+        write!(f,"NaN")
+    } else if (a == f64::INFINITY) {
+        write!(f,"+Inf")
+    } else if (a == f64::NEG_INFINITY) {
+        write!(f,"-Inf")
+    } else {
+        panic!("Those are al the f64 options, there should be any others.");
+    }
+}
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -51,7 +90,7 @@ impl fmt::Display for Value {
 
         match self {
             Int(a) => write!(f, "{}", a),
-            Float(a) => write!(f, "{}", a),
+            Float(a) => format_float(*a, f),
             String(ref a) => write!(f, "{}", a), // prints the string without quotation marks
             Bool(a) => write!(f, "{}", a), // prints true or false
 
@@ -237,64 +276,5 @@ pub mod builtins {
             _ => panic!("Cannot take not"),
         }
     }
-
-    // Binary operators:
-    
-    pub fn eq(l: &Value, r: &Value) -> Value {
-        Value::Bool(l == r)
-    }
-    pub fn neq(l: &Value, r: &Value) -> Value {
-        Value::Bool(l != r)
-    }
-
-    pub fn lt(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn leq(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn gt(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn geq(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn add(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn sub(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn mul(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn div(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn bw_or(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn bw_xor(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn modu(l: &Value, r: &Value) -> Value {
-        todo!()
-    }
-
-    pub fn bw_and(l: &Value, r: &Value) -> Value {
-        todo!()
-
-    }
-
 
 }
