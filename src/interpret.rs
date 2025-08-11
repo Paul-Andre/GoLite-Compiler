@@ -211,6 +211,9 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
     }
 }
 
+
+//pub fn interpret_block(statement&[StatementNode
+
 pub fn interpret_statement(statement: &Statement, env: & Env) {
     match statement {
         Statement::Empty => {},
@@ -276,6 +279,24 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
             }
             print!("\n");
         },
+        Statement::If{init, condition, if_branch, else_branch} => {
+            interpret_statement(&init.statement, env);
+            let cv = interpret_expression(condition, env);
+            if let Value::Bool(b) = cv {
+                if b {
+                    let new_env = create_child_env(env);
+                    for sn in if_branch {
+                        interpret_statement(&sn.statement, &new_env);
+                    }
+                } else if let Some(s) = else_branch{
+                    interpret_statement(&s.statement, env);
+                }
+
+            } else {
+                panic!("Condition passed to if statement is not a boolean type.");
+            }
+
+        }
         _ => todo!(),
 
     }
