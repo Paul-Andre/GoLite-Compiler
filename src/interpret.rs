@@ -171,6 +171,26 @@ pub fn compute_binary_operation_int(op: BinaryOperator, l: i32, r: i32) -> Value
     }
 }
 
+pub fn compute_binary_operation_float(op: BinaryOperator, l: f64, r: f64) -> Value {
+    use self::BinaryOperator::*;
+    match op {
+        Eq => Value::Bool(l == r),
+        Neq => Value::Bool(l != r),
+
+        Lt => Value::Bool(l < r),
+        Leq => Value::Bool(l <= r),
+        Gt => Value::Bool(l > r),
+        Geq => Value::Bool(l >= r),
+
+        Add => Value::Float(l+r),
+        Sub => Value::Float(l-r),
+        Mul => Value::Float(l*r),
+        Div => Value::Float(l/r),
+
+        _ => panic!("Other operators not supported on floats."),
+    }
+}
+
 pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Value {
     match &expression_node.expression {
         Expression::RawLiteral{value} => {value::parse_with_kind(&value, &expression_node.kind)}
@@ -188,6 +208,9 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
                 match (lv, rv) {
                     (Value::Int(li), Value::Int(ri)) => {
                         compute_binary_operation_int(*op, li, ri)
+                    },
+                    (Value::Float(li), Value::Float(ri)) => {
+                        compute_binary_operation_float(*op, li, ri)
                     },
                     _ => todo!(),
                 }
@@ -552,15 +575,13 @@ pub fn interpret_function<'a,'b>(f: &Function, tl_env: &'a Env<'a,'b>, args: &[V
 
 pub fn interpret<'b>(root: &'b Program){
     let mut env = Env {parent:None, entries:RefCell::new(HashMap::new())};
-    let init_functions = init_top_level(&env, root);
     {
         env.entries.borrow_mut().insert("true".to_string(),Declaration::Variable(Value::Bool(true)));
         env.entries.borrow_mut().insert("false".to_string(),Declaration::Variable(Value::Bool(false)));
-
     }
+    let init_functions = init_top_level(&env, root);
 
     let empty_args: &[Value] = &[];
-
     for f in init_functions.iter() {
         interpret_function(f, &mut env, empty_args);
     }
