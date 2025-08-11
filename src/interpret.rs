@@ -17,7 +17,6 @@ use std::rc::Rc;
 #[derive(Debug)]
 pub enum Declaration<'b> {
     Variable(Value),
-    Type(Kind),
     Function(&'b ast::Function),
 }
 
@@ -56,7 +55,6 @@ pub fn env_get(env: &Env, s: &str) -> Option<Value> {
     if let Some(declaration) = env.entries.borrow().get(s) {
         match declaration {
             Declaration::Variable(v) => Some(v.clone()),
-            Declaration::Type(_) => todo!(),
             Declaration::Function(_) => todo!()
         }
     } else if let Some(parent) = env.parent {
@@ -77,7 +75,6 @@ pub fn env_get_ref<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<RefMut<'a, Val
                 found = true;
 
             }
-            Declaration::Type(_) => todo!(),
             Declaration::Function(_) => todo!()
         }
     }
@@ -234,7 +231,22 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
             r.get_value(env)
         }
         Expression::FunctionCall { primary, arguments } => {
-            todo!()
+            match &primary.expression {
+                Expression::Identifier{name, ..} => {
+                    println!("{}", name);
+
+
+                },
+                _ => todo!()
+            }
+            let mut evaled_args = Vec::new();
+            for arg in arguments {
+                let av = interpret_expression(arg, env);
+                evaled_args.push(av);
+            }
+            Value::Void
+
+
         }
         Expression::Append { lhs, rhs } => {
             let lv = interpret_expression(lhs, env);
@@ -429,7 +441,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
             interpret_var_declarations(declarations, env);
         },
         Statement::TypeDeclarations{declarations} => {
-            todo!();
+            //todo!();
         },
         Statement::ShortVariableDeclaration{identifier_list, expression_list, is_assigning} => {
             let mut temp: Vec<Value> = Vec::new();
