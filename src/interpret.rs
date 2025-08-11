@@ -171,8 +171,10 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
             let rv = interpret_expression(rhs, env);
             builtins::append(lv,rv)
         }
-        Expression::TypeCast { name, expr } => {
-            todo!()
+        Expression::TypeCast {expr, ..} => {
+            let kind = &expression_node.kind;
+            let v = interpret_expression(expr, env);
+            builtins::cast(kind, &v)
         }
     }
 }

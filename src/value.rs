@@ -153,6 +153,39 @@ pub mod builtins {
     use value;
     use value::*;
 
+    pub fn cast(kk: &Kind, v: &Value) -> Value {
+        let k = kk.resolve();
+        if let Kind::Basic(bk) = k {
+                //dbg!(bk,v);
+            match (bk, v) {
+                (BasicKind::String, Value::Rune(i))|
+                (BasicKind::String, Value::Int(i)) => {
+                    // TODO: in go, casting an int to string is now deprecated...
+                    // Should I update my thing throughout?
+                    let i = *i;
+                    let c = char::from_u32(i as u32).unwrap();
+                    return Value::String(format!("{}",c))
+                },
+                (BasicKind::Int, Value::Float(f)) => {
+                    let f = *f;
+                    return Value::Int(f as i32);
+                },
+                (BasicKind::Rune, Value::Float(f)) => {
+                    let f = *f;
+                    return Value::Rune(f as i32);
+                },
+                (BasicKind::Float, Value::Int(i)) |
+                (BasicKind::Float, Value::Rune(i)) => {
+                    let i = *i;
+                    return Value::Float(i as f64);
+                },
+                (_,_) => {},
+            }
+        }
+        // Assume most of the heavy lifting was done by the typechecker.
+        return v.clone();
+    }
+
     pub fn append(l: Value, r: Value) -> Value {
         if let Value::Slice(slice) = l {
             let length = slice.length;
