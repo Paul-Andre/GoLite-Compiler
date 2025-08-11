@@ -158,6 +158,15 @@ impl Kind {
         }
     }
 
+    pub fn is_floating_point(&self) -> bool {
+        match self.resolve() {
+            Kind::Basic(t) => {
+                t == BasicKind::Float
+            }
+            _ => false
+        }
+    }
+
     pub fn is_boolean(&self) -> bool {
         match self.resolve() {
             Kind::Basic(BasicKind::Bool) => true,

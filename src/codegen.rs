@@ -584,6 +584,10 @@ impl CodeGenVisitor{
                     write!(post_string, "String.fromCharCode(").unwrap();
                     self.visit_expression(expr, pre_string, post_string);
                     write!(post_string, ")").unwrap();
+                } else if exp.kind.is_integer() && expr.kind.is_floating_point(){
+                    write!(post_string, "Math.trunc(").unwrap();
+                    self.visit_expression(expr, pre_string, post_string);
+                    write!(post_string, ")").unwrap();
                 } else {
                     // Do nothing at all
                     self.visit_expression(expr, pre_string, post_string);
