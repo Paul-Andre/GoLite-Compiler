@@ -312,30 +312,29 @@ fn set_reference_value(base: &mut Value, modifier_stack: &[ReferenceModifier], v
 
 
 impl Reference {
-    pub fn get_value(self, env: &Env) -> Value {
+    pub fn get_value(&self, env: &Env) -> Value {
         let modifier_stack = &self.modifier_stack;
-        match self.base {
+        match &self.base {
             ReferenceBase::Identifier(ref s) => {
                 // TODO: perhaps cleaner if remove env_get_ref altogether
                 let mut moved = env_get(env, s).unwrap();
                 get_reference_value(&moved, modifier_stack)
             },
             ReferenceBase::Value(base) => {
-                let mut moved = base;
-                get_reference_value(&moved, modifier_stack)
+                get_reference_value(&base, modifier_stack)
             }
         }
     }
-    pub fn set_value(self, env: &Env, value: Value) {
+    pub fn set_value(&self, env: &Env, value: Value) {
         let modifier_stack = &self.modifier_stack;
-        match self.base {
+        match &self.base {
             ReferenceBase::Identifier(ref s) => {
                 // TODO: perhaps cleaner if remove env_get_ref altogether
                 set_reference_value(&mut *env_get_ref(env, s).unwrap(), modifier_stack, value);
             },
             ReferenceBase::Value(base) => {
-                let mut moved = base;
-                set_reference_value(&mut moved, modifier_stack, value);
+                let mut copy = base.clone();
+                set_reference_value(&mut copy, modifier_stack, value);
             }
         }
     }
@@ -428,7 +427,27 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
             }
         },
         Statement::IncDec{is_dec, expr} => {
-            todo!();
+            let is_dec = *is_dec;
+            let r = interpret_reference_expr(expr, env);
+            let v = r.get_value(env);
+
+            let new_v =
+            match v {
+                Value::Int(i) => {
+                    Value::Int(
+                        if is_dec {i-1} else {i+1}
+                    )
+                },
+                Value::Float(f) =>  {
+                    Value::Float(
+                        if is_dec {f-1.} else {f+1.}
+                    )
+                },
+                _ => panic!("Shouldn't inc/dec this"),
+            };
+
+            r.set_value(env, new_v);
+
         },
         Statement::Print{exprs} => {
             for expression_node in exprs {
@@ -466,9 +485,9 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
 
         },
         Statement::For{init, condition, post, body} => {
+                interpret_statement(&init.statement, env);
             loop {
                 let new_env = create_child_env(env);
-                interpret_statement(&init.statement, env);
 
                 let looping =
                 if let Some(cond) = condition {
