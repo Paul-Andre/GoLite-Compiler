@@ -346,7 +346,31 @@ pub fn interpret_statement(statement: &Statement, env: & Env) {
 
         },
         Statement::For{init, condition, post, body} => {
-            todo!();
+            loop {
+                let new_env = create_child_env(env);
+                interpret_statement(&init.statement, env);
+
+                let looping =
+                if let Some(cond) = condition {
+                    let cv = interpret_expression(cond, env);
+                    if let Value::Bool(b) = cv {
+                        b
+                    } else {
+                        panic!("Condition passed to if statement is not a boolean type.");
+                    }
+                } else {
+                    true
+                };
+
+                if looping {
+                    for sn in body {
+                        interpret_statement(&sn.statement, &new_env);
+                    }
+                    interpret_statement(&post.statement, &env);
+                } else {
+                    break;
+                }
+            }
         },     
         Statement::Switch{init, expr, body} => {
             todo!();
