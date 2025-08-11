@@ -29,7 +29,9 @@ FILENAME="${1%.*}.js"
 # You MUST replace the following line with the command to execute your compiled code
 # Note the bash replacement which changes:
 #   programs/3-semantics+codegen/valid/test.min -> programs/3-semantics+codegen/valid/test.out
-node $FILENAME
+
+#node $FILENAME
+cat $1 | ./target/debug/golite interpret
 
 # Lastly, we propagate the exit code
 exit $?

@@ -12,6 +12,7 @@ mod util;
 mod codegen;
 mod codegen_c;
 mod value;
+mod interpret;
 
 use value::Value;
 
@@ -90,8 +91,7 @@ fn main() {
         weed::weed_terminating_statements(&ast);
         typecheck::typecheck(&mut ast, false, false);
 
-        println!("{}",Value::String("helloadsfad \n".to_string()));
-        println!("{}",util::parse_string_literal("\"hell\\\\o\""));
+        interpret::interpret(&mut ast);
 
     } else if &argv[1] == "codegen" {
         let mut ast = unsafe { Box::from_raw(parse()) };

@@ -13,6 +13,19 @@ pub enum BasicKind {
 }
 
 #[derive(Debug,Clone)]
+pub struct Field {
+    pub name: String,
+    pub kind: Kind
+}
+
+#[derive(Debug,Clone)]
+pub struct Definition {
+    pub line_number: u32,
+    pub name: String,
+    pub kind: Kind
+}
+
+#[derive(Debug,Clone)]
 pub enum Kind {
     Undefined,
     Basic(BasicKind),
@@ -62,18 +75,6 @@ impl fmt::Display for Kind {
     }
 }
 
-#[derive(Debug,Clone)]
-pub struct Field {
-    pub name: String,
-    pub kind: Kind
-}
-
-#[derive(Debug,Clone)]
-pub struct Definition {
-    pub line_number: u32,
-    pub name: String,
-    pub kind: Kind
-}
 
 pub fn are_identical(a: &Kind, b: &Kind) -> bool {
     use self::Kind::*;

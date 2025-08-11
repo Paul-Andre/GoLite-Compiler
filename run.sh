@@ -14,7 +14,7 @@ then
 	exit 1
 fi
 
-if [[ "|scan|tokens|parse|pretty|rename|obfuscate|symbol|typecheck|codegen|" != *"|$1|"* ]]
+if [[ "|scan|tokens|parse|pretty|rename|obfuscate|symbol|typecheck|codegen|runjs|interpret|" != *"|$1|"* ]]
 then
 	echo "Unknown mode \"$1\""
 	echo "Usage: $0 <mode> <file>"
@@ -31,7 +31,10 @@ fi
 if [[ "$1" == codegen ]]
 then
     ./target/debug/golite "$1" < "$2" > "${2%.*}.js" && echo OK
-else 
+  elif [[ "$1" == runjs ]]
+  then
+    ./target/debug/golite codegen < "$2" > "${2%.*}.js" && node "${2%.*}.js"
+  else
     ./target/debug/golite "$1" < "$2"
 fi
 #cargo run --quiet "$1" < "$2"

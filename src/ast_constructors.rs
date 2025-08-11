@@ -129,12 +129,12 @@ pub extern "C" fn make_function_top_level_declaration(line: u32,
                                                       body: *mut Vec<StatementNode>) -> *mut TopLevelDeclarationNode {
     make_top_level_declaration_ptr(
         line,
-        TopLevelDeclaration::FunctionDeclaration{
+        TopLevelDeclaration::FunctionDeclaration(Function {
             name: unsafe { from_c_string(name) },
             parameters: *unsafe { Box::from_raw(params) },
             return_kind: unsafe { from_raw_or_none(return_kind) },
             body: *unsafe { Box::from_raw(body) }
-        }
+        })
     )
 }
 

@@ -9,7 +9,7 @@ pub fn weed_ast(root: &Program){
     }
     for node in root.declarations.iter() {
         match node.top_level_declaration {
-            TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body } => {
+            TopLevelDeclaration::FunctionDeclaration (Function { ref name, ref parameters, ref return_kind, ref body }) => {
                 check_blank_func_decl(name, parameters, return_kind, body, node.line_number);
                 for stmt in body.iter() {
                     check_for_correct_break_and_continue_usage(stmt, false);
@@ -30,7 +30,7 @@ pub fn weed_ast(root: &Program){
 pub fn weed_terminating_statements(root: &Program) {
     for node in root.declarations.iter() {
         match node.top_level_declaration {
-            TopLevelDeclaration::FunctionDeclaration { ref return_kind, ref body, .. } => {
+            TopLevelDeclaration::FunctionDeclaration (Function { ref return_kind, ref body, .. }) => {
                 match return_kind {
                     &Some(..) => check_correct_terminating_statements(body, node.line_number),
                     &None => {},

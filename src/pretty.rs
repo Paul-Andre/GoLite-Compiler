@@ -41,7 +41,7 @@ fn pretty_print_top_level_declaration(node: &TopLevelDeclarationNode){
             }
             print!(")");
         },
-        TopLevelDeclaration::FunctionDeclaration { ref name, ref parameters, ref return_kind, ref body} =>  {
+        TopLevelDeclaration::FunctionDeclaration (Function{ ref name, ref parameters, ref return_kind, ref body} )=>  {
             pretty_print_function_declaration(&name, &parameters, &return_kind, &body);
         }
     }

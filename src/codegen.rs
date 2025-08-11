@@ -36,7 +36,7 @@ impl CodeGenVisitor{
             }
 
             TopLevelDeclaration::FunctionDeclaration 
-            { ref name, ref parameters, ref body, .. } => {
+                (Function { ref name, ref parameters, ref body, .. }) => {
                 if name == "_" {
                     return;
                 }

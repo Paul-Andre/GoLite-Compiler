@@ -28,7 +28,8 @@ fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbol_ta
         TopLevelDeclaration::TypeDeclarations { ref mut declarations } => {
             typecheck_type_declarations(declarations, symbol_table);
         }
-        TopLevelDeclaration::FunctionDeclaration { ref mut name, ref mut parameters, ref mut return_kind, ref mut body } => {
+        TopLevelDeclaration::FunctionDeclaration (Function {
+            ref mut name, ref mut parameters, ref mut return_kind, ref mut body }) => {
             let renamed = typecheck_function_declaration(name, parameters, return_kind, body, decl.line_number, symbol_table);
 
             *name = renamed;

@@ -7,6 +7,22 @@ use kind;
 use kind::Kind;
 use kind::BasicKind;
 
+
+#[derive(Clone)]
+pub enum Declaration {
+    Variable(Kind),
+    Constant(Kind),
+    Type(Kind),
+    Function{params: Vec<Kind>, return_kind: Option<Kind>},
+    Dummy,
+}
+
+pub struct Symbol {
+    pub line_number: u32,
+    pub new_name: String,
+    pub declaration: Declaration,
+}
+
 pub struct SymbolTable<'a> {
     pub parent_scope: Option<&'a SymbolTable<'a>>,
     pub symbols: HashMap<String, Symbol>,
@@ -17,7 +33,6 @@ pub struct SymbolTable<'a> {
     pub id_counter: Rc<Cell<u32>>,
     pub obfuscate: bool,
 }
-
 
 
 impl<'a> SymbolTable<'a>{
@@ -230,21 +245,6 @@ impl<'a> Drop for SymbolTable<'a> {
 }
 
 
-pub struct Symbol {
-    pub line_number: u32,
-    pub new_name: String,
-    pub declaration: Declaration,
-}
-
-
-#[derive(Clone)]
-pub enum Declaration {
-    Variable(Kind),
-    Constant(Kind),
-    Type(Kind),
-    Function{params: Vec<Kind>, return_kind: Option<Kind>},
-    Dummy,
-}
 
 
 /// Populates the symbol table with the Go default variables and types

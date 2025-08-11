@@ -184,15 +184,18 @@ pub struct StatementNode {
 }
 
 #[derive(Debug)]
+pub struct Function {
+    pub name: String,
+    pub parameters: Vec<Field>,
+    pub return_kind: Option<Box<AstKindNode>>,
+    pub body: Vec<StatementNode>,
+}
+
+#[derive(Debug)]
 pub enum TopLevelDeclaration {
     VarDeclarations { declarations: Vec<VarSpec> },
     TypeDeclarations { declarations: Vec<TypeSpec> },
-    FunctionDeclaration {
-        name: String,
-        parameters: Vec<Field>,
-        return_kind: Option<Box<AstKindNode>>,
-        body: Vec<StatementNode>,
-    },
+    FunctionDeclaration (Function),
 }
 
 #[derive(Debug)]
