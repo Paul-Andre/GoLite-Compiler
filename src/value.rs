@@ -24,7 +24,6 @@ pub struct Slice {
 pub enum Value {
     Int(i32),
     Float(f64),
-    Rune(i32),
     String(String),
     Bool(bool),
     
@@ -39,8 +38,7 @@ pub enum Value {
 impl Value {
     pub fn get_integer(&self) -> Option<i32> {
         match self {
-            Value::Int(i) |
-            Value::Rune(i) => Some(*i),
+            Value::Int(i) => Some(*i),
             _ => None
         }
     }
@@ -54,7 +52,6 @@ impl fmt::Display for Value {
         match self {
             Int(a) => write!(f, "{}", a),
             Float(a) => write!(f, "{}", a),
-            Rune(a) => write!(f, "{}", a),
             String(ref a) => write!(f, "{}", a), // prints the string without quotation marks
             Bool(a) => write!(f, "{}", a), // prints true or false
 
@@ -80,7 +77,7 @@ pub fn parse_with_kind(s: &str,k: &Kind) -> Value {
     match (k) {
         Kind::Basic(BasicKind::Int) => Value::Int(i32::try_from(string_to_int(s)).unwrap()),
         Kind::Basic(BasicKind::Float) => Value::Float(s.parse::<f64>().unwrap()),
-        Kind::Basic(BasicKind::Rune) => Value::Rune(util::parse_rune_literal(s)),
+        Kind::Basic(BasicKind::Rune) => Value::Int(util::parse_rune_literal(s)),
         Kind::Basic(BasicKind::String) => Value::String(util::parse_string_literal(s)),
         Kind::Basic(BasicKind::Bool) => Value::Bool(match s {
             "true" => true,
@@ -123,7 +120,7 @@ pub fn zero_value(k: &Kind) -> Value {
             Value::Float(0.0)
         }
         Basic(BasicKind::Rune) => {
-            Value::Rune(0)
+            Value::Int(0)
         }
         Basic(BasicKind::String) => {
             Value::String("".to_string())
@@ -158,10 +155,8 @@ pub mod builtins {
         if let Kind::Basic(bk) = k {
                 //dbg!(bk,v);
             match (bk, v) {
-                (BasicKind::String, Value::Rune(i))|
                 (BasicKind::String, Value::Int(i)) => {
-                    // TODO: in go, casting an int to string is now deprecated...
-                    // Should I update my thing throughout?
+                    // In modern Go, this will work only for runes, it is deprecated for other ints
                     let i = *i;
                     let c = char::from_u32(i as u32).unwrap();
                     return Value::String(format!("{}",c))
@@ -172,10 +167,9 @@ pub mod builtins {
                 },
                 (BasicKind::Rune, Value::Float(f)) => {
                     let f = *f;
-                    return Value::Rune(f as i32);
+                    return Value::Int(f as i32);
                 },
-                (BasicKind::Float, Value::Int(i)) |
-                (BasicKind::Float, Value::Rune(i)) => {
+                (BasicKind::Float, Value::Int(i)) => {
                     let i = *i;
                     return Value::Float(i as f64);
                 },
@@ -245,6 +239,54 @@ pub mod builtins {
         Value::Bool(l != r)
     }
 
+    pub fn lt(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn leq(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn gt(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn geq(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn add(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn sub(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn mul(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn div(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn bw_or(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn bw_xor(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn modu(l: &Value, r: &Value) -> Value {
+        todo!()
+    }
+
+    pub fn bw_and(l: &Value, r: &Value) -> Value {
+        todo!()
+
+    }
+
+
 }
-
-

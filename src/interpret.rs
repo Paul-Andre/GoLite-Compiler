@@ -142,11 +142,57 @@ pub fn env_set_var(env: &Env, s: &str, v: Value) {
 }
 */
 
+/*
+pub fn compute_binary_operation_int_calc(op:: BinaryOperator, l: i32, r: i32) -> i32 {
+    use BinaryOperator::*;
+    match op {
+        /*
+        Eq
+        Neq,
+
+        Lt,
+        Leq,
+        Gt,
+        Geq,
+        */
+
+        Add,
+        Sub,
+        Mul,
+        Div,
+
+        BwOr,
+        BwXor,
+        Mod,
+        BwAnd,
+        BwAndNot,
+
+        LShift,
+        RShift,
+
+        _ => panic!("Should not have been computing this, bc or/and are shortcircuiting"),
+
+
+}
+*/
+
 pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Value {
     match &expression_node.expression {
         Expression::RawLiteral{value} => {value::parse_with_kind(&value, &expression_node.kind)}
         Expression::BinaryOperation { op, lhs, rhs } => {
-            todo!();
+            if let BinaryOperator::Or = op {
+
+                todo!();
+            } else if let BinaryOperator::And = op {
+                //special case, short circuiting
+                todo!();
+            } else {
+                let lv = interpret_expression(lhs, env);
+                let rv = interpret_expression(rhs, env);
+
+                todo!();
+            }
+
         }
         Expression::UnaryOperation { op, rhs } => {
             let rv = interpret_expression(rhs, env);
