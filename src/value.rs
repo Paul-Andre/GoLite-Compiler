@@ -184,7 +184,7 @@ pub mod builtins {
         if let Value::Slice(slice) = l {
             let length = slice.length;
             let new_l = length+1;
-            if new_l < slice.contents.len() {
+            if new_l <= slice.contents.len() {
                 *slice.contents[new_l-1].borrow_mut() = r;
                 Value::Slice(value::Slice {
                     length: new_l,
