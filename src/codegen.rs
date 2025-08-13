@@ -505,7 +505,7 @@ impl CodeGenVisitor{
 
                     write!(post_string, "(").unwrap();
                     self.visit_expression(lhs, pre_string, post_string);
-                    write!(post_string, ",").unwrap();
+                    write!(post_string, ", ").unwrap();
                     self.visit_expression(rhs, pre_string, post_string);
                     write!(post_string, ")").unwrap();
                 }
@@ -562,7 +562,7 @@ impl CodeGenVisitor{
                     _ => panic!("codegening index of something other than slice or array")
                 };
 
-                write!(post_string, "[check_bounds({},{}.length,{})]",
+                write!(post_string, "[check_bounds({}, {}.length, {})]",
                 index_value, primary_value, exp.line_number).unwrap();
             }
 
@@ -574,7 +574,7 @@ impl CodeGenVisitor{
             Expression::Append { ref lhs, ref rhs } => {
                 write!(post_string, "append(").unwrap();
                 self.visit_expression(lhs, pre_string, post_string);
-                write!(post_string, ",").unwrap();
+                write!(post_string, ", ").unwrap();
                 self.visit_expression(rhs, pre_string, post_string);
                 write!(post_string, ")").unwrap();
             }
