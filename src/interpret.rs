@@ -217,8 +217,10 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
                 //special case, short circuiting
                 todo!();
             } else {
-                let lv = interpret_expression(lhs, env);
-                let rv = interpret_expression(rhs, env);
+                let l_ref = interpret_reference_expr(lhs, env);
+                let r_ref = interpret_reference_expr(rhs, env);
+                let lv = l_ref.get_value(env);
+                let rv = r_ref.get_value(env);
                 compute_binary_operation(*op, lv, rv)
             }
 
@@ -247,16 +249,22 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
                 },
                 _ => todo!()
             }
-            let mut evaled_args = Vec::with_capacity(arguments.len());
-            for arg in arguments {
-                let av = interpret_expression(arg, env);
-                evaled_args.push(av);
-            }
+
+            let refs: Vec<Reference> = arguments.iter().map(|arg| {
+                interpret_reference_expr(arg, env)
+            }).collect();
+
+            let evaled_args: Vec<Value> = refs.into_iter().map(|r| {
+                r.get_value(env)
+            }).collect();
+
             interpret_function(f, env, evaled_args.into())
         }
         Expression::Append { lhs, rhs } => {
-            let lv = interpret_expression(lhs, env);
-            let rv = interpret_expression(rhs, env);
+            let l_ref = interpret_reference_expr(lhs, env);
+            let r_ref = interpret_reference_expr(rhs, env);
+            let lv = l_ref.get_value(env);
+            let rv = r_ref.get_value(env);
             builtins::append(lv,rv)
         }
         Expression::TypeCast {expr, ..} => {
@@ -496,8 +504,9 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
         },
         Statement::OpAssignment{lhs, rhs, operator} => {
             let mut l_ref = interpret_reference_expr(lhs, env);
-            let lval = l_ref.get_value(env);
             let rval = interpret_expression(rhs, env);
+
+            let lval = l_ref.get_value(env);
 
             let result = compute_binary_operation(*operator, lval, rval);
 
@@ -556,16 +565,25 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             return Signal::None;
         },
         Statement::Print{exprs} => {
-            for expression_node in exprs {
-                let value = interpret_expression(&expression_node, env);
+            let refs: Vec<Reference> = exprs.iter().map(|expr| {
+                interpret_reference_expr(expr, env)
+            }).collect();
+
+            for v_ref in refs {
+                let value = v_ref.get_value(env);
                 print!("{}",value);
             }
             return Signal::None;
         },
         Statement::Println{exprs} => {
             let len = exprs.len();
-            for (i,expression_node) in exprs.iter().enumerate() {
-                let value = interpret_expression(expression_node, env);
+
+            let refs: Vec<Reference> = exprs.iter().map(|expr| {
+                interpret_reference_expr(expr, env)
+            }).collect();
+
+            for (i,refv) in refs.into_iter().enumerate() {
+                let value = refv.get_value(env);
                 print!("{}",value);
                 if i<len-1 {
                     print!(" ");
