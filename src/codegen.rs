@@ -388,6 +388,7 @@ impl CodeGenVisitor{
         println!("{}{}", pre, post);
     }
 
+    // "immediately invoked function expression"
     fn codegen_expression_iife(&mut self,
                                exp: &ExpressionNode,
                                post_string: &mut String) {
@@ -407,6 +408,9 @@ impl CodeGenVisitor{
     // Convention:
     // each line in pre_string is indented and ends with a semicolon and a newline
     // post_string is not indented or anything
+    //
+    // There isn't a single print or println in this function. All output is done through writing
+    // to pre_string and post_string.
     fn visit_expression(&mut self,
                         exp: &ExpressionNode,
                         pre_string: &mut String,
