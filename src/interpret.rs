@@ -81,40 +81,6 @@ pub fn env_get_function<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<&'b ast::
     }
 }
 
-
-/*
-pub fn env_get_ref<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<RefMut<'a, Value>> {
-    //println!("{:?}", env.entries.borrow().keys());
-
-    let mut found = false;
-    if let Some(declaration) = env.entries.borrow().get(s) {
-        match declaration {
-            Declaration::Variable(_) => {
-
-                found = true;
-
-            }
-            Declaration::Function(_) => todo!()
-        }
-    }
-
-    if (found) {
-        Some( RefMut::map(env.entries.borrow_mut(), |hm| {
-            if let Some(declaration) = hm.get_mut(s) {
-                if let Declaration::Variable(v) = declaration {
-                    return v;
-                }
-            } 
-            panic!("it was here just before!");
-        }))
-    }else if let Some(parent) = env.parent {
-        env_get_ref(parent, s)
-    } else {
-        None
-    }
-}
-*/
-
 pub fn check_bounds(a: i32, length: usize, line_number: u32) {
     if (a < 0) {
         eprintln!("Error: line {}: trying to index an array or slice with negative number.", line_number);
@@ -298,7 +264,7 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
                 Expression::Identifier{name, ..} => {
                     f = env_get_function(env, name).unwrap();
                 },
-                _ => todo!()
+                _ => todo!("Haven't implemented taking an expression as a function.")
             }
 
             let refs: Vec<Reference> = arguments.iter().map(|arg| {
@@ -738,7 +704,79 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             return Signal::None;
         },     
         Statement::Switch{init, expr, body} => {
-            todo!();
+            // TODO: check order of evaluation when using init statement
+            let is = interpret_statement(&init.statement, env);
+            if (!is.is_none()) {
+                // Technically it should alway be None...
+                return is;
+            }
+
+            let lv = if let Some(exp_n) = expr {
+                interpret_expression(&*exp_n, env)
+            } else {
+                Value::Bool(true)
+            };
+            let mut found = false;
+            'external: for CaseClause{line_number, switch_case, statements} in body {
+                match switch_case {
+                    SwitchCase::Default => {},
+                    SwitchCase::Cases(vec_expr) => {
+                        for expr in vec_expr {
+                            let rv = interpret_expression(&expr, env);
+
+                            if (lv == rv) {
+                                found = true;
+
+                                let new_env = create_child_env(env);
+                                for stmt in statements {
+                                    let s = interpret_statement(&stmt.statement, &env);
+                                    match (s) {
+                                        Signal::None => {},
+                                        Signal::Return(_) => {
+                                            return s;
+                                        },
+                                        Signal::Break => {
+                                            break 'external;
+                                        },
+                                        Signal::Continue => {
+                                            return s;
+                                        },
+                                    }
+                                }
+                                break 'external;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            if !found {
+                'external: for CaseClause{line_number, switch_case, statements} in body {
+                    match switch_case {
+                        SwitchCase::Cases{..} => {},
+                        SwitchCase::Default => {
+                            let new_env = create_child_env(env);
+                            for stmt in statements {
+                                let s = interpret_statement(&stmt.statement, &env);
+                                match (s) {
+                                    Signal::None => {},
+                                    Signal::Return(_) => {
+                                        return s;
+                                    },
+                                    Signal::Break => {
+                                        break 'external;
+                                    },
+                                    Signal::Continue => {
+                                        return s;
+                                    },
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return Signal::None;
         },
 
         Statement::Break => {
