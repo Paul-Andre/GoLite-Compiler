@@ -82,6 +82,7 @@ pub fn env_get_function<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<&'b ast::
 }
 
 
+/*
 pub fn env_get_ref<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<RefMut<'a, Value>> {
     //println!("{:?}", env.entries.borrow().keys());
 
@@ -112,6 +113,7 @@ pub fn env_get_ref<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<RefMut<'a, Val
         None
     }
 }
+*/
 
 pub fn check_bounds(a: i32, length: usize, line_number: u32) {
     if (a < 0) {
@@ -124,29 +126,16 @@ pub fn check_bounds(a: i32, length: usize, line_number: u32) {
     }
 }
 
-pub fn slice_get_index_ref<'a>(s: &'a value::Slice, i: i32) -> RefMut<'a, Value> {
-    s.contents[i as usize].borrow_mut()
-}
-
-pub fn array_get_index_ref(a: &mut[Value], i: i32) -> &mut Value {
-    &mut a[i as usize]
-}
-
-
 pub fn env_declare_var(env: &Env, s: &str, v: Value) {
     env.entries.borrow_mut().insert(s.to_string(), Declaration::Variable(v));
 }
 
-/*
 pub fn env_set_var(env: &Env, s: &str, v: Value) {
-    env.entries.borrow_mut().insert(s.to_string(), Declaration::Variable(v));
-    if let Some(declaration) = env.entries.borrow().get(s) {
+    if let Some(declaration) = env.entries.borrow_mut().get_mut(s) {
         match declaration {
-            Declaration::Variable(_) => {
-                //env.entries.borrow_mut().insert(s.to_string(), Declaration::Variable(v));
-                env.entries.borrow_mut()[s] = Declaration::Variable(v);
+            Declaration::Variable(ref mut lv) => {
+                *lv = v;
             },
-            Declaration::Type(_) => todo!(),
             Declaration::Function(_) => todo!()
         }
     } else if let Some(parent) = env.parent {
@@ -155,7 +144,6 @@ pub fn env_set_var(env: &Env, s: &str, v: Value) {
         panic!("Variable not found");
     }
 }
-*/
 
 pub fn compute_binary_operation_int(op: BinaryOperator, l: i32, r: i32) -> Value {
     use self::BinaryOperator::*;
@@ -206,6 +194,18 @@ pub fn compute_binary_operation_float(op: BinaryOperator, l: f64, r: f64) -> Val
     }
 }
 
+pub fn compute_binary_operation(op: BinaryOperator, lv: Value, rv: Value) -> Value {
+    match (lv, rv) {
+        (Value::Int(li), Value::Int(ri)) => {
+            compute_binary_operation_int(op, li, ri)
+        },
+        (Value::Float(li), Value::Float(ri)) => {
+            compute_binary_operation_float(op, li, ri)
+        },
+        _ => todo!(),
+    }
+}
+
 pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Value {
     match &expression_node.expression {
         Expression::RawLiteral{value} => {value::parse_with_kind(&value, &expression_node.kind)}
@@ -219,17 +219,7 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
             } else {
                 let lv = interpret_expression(lhs, env);
                 let rv = interpret_expression(rhs, env);
-
-                match (lv, rv) {
-                    (Value::Int(li), Value::Int(ri)) => {
-                        compute_binary_operation_int(*op, li, ri)
-                    },
-                    (Value::Float(li), Value::Float(ri)) => {
-                        compute_binary_operation_float(*op, li, ri)
-                    },
-                    _ => todo!(),
-                }
-
+                compute_binary_operation(*op, lv, rv)
             }
 
         }
@@ -245,6 +235,7 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
         Expression::Identifier{..} |
         Expression::Index { .. } |
         Expression::Selector { .. } => {
+            //dbg!(expression_node);
             let r = interpret_reference_expr(expression_node, env);
             r.get_value(env)
         }
@@ -384,9 +375,7 @@ impl Reference {
         let modifier_stack = &self.modifier_stack;
         match &self.base {
             ReferenceBase::Identifier(ref s) => {
-                // TODO: perhaps cleaner if remove env_get_ref altogether
-                let mut moved = env_get_value(env, s).unwrap();
-                get_reference_value(&moved, modifier_stack)
+                env_get_reference_value(env, s, modifier_stack).unwrap()
             },
             ReferenceBase::Value(base) => {
                 get_reference_value(&base, modifier_stack)
@@ -397,14 +386,44 @@ impl Reference {
         let modifier_stack = &self.modifier_stack;
         match &self.base {
             ReferenceBase::Identifier(ref s) => {
-                // TODO: perhaps cleaner if remove env_get_ref altogether
-                set_reference_value(&mut *env_get_ref(env, s).unwrap(), modifier_stack, value);
+                env_set_reference_value(env, s, modifier_stack, value);
             },
             ReferenceBase::Value(base) => {
                 let mut copy = base.clone();
                 set_reference_value(&mut copy, modifier_stack, value);
             }
         }
+    }
+}
+
+pub fn env_set_reference_value(env: &Env, ident: &str, modifier_stack: &[ReferenceModifier], value: Value) {
+    //println!("{:?}", env.entries.borrow().keys());
+    if let Some(ref mut declaration) = env.entries.borrow_mut().get_mut(ident) {
+        match declaration {
+            Declaration::Variable(ref mut v) => {
+                set_reference_value(v, modifier_stack, value);
+            }
+            Declaration::Function(_) => {todo!("Haven't implemented taking functions as values");}
+        }
+    } else if let Some(parent) = env.parent {
+        env_set_reference_value(parent, ident, modifier_stack, value)
+    } else {
+        panic!("Variable does not exist in scope");
+    }
+}
+
+pub fn env_get_reference_value(env: &Env, ident: &str, modifier_stack: &[ReferenceModifier]) -> Option<Value> {
+    if let Some(ref declaration) = env.entries.borrow().get(ident) {
+        match declaration {
+            Declaration::Variable(ref v) => {
+                Some(get_reference_value(v, modifier_stack))
+            }
+            Declaration::Function(_) => {todo!("Haven't implemented taking functions as values");}
+        }
+    } else if let Some(parent) = env.parent {
+        env_get_reference_value(parent, ident, modifier_stack)
+    } else {
+        None
     }
 }
 
@@ -476,7 +495,14 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             return Signal::None;
         },
         Statement::OpAssignment{lhs, rhs, operator} => {
-            todo!();
+            let mut l_ref = interpret_reference_expr(lhs, env);
+            let lval = l_ref.get_value(env);
+            let rval = interpret_expression(rhs, env);
+
+            let result = compute_binary_operation(*operator, lval, rval);
+
+            l_ref.set_value(env, result);
+            return Signal::None;
         },
         Statement::VarDeclarations{declarations} => {
             interpret_var_declarations(declarations, env);
@@ -497,8 +523,8 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             for (i,ev) in temp.into_iter().enumerate() {
                 let name = &identifier_list[i];
                 if is_assigning[i] {
-                    let mut l_ref = env_get_ref(env, name).unwrap();
-                    *l_ref = ev;
+
+                    env_set_var(&env, name, ev);
                 } else {
                     env_declare_var(&env, name, ev);
                 }
@@ -689,6 +715,7 @@ pub fn interpret<'b>(root: &'b Program){
         env.entries.borrow_mut().insert("true".to_string(),Declaration::Variable(Value::Bool(true)));
         env.entries.borrow_mut().insert("false".to_string(),Declaration::Variable(Value::Bool(false)));
     }
+
     let init_functions = init_top_level(&env, root);
 
     for f in init_functions.iter() {
@@ -696,17 +723,15 @@ pub fn interpret<'b>(root: &'b Program){
         interpret_function(f, &mut env, empty_args);
     }
 
-    let main_e = &env.entries.borrow()["main"];
-    let main =  {
-    if let Declaration::Function(f) = main_e {
-        f
+    let main = 
+    if let Some(Declaration::Function(ref f)) = env.entries.borrow().get("main") {
+        *f
     } else {
         panic!("no main function");
-    }
-
     };
 
     let empty_args: Box<[Value]> = Vec::new().into();
     interpret_function(main, &env, empty_args);
+
 
 }
