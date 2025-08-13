@@ -15,6 +15,14 @@
 //~inter 7
 //~9
 //~inter 9
+//~11 inc_glob 11
+//~inter 11
+//~12 inc_glob 13
+//~inter 13
+//~15 inc_glob 15
+//~inter 15
+//~16 inc_glob 17
+//~inter 17
 
 package main
 
@@ -35,8 +43,12 @@ func inc_glob_one() int {
 	return 1
 }
 
-func f(a int, b string, c int) {
+func custom_print(a int, b string, c int) {
 	println(a, b, c)
+}
+
+func add(a int, b int) int {
+	return a + b
 }
 
 func main() {
@@ -51,7 +63,7 @@ func main() {
 
 	println("inter", glob)
 
-	f(glob, inc_glob(), glob)
+	custom_print(glob, inc_glob(), glob)
 
 	println("inter", glob)
 
@@ -75,6 +87,22 @@ func main() {
 
 	glob += inc_glob_one()
 	println(glob)
+
+	println("inter", glob)
+
+	println(glob+inc_glob_zero(), inc_glob(), glob)
+
+	println("inter", glob)
+
+	println(add(glob, inc_glob_zero()), inc_glob(), glob)
+
+	println("inter", glob)
+
+	custom_print(glob+inc_glob_zero(), inc_glob(), glob)
+
+	println("inter", glob)
+
+	custom_print(add(glob, inc_glob_zero()), inc_glob(), glob)
 
 	println("inter", glob)
 }

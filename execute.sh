@@ -30,8 +30,8 @@ FILENAME="${1%.*}.js"
 # Note the bash replacement which changes:
 #   programs/3-semantics+codegen/valid/test.min -> programs/3-semantics+codegen/valid/test.out
 
-node $FILENAME
-#cat $1 | ./target/debug/golite interpret
+#node $FILENAME
+cat $1 | ./target/debug/golite interpret
 
 # Lastly, we propagate the exit code
 exit $?
