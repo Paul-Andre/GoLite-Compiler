@@ -50,19 +50,37 @@ fn init_top_level<'a,'b>(env: &Env<'a, 'b>, root: &'b Program) -> Box<[&'b ast::
 }
 
 
-pub fn env_get(env: &Env, s: &str) -> Option<Value> {
+pub fn env_get_value(env: &Env, s: &str) -> Option<Value> {
     //println!("{:?}", env.entries.borrow().keys());
     if let Some(declaration) = env.entries.borrow().get(s) {
         match declaration {
-            Declaration::Variable(v) => Some(v.clone()),
-            Declaration::Function(_) => todo!()
+            Declaration::Variable(v) => {return Some(v.clone());}
+            Declaration::Function(_) => {todo!("Haven't implemented taking functions as values");}
         }
     } else if let Some(parent) = env.parent {
-        env_get(parent, s)
+        env_get_value(parent, s)
     } else {
         None
     }
 }
+
+// TODO: functions are strictly top-level in this subset, so I probably want to
+// have a separate hashmap for functions, that is global, instead of one for each scope...
+// This code here is strictly because it was easy to copy and paste...
+pub fn env_get_function<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<&'b ast::Function> {
+    //println!("{:?}", env.entries.borrow().keys());
+    if let Some(declaration) = env.entries.borrow().get(s) {
+        match declaration {
+            Declaration::Variable(_) => {panic!("not a function")},
+            Declaration::Function(f) => {return Some(*f);}
+        }
+    } else if let Some(parent) = env.parent {
+        env_get_function(parent, s)
+    } else {
+        None
+    }
+}
+
 
 pub fn env_get_ref<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<RefMut<'a, Value>> {
     //println!("{:?}", env.entries.borrow().keys());
@@ -231,22 +249,19 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
             r.get_value(env)
         }
         Expression::FunctionCall { primary, arguments } => {
+            let f;
             match &primary.expression {
                 Expression::Identifier{name, ..} => {
-                    //println!("{}", name);
-
-
+                    f = env_get_function(env, name).unwrap();
                 },
                 _ => todo!()
             }
-            let mut evaled_args = Vec::new();
+            let mut evaled_args = Vec::with_capacity(arguments.len());
             for arg in arguments {
                 let av = interpret_expression(arg, env);
                 evaled_args.push(av);
             }
-            Value::Void
-
-
+            interpret_function(f, env, evaled_args.into())
         }
         Expression::Append { lhs, rhs } => {
             let lv = interpret_expression(lhs, env);
@@ -370,7 +385,7 @@ impl Reference {
         match &self.base {
             ReferenceBase::Identifier(ref s) => {
                 // TODO: perhaps cleaner if remove env_get_ref altogether
-                let mut moved = env_get(env, s).unwrap();
+                let mut moved = env_get_value(env, s).unwrap();
                 get_reference_value(&moved, modifier_stack)
             },
             ReferenceBase::Value(base) => {
@@ -638,11 +653,22 @@ pub fn create_child_env<'a,'b>(env: &'a Env<'a,'b>) -> Env<'a,'b> {
     };
 }
 
-pub fn interpret_function<'a,'b>(f: &Function, tl_env: &'a Env<'a,'b>, args: &[Value]) -> Value {
+pub fn interpret_function<'a,'b>(f: &ast::Function, tl_env: &'a Env<'a,'b>, args: Box<[Value]>) -> Value {
     let mut env = create_child_env(tl_env);
 
-    // TODO: Add params:args to env
-    assert!(args.len() == 0);
+    let mut flattened_parameters = Vec::new();
+    for field in &f.parameters {
+        for ident in &field.identifiers {
+            flattened_parameters.push(ident.clone());
+        }
+    }
+
+    assert!(args.len() == flattened_parameters.len());
+    let args_huh: Vec<Value> = args.into(); // WHY? is it a bug that I need to do this?
+    for (arg, param) in args_huh.into_iter().zip(flattened_parameters.into_iter()) {
+        // Why is arg a &Value and not a Value when I use into_iter directly on the Box<[Value]>??????
+        env.entries.borrow_mut().insert(param, Declaration::Variable(arg));
+    }
 
     for statement_node in &f.body {
         let s = interpret_statement(&statement_node.statement,&mut env);
@@ -665,8 +691,8 @@ pub fn interpret<'b>(root: &'b Program){
     }
     let init_functions = init_top_level(&env, root);
 
-    let empty_args: &[Value] = &[];
     for f in init_functions.iter() {
+        let empty_args: Box<[Value]> = Vec::new().into();
         interpret_function(f, &mut env, empty_args);
     }
 
@@ -680,6 +706,7 @@ pub fn interpret<'b>(root: &'b Program){
 
     };
 
+    let empty_args: Box<[Value]> = Vec::new().into();
     interpret_function(main, &env, empty_args);
 
 }
