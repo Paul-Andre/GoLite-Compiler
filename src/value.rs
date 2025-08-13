@@ -19,6 +19,8 @@ pub struct Slice {
     // Used to represent a growable slice with a length and capacity
 }
 
+const ONE_OVER_MAX: u32 = 2147483648;
+const SMALLEST_INT: i32 = -2147483648;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
@@ -26,11 +28,14 @@ pub enum Value {
     Float(f64),
     String(String),
     Bool(bool),
+
+    OneOverMax, // A special value to deal with the expression -2147483648 (Since the biggest positive int is 2147483647)
     
     Array(Box<[Value]>),
     Slice(Slice),
     Struct(HashMap<String,Value>),
     Void,
+
 
     Undefined, // Used for initializing Slices (although maybe it shouldn't and I should just use the zero type?
 }
@@ -93,6 +98,8 @@ impl fmt::Display for Value {
             Float(a) => format_float(*a, f),
             String(ref a) => write!(f, "{}", a), // prints the string without quotation marks
             Bool(a) => write!(f, "{}", a), // prints true or false
+            
+            Value::OneOverMax => write!(f, "2147483648"),
 
             Value::Void => write!(f, "()"),
 
@@ -114,7 +121,14 @@ impl fmt::Display for Value {
 
 pub fn parse_with_kind(s: &str,k: &Kind) -> Value {
     match (k) {
-        Kind::Basic(BasicKind::Int) => Value::Int(i32::try_from(string_to_int(s)).unwrap()),
+        Kind::Basic(BasicKind::Int) => {
+            let base: u32 = string_to_int(s);
+            if base == ONE_OVER_MAX {
+                Value::OneOverMax
+            } else {
+                Value::Int(i32::try_from(base).unwrap())
+            }
+        }
         Kind::Basic(BasicKind::Float) => Value::Float(s.parse::<f64>().unwrap()),
         Kind::Basic(BasicKind::Rune) => Value::Int(util::parse_rune_literal(s)),
         Kind::Basic(BasicKind::String) => Value::String(util::parse_string_literal(s)),
@@ -258,6 +272,7 @@ pub mod builtins {
         use value::Value::*;
         match v {
             Int(a) => Int(-a),
+            OneOverMax => Int(SMALLEST_INT),
             Float(f) => Float(-f),
             _ => panic!("Cannot negate"),
         }
