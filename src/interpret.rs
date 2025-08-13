@@ -190,19 +190,51 @@ pub fn compute_binary_operation_float(op: BinaryOperator, l: f64, r: f64) -> Val
         Mul => Value::Float(l*r),
         Div => Value::Float(l/r),
 
-        _ => panic!("Other operators not supported on floats."),
+        _ => panic!("other operators not supported on floats."),
+    }
+}
+
+pub fn compute_binary_operation_string(op: BinaryOperator, l: &str, r: &str) -> Value {
+    use self::BinaryOperator::*;
+    match op {
+        Eq => Value::Bool(l == r),
+        Neq => Value::Bool(l != r),
+
+        Lt => Value::Bool(l < r),
+        Leq => Value::Bool(l <= r),
+        Gt => Value::Bool(l > r),
+        Geq => Value::Bool(l >= r),
+
+        Add => {
+            let mut result = l.to_string();
+            result.push_str(&r);
+            Value::String(result)
+        }
+
+        _ => panic!("other operators not supported on ints."),
     }
 }
 
 pub fn compute_binary_operation(op: BinaryOperator, lv: Value, rv: Value) -> Value {
-    match (lv, rv) {
-        (Value::Int(li), Value::Int(ri)) => {
+    match (op, lv, rv) {
+        (_, Value::Int(li), Value::Int(ri)) => {
             compute_binary_operation_int(op, li, ri)
         },
-        (Value::Float(li), Value::Float(ri)) => {
+        (_, Value::Float(li), Value::Float(ri)) => {
             compute_binary_operation_float(op, li, ri)
         },
-        _ => todo!(),
+        (_, Value::String(li), Value::String(ri)) => {
+            compute_binary_operation_string(op, &li, &ri)
+        },
+        (BinaryOperator::Eq, lv, rv) => {
+            Value::Bool(lv == rv)
+        },
+        (BinaryOperator::Neq, lv, rv) => {
+            Value::Bool(lv != rv)
+        },
+        _ => {
+            panic!("Other operations not supported");
+        }
     }
 }
 
