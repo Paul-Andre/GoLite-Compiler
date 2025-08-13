@@ -211,11 +211,31 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
         Expression::RawLiteral{value} => {value::parse_with_kind(&value, &expression_node.kind)}
         Expression::BinaryOperation { op, lhs, rhs } => {
             if let BinaryOperator::Or = op {
+                //special case, short circuiting
+                let l_ref = interpret_reference_expr(lhs, env);
+                let lv = l_ref.get_value(env);
 
-                todo!();
+                if lv.get_boolean().unwrap() {
+                    lv
+                } else {
+                    let r_ref = interpret_reference_expr(rhs, env);
+                    let rv = r_ref.get_value(env);
+                    rv
+                }
+
             } else if let BinaryOperator::And = op {
                 //special case, short circuiting
-                todo!();
+                let l_ref = interpret_reference_expr(lhs, env);
+                let lv = l_ref.get_value(env);
+
+                if lv.get_boolean().unwrap() {
+                    let r_ref = interpret_reference_expr(rhs, env);
+                    let rv = r_ref.get_value(env);
+                    rv
+                } else {
+                    lv
+                }
+
             } else {
                 let l_ref = interpret_reference_expr(lhs, env);
                 let r_ref = interpret_reference_expr(rhs, env);

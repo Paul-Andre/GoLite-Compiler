@@ -47,6 +47,12 @@ impl Value {
             _ => None
         }
     }
+    pub fn get_boolean(&self) -> Option<bool> {
+        match self {
+            Value::Bool(i) => Some(*i),
+            _ => None
+        }
+    }
 }
 
 fn format_float(a: f64, f: &mut fmt::Formatter) -> fmt::Result {
