@@ -257,7 +257,6 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
         Expression::Identifier{..} |
         Expression::Index { .. } |
         Expression::Selector { .. } => {
-            //dbg!(expression_node);
             let r = interpret_reference_expr(expression_node, env);
             r.get_value(env)
         }
@@ -331,7 +330,7 @@ impl Signal {
 pub enum ReferenceBase {
     Identifier(String),
     Value(Value),
-
+    Underscore,
 }
 
 pub enum ReferenceModifier {
@@ -407,7 +406,10 @@ impl Reference {
             },
             ReferenceBase::Value(base) => {
                 get_reference_value(&base, modifier_stack)
-            }
+            },
+            ReferenceBase::Underscore => {
+                panic!("Cannot get value from underscore.");
+            },
         }
     }
     pub fn set_value(&self, env: &Env, value: Value) {
@@ -420,6 +422,15 @@ impl Reference {
                 let mut copy = base.clone();
                 set_reference_value(&mut copy, modifier_stack, value);
             }
+            ReferenceBase::Underscore => {
+                if modifier_stack.len() == 0 {
+                    // Do nothing.
+                }
+                else {
+                    panic!("Cannot do stuff with underscore");
+                }
+
+            },
         }
     }
 }
@@ -458,9 +469,16 @@ pub fn env_get_reference_value(env: &Env, ident: &str, modifier_stack: &[Referen
 pub fn interpret_reference_expr(expr: &ExpressionNode, env: &Env) -> Reference {
     match expr.expression {
         Expression::Identifier{ref name, ..} => {
-            Reference {
-                base: ReferenceBase::Identifier(name.clone()),
-                modifier_stack: Vec::new(),
+            if name == "_" {
+                Reference {
+                    base: ReferenceBase::Underscore,
+                    modifier_stack: Vec::new(),
+                }
+            } else {
+                Reference {
+                    base: ReferenceBase::Identifier(name.clone()),
+                    modifier_stack: Vec::new(),
+                }
             }
         },
         Expression::Index{ref primary,ref  index} => {
@@ -504,6 +522,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             return Signal::None;
         },
         Statement::Assignment{lhs, rhs} => {
+
             let mut references: Vec<Reference> = Vec::new();
             for le in lhs {
                 let l_ref = interpret_reference_expr(le, env);
