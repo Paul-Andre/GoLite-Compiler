@@ -1,14 +1,17 @@
 # Group 4's GoLite Compiler
 
-A compiler built in Rust and C that compiles a subset of GoLang which we have called GoLite.
+A compiler for a subset of Go, built in Rust and Flex/Bison, as a semester project for McGill's compiler course.
 
-Since this project was assigned in a University course, we had to focus on the core features of Go and strip some features that otherwise would have been time-consuming.
+Our team tied first place for implementation accuracy!
 
-You can view the specs here:
+The specs for this specific subset of Go were provided in the project description:
 
 * [Lexing + Parsing Specs](http://www.cs.mcgill.ca/~cs520/2018/project/Milestone1_Specifications.pdf)
 * [Typechecking Specs](http://www.cs.mcgill.ca/~cs520/2018/project/Milestone1_Specifications.pdf)
 
+We were allowed to emit any language (other than C++) in the backend, so we chose JavaScript for pragmatic reasons.
+
+2025 Update: I (Paul-Andre) added an "interpreter" mode to practice my Rust.
 
 ## Getting Started
 
