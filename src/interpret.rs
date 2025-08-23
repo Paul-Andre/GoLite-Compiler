@@ -431,6 +431,29 @@ impl Reference {
             },
         }
     }
+    
+    pub fn map_value<F>(&self, env: &Env, f: F)
+    where F: FnOnce(&mut Value) {
+        let modifier_stack = &self.modifier_stack;
+        match &self.base {
+            ReferenceBase::Identifier(ref s) => {
+                env_map_reference_value(env, s, modifier_stack, f);
+            },
+            ReferenceBase::Value(base) => {
+                let mut copy = base.clone();
+                map_reference_value(&mut copy, modifier_stack, f);
+            }
+            ReferenceBase::Underscore => {
+                if modifier_stack.len() == 0 {
+                    // Do nothing.
+                    // TODO: should we panic here?
+                }
+                else {
+                    panic!("Cannot do stuff with underscore");
+                }
+            },
+        }
+    }
 }
 
 pub fn env_set_reference_value(env: &Env, ident: &str, modifier_stack: &[ReferenceModifier], value: Value) {
@@ -446,6 +469,50 @@ pub fn env_set_reference_value(env: &Env, ident: &str, modifier_stack: &[Referen
         env_set_reference_value(parent, ident, modifier_stack, value)
     } else {
         panic!("Variable does not exist in scope");
+    }
+}
+
+pub fn env_map_reference_value<F>(env: &Env, ident: &str, modifier_stack: &[ReferenceModifier], f: F) 
+where F: FnOnce(&mut Value) {
+    if let Some(ref mut declaration) = env.entries.borrow_mut().get_mut(ident) {
+        match declaration {
+            Declaration::Variable(ref mut v) => {
+                map_reference_value(v, modifier_stack, f);
+            }
+            Declaration::Function(_) => {todo!("Haven't implemented taking functions as values");}
+        }
+    } else if let Some(parent) = env.parent {
+        env_map_reference_value(parent, ident, modifier_stack, f)
+    } else {
+        panic!("Variable does not exist in scope");
+    }
+}
+
+fn map_reference_value<F>(base: &mut Value, modifier_stack: &[ReferenceModifier], f: F)
+where F: FnOnce(&mut Value) {
+    if modifier_stack.len() == 0 {
+        f(base);
+        return;
+    }
+    match (base, &modifier_stack[0]) {
+        (Value::Array(ref mut array), ReferenceModifier::Index(ii))  => {
+            let i = *ii;
+            // TODO: display the correct line number
+            check_bounds(i, array.len(), 0);
+            map_reference_value(&mut array[i as usize], &modifier_stack[1..], f)
+        }
+        (Value::Slice(ref mut slice), ReferenceModifier::Index(ii))  => {
+            let i = *ii;
+            // TODO: display the correct line number
+            check_bounds(i, slice.length, 0);
+            map_reference_value(&mut *slice.contents[i as usize].borrow_mut(), &modifier_stack[1..], f)
+        }
+        (_, ReferenceModifier::Index(s))  => panic!("Trying to index something that isn't an array or slice."),
+        (Value::Struct(ref mut hm), ReferenceModifier::Selector(s))  =>  {
+            map_reference_value(hm.get_mut(s).unwrap(), &modifier_stack[1..], f)
+        }
+        (_, ReferenceModifier::Selector(s))  => panic!("Trying to get a field of something that isn't a struct."),
+        (_,_) => panic!("Invalid reference expression.")
     }
 }
 
@@ -540,14 +607,13 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             return Signal::None;
         },
         Statement::OpAssignment{lhs, rhs, operator} => {
-            let mut l_ref = interpret_reference_expr(lhs, env);
+            let l_ref = interpret_reference_expr(lhs, env);
             let rval = interpret_expression(rhs, env);
 
-            let lval = l_ref.get_value(env);
-
-            let result = compute_binary_operation(*operator, lval, rval);
-
-            l_ref.set_value(env, result);
+            l_ref.map_value(env, |lval| {
+                let result = compute_binary_operation(*operator, lval.clone(), rval);
+                *lval = result;
+            });
             return Signal::None;
         },
         Statement::VarDeclarations{declarations} => {
@@ -580,25 +646,18 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
         Statement::IncDec{is_dec, expr} => {
             let is_dec = *is_dec;
             let r = interpret_reference_expr(expr, env);
-            let v = r.get_value(env);
 
-            let new_v =
-            match v {
-                Value::Int(i) => {
-                    Value::Int(
-                        if is_dec {i-1} else {i+1}
-                    )
-                },
-                Value::Float(f) =>  {
-                    Value::Float(
-                        if is_dec {f-1.} else {f+1.}
-                    )
-                },
-                _ => panic!("Shouldn't inc/dec this"),
-            };
-
-            // TODO: create some kind of Reference::transform_value, that takes a function
-            r.set_value(env, new_v);
+            r.map_value(env, |v| {
+                match v {
+                    Value::Int(i) => {
+                        *v = Value::Int(if is_dec { *i-1 } else { *i+1 });
+                    },
+                    Value::Float(f) => {
+                        *v = Value::Float(if is_dec { *f-1. } else { *f+1. });
+                    },
+                    _ => panic!("Shouldn't inc/dec this"),
+                }
+            });
             return Signal::None;
         },
         Statement::Print{exprs} => {
