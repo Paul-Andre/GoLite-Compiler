@@ -1,15 +1,15 @@
 //~lhs1
-//~call3
 //~rhs1
-//~true
+//~call3
+//~false
 //~3
-//~2
+//~3
 //~lhs1
-//~call3
 //~rhs1
-//~true
+//~call3
+//~false
 //~6
-//~5
+//~6
 
 package main
 

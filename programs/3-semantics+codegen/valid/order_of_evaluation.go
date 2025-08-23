@@ -5,24 +5,30 @@
 //~inter 2
 //~3 inc_glob 3
 //~inter 3
-//~4
+//~4 inc_glob 4
 //~inter 4
-//~5
+//~5 inc_glob 5
 //~inter 5
-//~6
+//~6 inc_glob 6
 //~inter 6
 //~7
 //~inter 7
+//~8
+//~inter 8
 //~9
 //~inter 9
-//~11 inc_glob 11
-//~inter 11
-//~12 inc_glob 13
-//~inter 13
-//~15 inc_glob 15
-//~inter 15
-//~16 inc_glob 17
-//~inter 17
+//~10
+//~inter 10
+//~12
+//~inter 12
+//~14 inc_glob 14
+//~inter 14
+//~15 inc_glob 16
+//~inter 16
+//~18 inc_glob 18
+//~inter 18
+//~19 inc_glob 20
+//~inter 20
 
 package main
 
@@ -67,6 +73,31 @@ func main() {
 
 	println("inter", glob)
 
+  {
+    a,b,c := glob, inc_glob(), glob
+    println(a,b,c);
+  }
+
+	println("inter", glob)
+
+  {
+    var a,b,c = glob, inc_glob(), glob
+    println(a,b,c);
+  }
+
+	println("inter", glob)
+
+  {
+    var a int
+    var b string
+    var c int
+    a,b,c = glob, inc_glob(), glob
+    println(a,b,c);
+  }
+
+	println("inter", glob)
+
+
 	var a = glob + inc_glob_zero()
 	println(a)
 
@@ -105,4 +136,5 @@ func main() {
 	custom_print(add(glob, inc_glob_zero()), inc_glob(), glob)
 
 	println("inter", glob)
+
 }

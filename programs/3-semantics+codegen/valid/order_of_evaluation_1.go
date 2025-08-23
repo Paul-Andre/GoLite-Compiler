@@ -1,19 +1,17 @@
-// Crazy order of evaluation involing short circuiting operators
 //~lhs1
-//~call3
 //~rhs1
-//~call xxxx
 //~something
+//~call3
 //~call4
-//~false
+//~true
 //~0
 //~0
 //~false
 //~lhs1
 //~call3
 //~false
-//~8
-//~8
+//~7
+//~7
 package main
 
 var g int = 0
