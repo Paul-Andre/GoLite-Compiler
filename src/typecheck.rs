@@ -21,14 +21,14 @@ pub fn typecheck(root: &mut Program, print_table: bool, obfuscate: bool) {
 }
 
 fn typecheck_top_level_declaration(decl: &mut TopLevelDeclarationNode, symbol_table: &mut SymbolTable) {
-    match decl.top_level_declaration {
-        TopLevelDeclaration::VarDeclarations { ref mut declarations } => {
+    match decl.variant {
+        TopLevelDeclarationVariant::VarDeclarations { ref mut declarations } => {
             typecheck_variable_declarations(declarations, symbol_table);
         }
-        TopLevelDeclaration::TypeDeclarations { ref mut declarations } => {
+        TopLevelDeclarationVariant::TypeDeclarations { ref mut declarations } => {
             typecheck_type_declarations(declarations, symbol_table);
         }
-        TopLevelDeclaration::FunctionDeclaration (Function {
+        TopLevelDeclarationVariant::FunctionDeclaration (Function {
             ref mut name, ref mut parameters, ref mut return_kind, ref mut body }) => {
             let renamed = typecheck_function_declaration(name, parameters, return_kind, body, decl.line_number, symbol_table);
 
@@ -169,11 +169,11 @@ fn typecheck_function_declaration(name: &str,
 
 fn typecheck_statement(stmt: &mut StatementNode,
                            symbol_table: &mut SymbolTable) {
-    match stmt.statement {
-        Statement::Empty => {},
-        Statement::Break => {},
-        Statement::Continue => {},
-        Statement::Expression(ref mut exp) => {
+    match stmt.variant {
+        StatementVariant::Empty => {},
+        StatementVariant::Break => {},
+        StatementVariant::Continue => {},
+        StatementVariant::Expression(ref mut exp) => {
             typecheck_expression(exp, symbol_table, true);
             match exp.variant {
                 ExpressionVariant::FunctionCall {..} => {},
@@ -184,7 +184,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 }
             }
         },
-        Statement::Return(ref mut exp) => {
+        StatementVariant::Return(ref mut exp) => {
             // Since statements happen only inside functions, return only happens inside functions
             let maybe_actual_kind =
                 if let &mut Some(ref mut exp) = exp {
@@ -216,7 +216,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
 
         },
-        Statement::ShortVariableDeclaration { ref mut identifier_list, ref mut expression_list, ref mut is_assigning } => {
+        StatementVariant::ShortVariableDeclaration { ref mut identifier_list, ref mut expression_list, ref mut is_assigning } => {
             let rhs_kinds = typecheck_expression_vec(expression_list.as_mut_slice(), symbol_table);
 
             let mut new_count = 0;
@@ -283,15 +283,15 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
         }
 
-        Statement::VarDeclarations { ref mut declarations } => {
+        StatementVariant::VarDeclarations { ref mut declarations } => {
             typecheck_variable_declarations(declarations, symbol_table);
         }
 
-        Statement::TypeDeclarations { ref mut declarations } => {
+        StatementVariant::TypeDeclarations { ref mut declarations } => {
             typecheck_type_declarations(declarations, symbol_table);
         }
 
-        Statement::Assignment { ref mut lhs, ref mut rhs } => {
+        StatementVariant::Assignment { ref mut lhs, ref mut rhs } => {
             for i in 0..lhs.len() {
                 let lhs_exp = &mut lhs[i];
                 let rhs_exp = &mut rhs[i];
@@ -319,7 +319,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
         }
 
-        Statement::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
+        StatementVariant::OpAssignment { ref mut lhs, ref mut rhs, ref mut operator } => {
             let lhs_kind = typecheck_expression(lhs, symbol_table, false);
             let rhs_kind = typecheck_expression(rhs, symbol_table, false);
 
@@ -336,14 +336,14 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
         }
 
-        Statement::Block(ref mut statements) => {
+        StatementVariant::Block(ref mut statements) => {
             if statements.len() != 0 {
                 let new_scope = &mut symbol_table.new_scope();
                 typecheck_statements(statements, new_scope);
             }
         }
-        Statement::Print { ref mut exprs } |
-        Statement::Println { ref mut exprs } => {
+        StatementVariant::Print { ref mut exprs } |
+        StatementVariant::Println { ref mut exprs } => {
             for expr in exprs {
                 let kind = typecheck_expression(expr, symbol_table, false);
                 let resolved_kind = kind.resolve();
@@ -356,7 +356,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
         }
 
-        Statement::For { ref mut init, ref mut condition, ref mut post, ref mut body } => {
+        StatementVariant::For { ref mut init, ref mut condition, ref mut post, ref mut body } => {
             let init_scope = &mut symbol_table.new_scope();
 
             // init, condition and post are in the same scope; body is in a different one
@@ -380,7 +380,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             typecheck_statements(body, new_scope);
         }
 
-        Statement::If { ref mut init, ref mut condition, ref mut if_branch, ref mut else_branch } => {
+        StatementVariant::If { ref mut init, ref mut condition, ref mut if_branch, ref mut else_branch } => {
             let init_scope = &mut symbol_table.new_scope();
             typecheck_statement(init, init_scope);
             let exp_type = typecheck_expression(condition, init_scope, false);
@@ -405,7 +405,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
             }
         }
 
-        Statement::Switch { ref mut init, ref mut expr, ref mut body } => {
+        StatementVariant::Switch { ref mut init, ref mut expr, ref mut body } => {
             let init_scope = &mut symbol_table.new_scope();
             typecheck_statement(init, init_scope);
 
@@ -444,7 +444,7 @@ fn typecheck_statement(stmt: &mut StatementNode,
                 }
             }
         }
-        Statement::IncDec { ref mut expr, .. } => {
+        StatementVariant::IncDec { ref mut expr, .. } => {
             let exp_type = typecheck_expression(expr, symbol_table, false);
             if !is_exp_addressable(expr, symbol_table) {
                 eprintln!("Error: line {}: expression is not addressable", expr.line_number);
@@ -465,8 +465,8 @@ fn typecheck_kind(ast: &mut AstKindNode,
                       symbol_table: &mut SymbolTable, 
                       top_name: Option<&str>) -> Kind { 
                     // top_name is to prevent recursive definitions in structs
-    match ast.ast_kind {
-        AstKind::Identifier { ref mut name } => {
+    match ast.variant {
+        AstKindVariant::Identifier { ref mut name } => {
             match top_name {
                 Some(ref top_name) => {
                     if name == top_name {
@@ -488,14 +488,14 @@ fn typecheck_kind(ast: &mut AstKindNode,
                 exit(1);
             }
         },
-        AstKind::Slice { ref mut base } => {
+        AstKindVariant::Slice { ref mut base } => {
             return Kind::Slice(Box::new(typecheck_kind(base, symbol_table, None)))
         },
-        AstKind::Array { ref mut base, ref size } => {
+        AstKindVariant::Array { ref mut base, ref size } => {
             return Kind::Array(Box::new(typecheck_kind(base, symbol_table, top_name)),
                                 util::string_to_int(size))
         },
-        AstKind::Struct { ref mut fields } => {
+        AstKindVariant::Struct { ref mut fields } => {
             let mut kind_fields = Vec::new();
             let mut previous_names = HashSet::new();
             for field in fields {

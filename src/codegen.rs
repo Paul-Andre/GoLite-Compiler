@@ -28,14 +28,14 @@ impl CodeGenVisitor{
 
 
     fn visit_top_level_declaration(&mut self, decl: &TopLevelDeclarationNode) {
-        match decl.top_level_declaration {
-            TopLevelDeclaration::VarDeclarations { ref declarations } => {
+        match decl.variant {
+            TopLevelDeclarationVariant::VarDeclarations { ref declarations } => {
                 for d in declarations.iter(){
                     self.visit_var_spec(&d)
                 }
             }
 
-            TopLevelDeclaration::FunctionDeclaration 
+            TopLevelDeclarationVariant::FunctionDeclaration 
                 (Function { ref name, ref parameters, ref body, .. }) => {
                 if name == "_" {
                     return;
@@ -143,24 +143,24 @@ impl CodeGenVisitor{
     }
 
     fn visit_statement(&mut self, stmt: &StatementNode) {
-        match stmt.statement {
-            Statement::Empty => {},
-            Statement::Break => {
+        match stmt.variant {
+            StatementVariant::Empty => {},
+            StatementVariant::Break => {
                 print!("{}", indent(self.indent));
                 println!("break;")
             },
-            Statement::Continue => {
+            StatementVariant::Continue => {
                 print!("{}", indent(self.indent));
                 println!("continue;")
             },
-            Statement::Expression(ref exp) => {
+            StatementVariant::Expression(ref exp) => {
                 let mut pre = String::new();
                 let mut post = String::new();
                 self.visit_expression(exp, &mut pre, &mut post);
                 print!("{}",pre);
                 println!("{}{};", indent(self.indent), &mut post);
             },
-            Statement::Return(ref exp) => {
+            StatementVariant::Return(ref exp) => {
                 match exp {
                     &Some(ref e) => {
                         let mut pre = String::new();
@@ -175,7 +175,7 @@ impl CodeGenVisitor{
                     }
                 }
             },
-            Statement::ShortVariableDeclaration { ref identifier_list, ref expression_list, ref is_assigning } => {
+            StatementVariant::ShortVariableDeclaration { ref identifier_list, ref expression_list, ref is_assigning } => {
                 let mut global_pre = String::new();
                 let mut global_post = String::new();
                 let mut temps = Vec::new();
@@ -201,13 +201,13 @@ impl CodeGenVisitor{
 
                 println!("{}{}", global_pre, global_post);
             },
-            Statement::VarDeclarations { ref declarations } => {
+            StatementVariant::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
                     self.visit_var_spec(decl);
                 }
             },
-            Statement::TypeDeclarations { .. } => {},
-            Statement::Assignment { ref lhs, ref rhs } => {
+            StatementVariant::TypeDeclarations { .. } => {},
+            StatementVariant::Assignment { ref lhs, ref rhs } => {
 
                 let mut global_pre = String::new();
                 let mut global_post = String::new();
@@ -235,7 +235,7 @@ impl CodeGenVisitor{
 
                 println!("{}{}", global_pre, global_post);
             },
-            Statement::OpAssignment { ref lhs, ref rhs, ref operator } => {
+            StatementVariant::OpAssignment { ref lhs, ref rhs, ref operator } => {
                 let mut pre_lhs = String::new();
                 let mut post_lhs = String::new();
                 self.visit_expression(&lhs, &mut pre_lhs, &mut post_lhs);
@@ -250,18 +250,18 @@ impl CodeGenVisitor{
                 print!("{}",generate_binary_op(&operator));
                 println!("({}, {});", post_lhs, post_rhs);
             },
-            Statement::Block(ref statements) => {
+            StatementVariant::Block(ref statements) => {
                 for stmt in statements {
                     self.visit_statement(stmt);
                 }
             },
-            Statement::Print { ref exprs } => {
+            StatementVariant::Print { ref exprs } => {
                 self.codegen_print(exprs, false);
             },
-            Statement::Println { ref exprs } => {
+            StatementVariant::Println { ref exprs } => {
                 self.codegen_print(exprs, true);
             },
-            Statement::For { ref init, ref condition, ref post, ref body } => {
+            StatementVariant::For { ref init, ref condition, ref post, ref body } => {
                 self.visit_statement(init);
                 let mut condition_string;
                 if let &Some(ref condition) = condition {
@@ -287,7 +287,7 @@ impl CodeGenVisitor{
                 println!("{}}}",indent(self.indent));
 
             },
-            Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
+            StatementVariant::If { ref init, ref condition, ref if_branch, ref else_branch } => {
                 self.visit_statement(init);
                 let mut pre = String::new();
                 let mut post = String::new();
@@ -306,7 +306,7 @@ impl CodeGenVisitor{
                 println!("{}}}",indent(self.indent));
 
             },
-            Statement::Switch { ref init, ref expr, ref body } => {
+            StatementVariant::Switch { ref init, ref expr, ref body } => {
                 self.visit_statement(init);
 
                     let mut pre;
@@ -342,7 +342,7 @@ impl CodeGenVisitor{
                 self.indent-=1;
                 println!("{}}}",indent(self.indent));
             },
-            Statement::IncDec { ref expr, is_dec } => {
+            StatementVariant::IncDec { ref expr, is_dec } => {
                 let mut pre = String::new();
                 let mut post = String::new();
                 self.visit_expression(expr, &mut pre, &mut post);

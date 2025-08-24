@@ -8,8 +8,8 @@ pub fn weed_ast(root: &Program){
         exit(1);
     }
     for node in root.declarations.iter() {
-        match node.top_level_declaration {
-            TopLevelDeclaration::FunctionDeclaration (Function { ref name, ref parameters, ref return_kind, ref body }) => {
+        match node.variant {
+            TopLevelDeclarationVariant::FunctionDeclaration (Function { ref name, ref parameters, ref return_kind, ref body }) => {
                 check_blank_func_decl(name, parameters, return_kind, body, node.line_number);
                 for stmt in body.iter() {
                     check_for_correct_break_and_continue_usage(stmt, false);
@@ -17,7 +17,7 @@ pub fn weed_ast(root: &Program){
                 }
 
             },
-            TopLevelDeclaration::VarDeclarations { ref declarations } => {
+            TopLevelDeclarationVariant::VarDeclarations { ref declarations } => {
                 for decl in declarations.iter() {
                     check_blank_var_decl(&decl);
                 }
@@ -29,8 +29,8 @@ pub fn weed_ast(root: &Program){
 
 pub fn weed_terminating_statements(root: &Program) {
     for node in root.declarations.iter() {
-        match node.top_level_declaration {
-            TopLevelDeclaration::FunctionDeclaration (Function { ref return_kind, ref body, .. }) => {
+        match node.variant {
+            TopLevelDeclarationVariant::FunctionDeclaration (Function { ref return_kind, ref body, .. }) => {
                 match return_kind {
                     &Some(..) => check_correct_terminating_statements(body, node.line_number),
                     &None => {},
@@ -46,10 +46,10 @@ fn check_correct_terminating_statements(body: &Vec<StatementNode>, line_number: 
     match length {
         0 => error_missing_terminating_statement(line_number),
         _ => {
-            match body[length-1].statement {
-                Statement::Return(..) => return,
-                Statement::Block(ref body) => check_correct_terminating_statements(body,line_number),
-                Statement::If { ref if_branch, ref else_branch, .. } => {
+            match body[length-1].variant {
+                StatementVariant::Return(..) => return,
+                StatementVariant::Block(ref body) => check_correct_terminating_statements(body,line_number),
+                StatementVariant::If { ref if_branch, ref else_branch, .. } => {
                     match else_branch {
                         &Some(ref else_branch) => {
                             check_correct_terminating_statements(if_branch, line_number);
@@ -58,7 +58,7 @@ fn check_correct_terminating_statements(body: &Vec<StatementNode>, line_number: 
                         &None => error_missing_terminating_statement(line_number),
                     }
                 }
-                Statement::For { ref body, ref condition, .. } => {
+                StatementVariant::For { ref body, ref condition, .. } => {
                     match condition {
                         &None => {},
                         &Some(..) => error_missing_terminating_statement(line_number),
@@ -67,7 +67,7 @@ fn check_correct_terminating_statements(body: &Vec<StatementNode>, line_number: 
                         error_missing_terminating_statement(line_number)
                     }
                 }
-                Statement::Switch { ref body, .. } => {
+                StatementVariant::Switch { ref body, .. } => {
                     let mut flag = false;
                     for case_clause in body {
                         match case_clause.switch_case {
@@ -92,14 +92,14 @@ fn check_correct_terminating_statements(body: &Vec<StatementNode>, line_number: 
 
 fn find_break(body: &Vec<StatementNode>) -> bool {
     for stmt in body {
-        match stmt.statement {
-            Statement::Break => return true,
-            Statement::Block(ref body) => {
+        match stmt.variant {
+            StatementVariant::Break => return true,
+            StatementVariant::Block(ref body) => {
                 if find_break(body) {
                     return true;
                 }
             }
-            Statement::If { ref if_branch, ref else_branch, .. } => {
+            StatementVariant::If { ref if_branch, ref else_branch, .. } => {
                 if find_break(if_branch) {
                     return true;
                 }
@@ -119,11 +119,11 @@ fn find_break(body: &Vec<StatementNode>) -> bool {
 }
 
 fn find_break_elseif(stmt: &StatementNode) -> bool {
-    match stmt.statement {
-        Statement::Block(ref body) => {
+    match stmt.variant {
+        StatementVariant::Block(ref body) => {
             return find_break(body)
         }
-        Statement::If { ref if_branch, ref else_branch, .. } => {
+        StatementVariant::If { ref if_branch, ref else_branch, .. } => {
             if find_break(if_branch) {
                 return true;
             }
@@ -147,8 +147,8 @@ fn error_missing_terminating_statement(line_number: u32) {
 }
 
 fn check_correct_terminating_statements_elseif(stmt: &StatementNode, line_number: u32) {
-    match stmt.statement {
-        Statement::If { ref if_branch, ref else_branch, .. } => {
+    match stmt.variant {
+        StatementVariant::If { ref if_branch, ref else_branch, .. } => {
             match else_branch {
                 &Some(ref else_branch) => {
                     check_correct_terminating_statements(if_branch, line_number);
@@ -157,7 +157,7 @@ fn check_correct_terminating_statements_elseif(stmt: &StatementNode, line_number
                 &None => error_missing_terminating_statement(line_number),
             }
         }
-        Statement::Block(ref body) => {
+        StatementVariant::Block(ref body) => {
             check_correct_terminating_statements(body, line_number);
         }
         _ => error_missing_terminating_statement(line_number),
@@ -171,13 +171,13 @@ BREAK/CONTINUE USAGE WEED FUNCTIONS
 /// Checks for correct usage of break and continue
 /// Note that `continue` is only valid for loops whereas `break` is balid for loops and switch
 fn check_for_correct_break_and_continue_usage(stmt: &StatementNode, can_break: bool){
-    match stmt.statement {
-        Statement::Block(ref v) => {
+    match stmt.variant {
+        StatementVariant::Block(ref v) => {
             for x in v {
                 check_for_correct_break_and_continue_usage(&x, can_break);
             }
         },
-        Statement::If { ref if_branch, ref else_branch, .. } => {
+        StatementVariant::If { ref if_branch, ref else_branch, .. } => {
 
             for x in if_branch {
                 check_for_correct_break_and_continue_usage(&x, can_break);
@@ -188,7 +188,7 @@ fn check_for_correct_break_and_continue_usage(stmt: &StatementNode, can_break: b
                 &None => return,
             }
         },
-        Statement::Switch { ref body, .. } => {
+        StatementVariant::Switch { ref body, .. } => {
 
             for case_clause in body {
                 for stmt in &case_clause.statements {
@@ -196,13 +196,13 @@ fn check_for_correct_break_and_continue_usage(stmt: &StatementNode, can_break: b
                 }
             }
         },
-        Statement::Break => {
+        StatementVariant::Break => {
             if !can_break {
                 eprintln!("Error: line {}: break outside loop or switch.", stmt.line_number);
                 exit(1);
             }
         },
-        Statement::Continue => {
+        StatementVariant::Continue => {
             eprintln!("Error: line {}: continue outside loop.", stmt.line_number);
             exit(1);
         },
@@ -254,16 +254,16 @@ fn check_blank_func_decl(_name: &String,
 
 /// Checks a type for blank identifier usage
 fn check_blank_type(kind: &AstKindNode) {
-    match kind.ast_kind {
-        AstKind::Identifier { ref name } => {
+    match kind.variant {
+        AstKindVariant::Identifier { ref name } => {
             if name == "_" {
                 eprintln!("Error: line {}: Invalid type name. Cannot be blank identifier.", kind.line_number);
                 exit(1);
             }
         }
-        AstKind::Slice { ref base } => check_blank_type(&** base),
-        AstKind::Array { ref base, .. } => check_blank_type(&** base),
-        AstKind::Struct { ref fields } => {
+        AstKindVariant::Slice { ref base } => check_blank_type(&** base),
+        AstKindVariant::Array { ref base, .. } => check_blank_type(&** base),
+        AstKindVariant::Struct { ref fields } => {
             for field in fields {
                 check_blank_field(field);
             }
@@ -279,16 +279,16 @@ fn check_blank_field(field: &Field){
 
 /// Recursively traverses statements to detect any invalid blank id usage
 fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
-    match stmt.statement {
-        Statement::Block(ref v) => {
+    match stmt.variant {
+        StatementVariant::Block(ref v) => {
             for x in v {
                 traverse_stmt_for_invalid_blank(&x)
             }
         },
-        Statement::Expression(ref exp) => {
+        StatementVariant::Expression(ref exp) => {
             traverse_exp_for_invalid_blank(&*exp)
         },
-        Statement::Assignment {ref lhs, ref rhs, ..} => {
+        StatementVariant::Assignment {ref lhs, ref rhs, ..} => {
             for exp in lhs.iter(){
                 traverse_assignable_exp_for_invalid_blank(exp)
             }
@@ -296,34 +296,34 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        Statement::OpAssignment { ref lhs, ref rhs, .. } => {
+        StatementVariant::OpAssignment { ref lhs, ref rhs, .. } => {
             traverse_exp_for_invalid_blank(&*lhs);
             traverse_exp_for_invalid_blank(&*rhs)
         },
-        Statement::VarDeclarations { ref declarations } => {
+        StatementVariant::VarDeclarations { ref declarations } => {
             for decl in declarations.iter(){
                 check_blank_var_decl(decl)
             }
         },
-        Statement::ShortVariableDeclaration { ref expression_list, .. } => {
+        StatementVariant::ShortVariableDeclaration { ref expression_list, .. } => {
             for exp in expression_list.iter(){
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        Statement::IncDec { ref expr, .. } => {
+        StatementVariant::IncDec { ref expr, .. } => {
             traverse_exp_for_invalid_blank(&*expr)
         },
-        Statement::Print { ref exprs } => {
+        StatementVariant::Print { ref exprs } => {
             for exp in exprs.iter(){
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        Statement::Println { ref exprs } => {
+        StatementVariant::Println { ref exprs } => {
             for exp in exprs.iter(){
                 traverse_exp_for_invalid_blank(exp)
             }
         },
-        Statement::If { ref init, ref condition, ref if_branch, ref else_branch } => {
+        StatementVariant::If { ref init, ref condition, ref if_branch, ref else_branch } => {
             traverse_stmt_for_invalid_blank(&*init);
             traverse_exp_for_invalid_blank(&*condition);
 
@@ -336,7 +336,7 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
                 &None => return,
             }
         },
-        Statement::For { ref init, ref condition, ref post, ref body } => {
+        StatementVariant::For { ref init, ref condition, ref post, ref body } => {
             traverse_stmt_for_invalid_blank(&*init);
             match condition {
                 &Some(ref condition) => traverse_exp_for_invalid_blank(&*condition),
@@ -348,7 +348,7 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
                 traverse_stmt_for_invalid_blank(stmt)
             }
         },
-        Statement::Switch { ref init, ref expr, ref body } => {
+        StatementVariant::Switch { ref init, ref expr, ref body } => {
             traverse_stmt_for_invalid_blank(&*init);
 
             match expr {
@@ -360,18 +360,18 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
                 traverse_case_clause_for_invalid_blank(case_clause)
             }
         },
-        Statement::Return( ref expr) => {
+        StatementVariant::Return( ref expr) => {
             match expr {
                 &Some( ref expr ) => traverse_exp_for_invalid_blank(&*expr),
                 &None => ()
             }
         }
-        Statement::TypeDeclarations{ ref declarations } => {
+        StatementVariant::TypeDeclarations{ ref declarations } => {
             for spec in declarations {
                 check_blank_type_decl(spec)
             }
         }
-        Statement::Empty | Statement::Break | Statement::Continue => {}
+        StatementVariant::Empty | StatementVariant::Break | StatementVariant::Continue => {}
     }
 }
 

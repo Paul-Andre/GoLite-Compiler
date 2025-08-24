@@ -31,12 +31,12 @@ pub struct Env<'a,'b> {
 fn init_top_level<'a,'b>(env: &Env<'a, 'b>, root: &'b Program) -> Box<[&'b ast::Function]> {
     let mut init_functions = Vec::<&'b ast::Function>::new();
     for decl in &root.declarations {
-        match &decl.top_level_declaration {
-            TopLevelDeclaration::VarDeclarations{declarations} => {
+        match &decl.variant {
+            TopLevelDeclarationVariant::VarDeclarations{declarations} => {
                 interpret_var_declarations(declarations, env);
             },
-            TopLevelDeclaration::TypeDeclarations{declarations} => {},
-            TopLevelDeclaration::FunctionDeclaration(function) => {
+            TopLevelDeclarationVariant::TypeDeclarations{declarations} => {},
+            TopLevelDeclarationVariant::FunctionDeclaration(function) => {
                 let name = &function.name;
                 if name == "init" {
                     init_functions.push(function);
@@ -567,26 +567,26 @@ pub fn interpret_reference_expr(expr: &Expression, env: &Env) -> Reference {
 }
 
 #[must_use]
-pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
+pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
     match statement {
-        Statement::Empty => {
+        StatementVariant::Empty => {
             return Signal::None;
         },
-        Statement::Block(statement_node_vec) => {
+        StatementVariant::Block(statement_node_vec) => {
             let mut block_env = create_child_env(env);
             for sn in statement_node_vec {
-                let s = interpret_statement(&sn.statement, &block_env);
+                let s = interpret_statement(&sn.variant, &block_env);
                 if (!s.is_none()) {
                     return s;
                 }
             }
             return Signal::None;
         },
-        Statement::Expression(expression_node) => {
+        StatementVariant::Expression(expression_node) => {
             interpret_expression(&expression_node, env);
             return Signal::None;
         },
-        Statement::Assignment{lhs, rhs} => {
+        StatementVariant::Assignment{lhs, rhs} => {
 
             let mut references: Vec<Reference> = Vec::new();
             for le in lhs {
@@ -606,7 +606,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             }
             return Signal::None;
         },
-        Statement::OpAssignment{lhs, rhs, operator} => {
+        StatementVariant::OpAssignment{lhs, rhs, operator} => {
             let l_ref = interpret_reference_expr(lhs, env);
             let rval = interpret_expression(rhs, env);
 
@@ -616,15 +616,15 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             });
             return Signal::None;
         },
-        Statement::VarDeclarations{declarations} => {
+        StatementVariant::VarDeclarations{declarations} => {
             interpret_var_declarations(declarations, env);
             return Signal::None;
         },
-        Statement::TypeDeclarations{declarations} => {
+        StatementVariant::TypeDeclarations{declarations} => {
             // nothing, we completely erase all types
             return Signal::None;
         },
-        Statement::ShortVariableDeclaration{identifier_list, expression_list, is_assigning} => {
+        StatementVariant::ShortVariableDeclaration{identifier_list, expression_list, is_assigning} => {
             let mut temp: Vec<Value> = Vec::new();
             for ee in expression_list {
                 let ev = interpret_expression(ee, env);
@@ -643,7 +643,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             }
             return Signal::None;
         },
-        Statement::IncDec{is_dec, expr} => {
+        StatementVariant::IncDec{is_dec, expr} => {
             let is_dec = *is_dec;
             let r = interpret_reference_expr(expr, env);
 
@@ -660,7 +660,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             });
             return Signal::None;
         },
-        Statement::Print{exprs} => {
+        StatementVariant::Print{exprs} => {
             let refs: Vec<Reference> = exprs.iter().map(|expr| {
                 interpret_reference_expr(expr, env)
             }).collect();
@@ -671,7 +671,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             }
             return Signal::None;
         },
-        Statement::Println{exprs} => {
+        StatementVariant::Println{exprs} => {
             let len = exprs.len();
 
             let refs: Vec<Reference> = exprs.iter().map(|expr| {
@@ -688,8 +688,8 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             print!("\n");
             return Signal::None;
         },
-        Statement::If{init, condition, if_branch, else_branch} => {
-            let is = interpret_statement(&init.statement, env);
+        StatementVariant::If{init, condition, if_branch, else_branch} => {
+            let is = interpret_statement(&init.variant, env);
             if (!is.is_none()) {
                 return is;
             }
@@ -699,14 +699,14 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
                 if b {
                     let new_env = create_child_env(env);
                     for sn in if_branch {
-                        let s = interpret_statement(&sn.statement, &new_env);
+                        let s = interpret_statement(&sn.variant, &new_env);
                         if (!s.is_none()) {
                             return s;
                         }
                     }
                     return Signal::None;
                 } else if let Some(s) = else_branch{
-                    return interpret_statement(&s.statement, env);
+                    return interpret_statement(&(*s).variant, env);
                 } else {
                     // condition was false and there is no else branch
                     return Signal::None;
@@ -716,8 +716,8 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
                 panic!("Condition passed to if statement is not a boolean type.");
             }
         },
-        Statement::For{init, condition, post, body} => {
-            let is = interpret_statement(&init.statement, env);
+        StatementVariant::For{init, condition, post, body} => {
+            let is = interpret_statement(&init.variant, env);
             if (!is.is_none()) {
                 return is;
             }
@@ -738,7 +738,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
 
                 if looping {
                     for sn in body {
-                        let s = interpret_statement(&sn.statement, &new_env);
+                        let s = interpret_statement(&sn.variant, &new_env);
                         match (s) {
                             Signal::None => {},
                             Signal::Return(_) => {
@@ -752,7 +752,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
                             },
                         }
                     }
-                    let ps = interpret_statement(&post.statement, &env);
+                    let ps = interpret_statement(&post.variant, &env);
                     if (!ps.is_none()) {
                         return ps;
                     }
@@ -762,9 +762,9 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             }
             return Signal::None;
         },     
-        Statement::Switch{init, expr, body} => {
+        StatementVariant::Switch{init, expr, body} => {
             // TODO: check order of evaluation when using init statement
-            let is = interpret_statement(&init.statement, env);
+            let is = interpret_statement(&init.variant, env);
             if (!is.is_none()) {
                 // Technically it should alway be None...
                 return is;
@@ -788,7 +788,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
 
                                 let new_env = create_child_env(env);
                                 for stmt in statements {
-                                    let s = interpret_statement(&stmt.statement, &env);
+                                    let s = interpret_statement(&stmt.variant, &env);
                                     match (s) {
                                         Signal::None => {},
                                         Signal::Return(_) => {
@@ -817,7 +817,7 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
                         SwitchCase::Default => {
                             let new_env = create_child_env(env);
                             for stmt in statements {
-                                let s = interpret_statement(&stmt.statement, &env);
+                                let s = interpret_statement(&stmt.variant, &env);
                                 match (s) {
                                     Signal::None => {},
                                     Signal::Return(_) => {
@@ -838,15 +838,15 @@ pub fn interpret_statement(statement: &Statement, env: & Env) -> Signal {
             return Signal::None;
         },
 
-        Statement::Break => {
+        StatementVariant::Break => {
             return Signal::Break;
         },
 
-        Statement::Continue => {
+        StatementVariant::Continue => {
             return Signal::Continue;
         },
 
-        Statement::Return(opt_expr) => {
+        StatementVariant::Return(opt_expr) => {
             if let Some(expr) = opt_expr {
                 let v = interpret_expression(&*expr, env);
                 return Signal::Return(v);
@@ -883,7 +883,7 @@ pub fn interpret_function<'a,'b>(f: &ast::Function, tl_env: &'a Env<'a,'b>, args
     }
 
     for statement_node in &f.body {
-        let s = interpret_statement(&statement_node.statement,&mut env);
+        let s = interpret_statement(&statement_node.variant,&mut env);
         match s {
             Signal::None => {},
             Signal::Return(v) => {return v},

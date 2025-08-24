@@ -96,10 +96,10 @@ TOP DECLARATION NODE CONSTRUCTORS
 
 
 /// This is a function that factors out most of the repetition from creating top level declaration nodes
-fn make_top_level_declaration_ptr(line: u32, dcl: TopLevelDeclaration) -> *mut TopLevelDeclarationNode {
+fn make_top_level_declaration_ptr(line: u32, dcl: TopLevelDeclarationVariant) -> *mut TopLevelDeclarationNode {
     Box::into_raw(Box::new(TopLevelDeclarationNode {
         line_number: line ,
-        top_level_declaration: dcl
+        variant: dcl
     }))
 }
 
@@ -108,7 +108,7 @@ pub extern "C" fn make_var_top_level_declaration(line: u32,
                                                  decls:  *mut Vec<VarSpec>) -> *mut TopLevelDeclarationNode {
     make_top_level_declaration_ptr(
         line,
-        TopLevelDeclaration::VarDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
+        TopLevelDeclarationVariant::VarDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
     )
 }
 
@@ -117,7 +117,7 @@ pub extern "C" fn make_type_top_level_declaration(line: u32,
                                                  decls:  *mut Vec<TypeSpec>) -> *mut TopLevelDeclarationNode {
     make_top_level_declaration_ptr(
         line,
-        TopLevelDeclaration::TypeDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
+        TopLevelDeclarationVariant::TypeDeclarations{ declarations:  *unsafe { Box::from_raw(decls) }}
     )
 }
 
@@ -129,7 +129,7 @@ pub extern "C" fn make_function_top_level_declaration(line: u32,
                                                       body: *mut Vec<StatementNode>) -> *mut TopLevelDeclarationNode {
     make_top_level_declaration_ptr(
         line,
-        TopLevelDeclaration::FunctionDeclaration(Function {
+        TopLevelDeclarationVariant::FunctionDeclaration(Function {
             name: unsafe { from_c_string(name) },
             parameters: *unsafe { Box::from_raw(params) },
             return_kind: unsafe { from_raw_or_none(return_kind) },
@@ -273,10 +273,10 @@ STATEMENT NODE CONSTRUCTORS
 */
 
 /// This is a function that factors out most of the repetition from creating statement nodes
-fn make_statement_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
+fn make_statement_ptr(line: u32, stmt: StatementVariant) -> *mut StatementNode {
     Box::into_raw(Box::new(StatementNode {
         line_number: line ,
-        statement: stmt
+        variant: stmt
     }))
 }
 
@@ -285,7 +285,7 @@ fn make_statement_ptr(line: u32, stmt: Statement) -> *mut StatementNode {
 pub extern "C" fn make_empty_statement(line: u32) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::Empty
+        StatementVariant::Empty
     )
 }
 
@@ -293,7 +293,7 @@ pub extern "C" fn make_empty_statement(line: u32) -> *mut StatementNode {
 pub extern "C" fn make_block_statement(line: u32, stmts: *mut Vec<StatementNode>) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::Block(*unsafe {Box::from_raw(stmts)})
+        StatementVariant::Block(*unsafe {Box::from_raw(stmts)})
     )
 }
 
@@ -304,7 +304,7 @@ pub extern "C" fn make_expression_statement(line: u32, expr: *mut Expression) ->
         ExpressionVariant::FunctionCall{..} => {
             make_statement_ptr(
                 line,
-                Statement::Expression(expr)
+                StatementVariant::Expression(expr)
                 )
         }
         _ => {
@@ -327,7 +327,7 @@ rhs: *mut Vec<Expression>) -> *mut StatementNode {
 
     make_statement_ptr(
         line,
-        Statement::Assignment {
+        StatementVariant::Assignment {
             lhs,
             rhs
         }
@@ -340,7 +340,7 @@ pub extern "C" fn make_op_assignment_statement(line: u32, lhs: *mut Expression,
                                                op: BinaryOperator) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::OpAssignment {
+        StatementVariant::OpAssignment {
             lhs: unsafe{Box::from_raw(lhs)},
             rhs: unsafe{Box::from_raw(rhs)},
             operator: op
@@ -353,7 +353,7 @@ pub extern "C" fn make_var_declaration_statement(line: u32,
                                                  decls: *mut Vec<VarSpec>) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::VarDeclarations {
+        StatementVariant::VarDeclarations {
             declarations: *unsafe{Box::from_raw(decls)}
         }
     )
@@ -363,7 +363,7 @@ pub extern "C" fn make_var_declaration_statement(line: u32,
 pub extern "C" fn make_type_declaration_statement(line: u32, decls: *mut Vec<TypeSpec>) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::TypeDeclarations {
+        StatementVariant::TypeDeclarations {
             declarations: *unsafe{Box::from_raw(decls)}
         }
     )
@@ -382,7 +382,7 @@ pub extern "C" fn make_short_var_declaration_statement(line: u32, ids: *mut Vec<
 
     make_statement_ptr(
         line,
-        Statement::ShortVariableDeclaration {
+        StatementVariant::ShortVariableDeclaration {
             identifier_list: lhs,
             expression_list: rhs,
             is_assigning: Vec::new()
@@ -395,7 +395,7 @@ pub extern "C" fn make_inc_dec_statement(line: u32, is_dec: c_int, expr: *mut Ex
 
     make_statement_ptr(
         line,
-        Statement::IncDec {
+        StatementVariant::IncDec {
             is_dec: if is_dec == 0 {false} else {true},
             expr: unsafe{Box::from_raw(expr)}
         }
@@ -406,7 +406,7 @@ pub extern "C" fn make_inc_dec_statement(line: u32, is_dec: c_int, expr: *mut Ex
 pub extern "C" fn make_print_statement(line: u32, exprs: *mut Vec<Expression> ) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::Print {
+        StatementVariant::Print {
             exprs: *unsafe{Box::from_raw(exprs)}
         }
     )
@@ -416,7 +416,7 @@ pub extern "C" fn make_print_statement(line: u32, exprs: *mut Vec<Expression> ) 
 pub extern "C" fn make_println_statement(line: u32, exprs: *mut Vec<Expression> ) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::Println {
+        StatementVariant::Println {
             exprs: *unsafe{Box::from_raw(exprs)}
         }
     )
@@ -430,7 +430,7 @@ pub extern "C" fn make_if_statement(line: u32,
                                     else_branch: *mut StatementNode ) -> *mut StatementNode {
     make_statement_ptr(
         line,
-        Statement::If {
+        StatementVariant::If {
             init: unsafe{Box::from_raw(init)},
             condition: unsafe{Box::from_raw(cond)},
             if_branch: *unsafe{Box::from_raw(if_branch)},
@@ -446,14 +446,14 @@ pub extern "C" fn make_for_statement(line: u32,
                                      post: *mut StatementNode,
                                      body: *mut Vec<StatementNode> ) -> *mut StatementNode {
     let post = unsafe{Box::from_raw(post)};
-    if let Statement::ShortVariableDeclaration{..} =  post.statement {
+    if let StatementVariant::ShortVariableDeclaration{..} =  post.variant {
         eprintln!("Error: line {}: cannot have short variable declaration in the post condition of loop", line);
         exit(1)
     }
     else {
         make_statement_ptr(
             line,
-            Statement::For {
+            StatementVariant::For {
                 init: unsafe{Box::from_raw(init)},
                 condition: unsafe{from_raw_or_none(cond)},
                 post: post,
@@ -476,7 +476,7 @@ pub extern "C" fn make_switch_statement(line: u32,
 
     make_statement_ptr(
         line,
-        Statement::Switch {
+        StatementVariant::Switch {
             init: unsafe{Box::from_raw(init)},
             expr: unsafe{from_raw_or_none(expr)},
             body: body
@@ -488,7 +488,7 @@ pub extern "C" fn make_switch_statement(line: u32,
 pub extern "C" fn make_break_statement(line: u32) -> *mut StatementNode{
     make_statement_ptr(
         line,
-        Statement::Break
+        StatementVariant::Break
 
     )
 }
@@ -497,7 +497,7 @@ pub extern "C" fn make_break_statement(line: u32) -> *mut StatementNode{
 pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
     make_statement_ptr(
         line,
-        Statement::Continue
+        StatementVariant::Continue
 
     )
 }
@@ -506,7 +506,7 @@ pub extern "C" fn make_continue_statement(line: u32) -> *mut StatementNode{
 pub extern "C" fn make_return_statement(line: u32, value: *mut Expression) -> *mut StatementNode{
     make_statement_ptr(
         line,
-        Statement::Return(unsafe{from_raw_or_none(value)})
+        StatementVariant::Return(unsafe{from_raw_or_none(value)})
     )
 }
 
@@ -602,10 +602,10 @@ AST KIND NODE CONSTRUCTORS
 
 
 /// This is a function that factors out most of the repetition
-fn make_ast_kind_ptr(line: u32, expr: AstKind) -> *mut AstKindNode {
+fn make_ast_kind_ptr(line: u32, expr: AstKindVariant) -> *mut AstKindNode {
     Box::into_raw(Box::new( AstKindNode{
         line_number: line,
-        ast_kind: expr,
+        variant: expr,
     }))
 }
 
@@ -613,7 +613,7 @@ fn make_ast_kind_ptr(line: u32, expr: AstKind) -> *mut AstKindNode {
 pub extern "C" fn make_identifier_kind(line: u32, string: *const c_char) -> *mut AstKindNode {
     make_ast_kind_ptr(
         line,
-        AstKind::Identifier { name: unsafe { from_c_string(string) } },
+        AstKindVariant::Identifier { name: unsafe { from_c_string(string) } },
     )
 }
 
@@ -622,7 +622,7 @@ pub extern "C" fn make_identifier_kind(line: u32, string: *const c_char) -> *mut
 pub extern "C" fn make_slice_kind(line: u32, base: *mut AstKindNode) -> *mut AstKindNode {
     make_ast_kind_ptr(
         line,
-        AstKind::Slice { base: unsafe { Box::from_raw(base) } },
+        AstKindVariant::Slice { base: unsafe { Box::from_raw(base) } },
     )
 }
 
@@ -630,7 +630,7 @@ pub extern "C" fn make_slice_kind(line: u32, base: *mut AstKindNode) -> *mut Ast
 pub extern "C" fn make_array_kind(line: u32, base: *mut AstKindNode, size: *const c_char) -> *mut AstKindNode {
     make_ast_kind_ptr(
         line,
-        AstKind::Array {
+        AstKindVariant::Array {
             base: unsafe { Box::from_raw(base) },
             size: unsafe { from_c_string(size) },
         },
@@ -641,7 +641,7 @@ pub extern "C" fn make_array_kind(line: u32, base: *mut AstKindNode, size: *cons
 pub extern "C" fn make_struct_kind(line: u32, fields: *mut Vec<Field>) -> *mut AstKindNode {
     make_ast_kind_ptr(
         line,
-        AstKind::Struct {
+        AstKindVariant::Struct {
             fields: *unsafe{ Box::from_raw(fields) }
         },
     )

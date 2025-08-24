@@ -38,7 +38,7 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug)]
-pub enum AstKind {
+pub enum AstKindVariant {
     Identifier { name: String },
     Slice { base: Box<AstKindNode> },
     Array { base: Box<AstKindNode>, size: String },
@@ -48,7 +48,7 @@ pub enum AstKind {
 #[derive(Debug)]
 pub struct AstKindNode {
     pub line_number: u32,
-    pub ast_kind: AstKind
+    pub variant: AstKindVariant
 }
 
 // This is either the field of a struct or a list of parameters declared with the same type for a
@@ -129,7 +129,7 @@ pub struct CaseClause {
 }
 
 #[derive(Debug)]
-pub enum Statement {
+pub enum StatementVariant {
     Empty,
     Block(Vec<StatementNode>),
     Expression(Box<Expression>),
@@ -180,7 +180,7 @@ pub enum Statement {
 #[derive(Debug)]
 pub struct StatementNode {
     pub line_number: u32,
-    pub statement: Statement,
+    pub variant: StatementVariant,
 }
 
 #[derive(Debug)]
@@ -192,7 +192,7 @@ pub struct Function {
 }
 
 #[derive(Debug)]
-pub enum TopLevelDeclaration {
+pub enum TopLevelDeclarationVariant {
     VarDeclarations { declarations: Vec<VarSpec> },
     TypeDeclarations { declarations: Vec<TypeSpec> },
     FunctionDeclaration (Function),
@@ -201,7 +201,7 @@ pub enum TopLevelDeclaration {
 #[derive(Debug)]
 pub struct TopLevelDeclarationNode {
     pub line_number: u32,
-    pub top_level_declaration: TopLevelDeclaration
+    pub variant: TopLevelDeclarationVariant
 }
 
 #[repr(C)]
