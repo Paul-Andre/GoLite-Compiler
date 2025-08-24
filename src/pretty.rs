@@ -368,7 +368,7 @@ fn pretty_print_case_clause(case_clause: &CaseClause, indent: i32){
 }
 
 
-fn comma_separated_expressions(v: &Vec<ExpressionNode>) {
+fn comma_separated_expressions(v: &Vec<Expression>) {
     for (count, expr) in v.iter().enumerate() {
         pretty_print_expression(expr);
         if count < v.len() - 1 {
@@ -393,7 +393,7 @@ fn pretty_print_switch_case(switch_case: &SwitchCase, indent: i32){
 /*
 EXPRESSION PRETTY PRINTING
 ========================================= */
-fn pretty_print_expression_list(exprs: &Vec<ExpressionNode>) {
+fn pretty_print_expression_list(exprs: &Vec<Expression>) {
     let len = exprs.len();
     let mut count = 0;
 
@@ -408,11 +408,11 @@ fn pretty_print_expression_list(exprs: &Vec<ExpressionNode>) {
     }
 }
 
-fn pretty_print_expression(expr: &ExpressionNode){
-    match expr.expression {
-        Expression::Identifier { ref name, .. } => print!("{}", name),
-        Expression::RawLiteral { ref value } => print!("{}", value),
-        Expression::BinaryOperation { op, ref lhs, ref rhs} => {
+fn pretty_print_expression(expr: &Expression){
+    match expr.variant {
+        ExpressionVariant::Identifier { ref name, .. } => print!("{}", name),
+        ExpressionVariant::RawLiteral { ref value } => print!("{}", value),
+        ExpressionVariant::BinaryOperation { op, ref lhs, ref rhs} => {
             print!("( ");
             pretty_print_expression(&*lhs);
             print!(" ");
@@ -421,10 +421,10 @@ fn pretty_print_expression(expr: &ExpressionNode){
             pretty_print_expression(&*rhs);
             print!(" )");
         },
-        Expression::UnaryOperation { op, ref rhs } => {
+        ExpressionVariant::UnaryOperation { op, ref rhs } => {
             pretty_print_unary_operator(op);
-            match rhs.expression {
-                Expression::Identifier { .. } => pretty_print_expression(&*rhs),
+            match rhs.variant {
+                ExpressionVariant::Identifier { .. } => pretty_print_expression(&*rhs),
                 _ => {
                     print!("(");
                     pretty_print_expression(&*rhs);
@@ -432,17 +432,17 @@ fn pretty_print_expression(expr: &ExpressionNode){
                 }
             }
         },
-        Expression::Index { ref primary, ref index } => {
+        ExpressionVariant::Index { ref primary, ref index } => {
             pretty_print_expression(&*primary);
             print!("[");
             pretty_print_expression(&*index);
             print!("]");
         },
-        Expression::Selector { ref primary, ref name} => {
+        ExpressionVariant::Selector { ref primary, ref name} => {
             pretty_print_expression(&*primary);
             print!(".{}", name);
         },
-        Expression::FunctionCall { ref primary, ref arguments } => {
+        ExpressionVariant::FunctionCall { ref primary, ref arguments } => {
             pretty_print_expression(&*primary);
             print!("(");
 
@@ -461,14 +461,14 @@ fn pretty_print_expression(expr: &ExpressionNode){
 
             print!(" )");
         },
-        Expression::Append { ref lhs, ref rhs } => {
+        ExpressionVariant::Append { ref lhs, ref rhs } => {
             print!("append( ");
             pretty_print_expression(&*lhs);
             print!(" , ");
             pretty_print_expression(&*rhs);
             print!(" )");
         },
-        Expression::TypeCast {ref name, ref expr} => {
+        ExpressionVariant::TypeCast {ref name, ref expr} => {
             print!("{}( ",name);
             pretty_print_expression(expr);
             print!(" )");

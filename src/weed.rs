@@ -376,36 +376,36 @@ fn traverse_stmt_for_invalid_blank(stmt: &StatementNode){
 }
 
 
-fn traverse_assignable_exp_for_invalid_blank(exp: &ExpressionNode) {
-    match exp.expression {
-        Expression::Identifier { .. } => return,
-        Expression::RawLiteral { .. } => {
+fn traverse_assignable_exp_for_invalid_blank(exp: &Expression) {
+    match exp.variant {
+        ExpressionVariant::Identifier { .. } => return,
+        ExpressionVariant::RawLiteral { .. } => {
             eprintln!("Error: line {}: cannot assign to RawLiteral.", exp.line_number);
             exit(1);
         }
-        Expression::BinaryOperation { .. } => {
+        ExpressionVariant::BinaryOperation { .. } => {
             eprintln!("Error: line {}: cannot assign to Binary expression.", exp.line_number);
             exit(1);
         }
-        Expression::UnaryOperation { .. } => {
+        ExpressionVariant::UnaryOperation { .. } => {
             eprintln!("Error: line {}: cannot assign to Unary expression.", exp.line_number);
             exit(1);
         }
-        Expression::Index { .. } => {
+        ExpressionVariant::Index { .. } => {
             traverse_exp_for_invalid_blank(exp);
         }
-        Expression::Selector { .. } => {
+        ExpressionVariant::Selector { .. } => {
             traverse_exp_for_invalid_blank(exp);
         }
-        Expression::FunctionCall { .. } => {
+        ExpressionVariant::FunctionCall { .. } => {
             eprintln!("Error: line {}: cannot assign to function call.", exp.line_number);
             exit(1);
         }
-        Expression::Append { .. } => {
+        ExpressionVariant::Append { .. } => {
             eprintln!("Error: line {}: cannot assign to append expression.", exp.line_number);
             exit(1);
         }
-        Expression::TypeCast { .. } => {
+        ExpressionVariant::TypeCast { .. } => {
             eprintln!("Error: line {}: cannot assign to type cast.", exp.line_number);
             exit(1);
         }
@@ -414,33 +414,33 @@ fn traverse_assignable_exp_for_invalid_blank(exp: &ExpressionNode) {
 
 
 /// Recursively traverses expression in order to detect any invalid blank id usage
-fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
-    match exp.expression {
-        Expression::Identifier { ref name, .. } => {
+fn traverse_exp_for_invalid_blank(exp: &Expression){
+    match exp.variant {
+        ExpressionVariant::Identifier { ref name, .. } => {
             if name == "_" {
                 eprintln!("Error: line {}: invalid use of blank identifier within expression.", exp.line_number);
                 exit(1);
             }
         },
-        Expression::RawLiteral { ref value } => {
+        ExpressionVariant::RawLiteral { ref value } => {
             if value == "_" {
                 eprintln!("Error: line {}: invalid use of blank identifier within expression.", exp.line_number);
                 exit(1);
             }
         },
-        Expression::BinaryOperation { ref lhs, ref rhs, .. } => {
+        ExpressionVariant::BinaryOperation { ref lhs, ref rhs, .. } => {
             traverse_exp_for_invalid_blank(&*lhs);
             traverse_exp_for_invalid_blank(&*rhs);
 
         },
-        Expression::UnaryOperation { ref rhs, .. } => {
+        ExpressionVariant::UnaryOperation { ref rhs, .. } => {
             traverse_exp_for_invalid_blank( &*rhs);
         }
-        Expression::Index { ref primary, ref index } => {
+        ExpressionVariant::Index { ref primary, ref index } => {
             traverse_exp_for_invalid_blank( &*primary);
             traverse_exp_for_invalid_blank( &*index);
         }
-        Expression::Selector { ref primary, ref name } => {
+        ExpressionVariant::Selector { ref primary, ref name } => {
             if name == "_" {
                 eprintln!("Error: line {}: invalid use of blank identifier within selector.", exp.line_number);
                 exit(1);
@@ -448,18 +448,18 @@ fn traverse_exp_for_invalid_blank(exp: &ExpressionNode){
 
             traverse_exp_for_invalid_blank(&*primary)
         }
-        Expression::FunctionCall {ref primary, ref arguments } => {
+        ExpressionVariant::FunctionCall {ref primary, ref arguments } => {
             traverse_exp_for_invalid_blank(&*primary);
 
             for arg in arguments.iter() {
                 traverse_exp_for_invalid_blank( &arg);
             }
         }
-        Expression::Append { ref lhs, ref rhs } => {
+        ExpressionVariant::Append { ref lhs, ref rhs } => {
             traverse_exp_for_invalid_blank( &*lhs);
             traverse_exp_for_invalid_blank( &*rhs);
         }
-        Expression::TypeCast { ref expr, .. } => {
+        ExpressionVariant::TypeCast { ref expr, .. } => {
             traverse_exp_for_invalid_blank( &*expr);
         }
     }

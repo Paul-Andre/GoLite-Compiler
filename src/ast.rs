@@ -61,42 +61,42 @@ pub struct Field {
 }
 
 #[derive(Debug)]
-pub enum Expression {
+pub enum ExpressionVariant {
     Identifier { name: String, original_name: String },
     RawLiteral { value: String },
     BinaryOperation {
         op: BinaryOperator,
-        lhs: Box<ExpressionNode>,
-        rhs: Box<ExpressionNode>,
+        lhs: Box<Expression>,
+        rhs: Box<Expression>,
     },
     UnaryOperation {
         op: UnaryOperator,
-        rhs: Box<ExpressionNode>,
+        rhs: Box<Expression>,
     },
     Index {
-        primary: Box<ExpressionNode>,
-        index: Box<ExpressionNode>,
+        primary: Box<Expression>,
+        index: Box<Expression>,
     },
     Selector {
-        primary: Box<ExpressionNode>,
+        primary: Box<Expression>,
         name: String,
     },
     FunctionCall {
-        primary: Box<ExpressionNode>,
-        arguments: Vec<ExpressionNode>,
+        primary: Box<Expression>,
+        arguments: Vec<Expression>,
     },
     Append {
-        lhs: Box<ExpressionNode>,
-        rhs: Box<ExpressionNode>,
+        lhs: Box<Expression>,
+        rhs: Box<Expression>,
     },
-    TypeCast { name:String, expr: Box<ExpressionNode> },
+    TypeCast { name:String, expr: Box<Expression> },
 }
 
 #[derive(Debug)]
-pub struct ExpressionNode {
+pub struct Expression {
     pub line_number: u32,
     pub kind: Kind,
-    pub expression: Expression,
+    pub variant: ExpressionVariant,
 }
 
 #[derive(Debug)]
@@ -104,7 +104,7 @@ pub struct VarSpec {
     pub line_number: u32,
     pub names: Vec<String>,
     pub kind: Option<Box<AstKindNode>>,
-    pub rhs: Option<Vec<ExpressionNode>>,
+    pub rhs: Option<Vec<Expression>>,
     pub evaluated_kind: Kind
 }
 
@@ -118,7 +118,7 @@ pub struct TypeSpec {
 #[derive(Debug)]
 pub enum SwitchCase {
     Default,
-    Cases(Vec<ExpressionNode>),
+    Cases(Vec<Expression>),
 }
 
 #[derive(Debug)]
@@ -132,49 +132,49 @@ pub struct CaseClause {
 pub enum Statement {
     Empty,
     Block(Vec<StatementNode>),
-    Expression(Box<ExpressionNode>),
+    Expression(Box<Expression>),
     Assignment {
-        lhs: Vec<ExpressionNode>,
-        rhs: Vec<ExpressionNode>,
+        lhs: Vec<Expression>,
+        rhs: Vec<Expression>,
     },
     OpAssignment {
-        lhs: Box<ExpressionNode>,
-        rhs: Box<ExpressionNode>,
+        lhs: Box<Expression>,
+        rhs: Box<Expression>,
         operator: BinaryOperator,
     },
     VarDeclarations { declarations: Vec<VarSpec> },
     TypeDeclarations { declarations: Vec<TypeSpec> },
     ShortVariableDeclaration {
         identifier_list: Vec<String>,
-        expression_list: Vec<ExpressionNode>,
+        expression_list: Vec<Expression>,
         is_assigning: Vec<bool>
     },
     IncDec {
         is_dec: bool,
-        expr: Box<ExpressionNode>,
+        expr: Box<Expression>,
     },
-    Print { exprs: Vec<ExpressionNode> },
-    Println { exprs: Vec<ExpressionNode> },
+    Print { exprs: Vec<Expression> },
+    Println { exprs: Vec<Expression> },
     If {
         init: Box<StatementNode>,
-        condition: Box<ExpressionNode>,
+        condition: Box<Expression>,
         if_branch: Vec<StatementNode>,
         else_branch: Option<Box<StatementNode>>,
     },
     For {
         init: Box<StatementNode>,
-        condition: Option<Box<ExpressionNode>>,
+        condition: Option<Box<Expression>>,
         post: Box<StatementNode>,
         body: Vec<StatementNode>,
     },
     Switch {
         init: Box<StatementNode>,
-        expr: Option<Box<ExpressionNode>>,
+        expr: Option<Box<Expression>>,
         body: Vec<CaseClause>,
     },
     Break,
     Continue,
-    Return(Option<Box<ExpressionNode>>)
+    Return(Option<Box<Expression>>)
 }
 
 #[derive(Debug)]

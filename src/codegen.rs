@@ -365,7 +365,7 @@ impl CodeGenVisitor{
     }
 
     fn codegen_print(&mut self,
-                     exprs: &Vec<ExpressionNode>,
+                     exprs: &Vec<Expression>,
                      is_println: bool) {
         let mut pre = String::new();
         let mut post = String::new();
@@ -390,7 +390,7 @@ impl CodeGenVisitor{
 
     // "immediately invoked function expression"
     fn codegen_expression_iife(&mut self,
-                               exp: &ExpressionNode,
+                               exp: &Expression,
                                post_string: &mut String) {
         let mut new_pre = String::new();
         let mut new_post = String::new();
@@ -412,12 +412,12 @@ impl CodeGenVisitor{
     // There isn't a single print or println in this function. All output is done through writing
     // to pre_string and post_string.
     fn visit_expression(&mut self,
-                        exp: &ExpressionNode,
+                        exp: &Expression,
                         pre_string: &mut String,
                         post_string: &mut String) {
 
-        match exp.expression {
-            Expression::RawLiteral{ ref value } => {
+        match exp.variant {
+            ExpressionVariant::RawLiteral{ ref value } => {
                 match exp.kind {
                     Kind::Basic(BasicKind::Int) | 
                     Kind::Basic(BasicKind::Float) => {
@@ -474,17 +474,17 @@ impl CodeGenVisitor{
                 }
             }
 
-            Expression::Identifier { ref name, .. } => {
+            ExpressionVariant::Identifier { ref name, .. } => {
                 write!(post_string, "{}", name).unwrap();
             }
 
-            Expression::UnaryOperation { ref op, ref rhs } => {
+            ExpressionVariant::UnaryOperation { ref op, ref rhs } => {
                 write!(post_string, "{}(", generate_unary_op(op)).unwrap();
                 self.visit_expression(rhs, pre_string, post_string);
                 write!(post_string, ")").unwrap();
             }
 
-            Expression::BinaryOperation { ref op, ref lhs, ref rhs } => {
+            ExpressionVariant::BinaryOperation { ref op, ref lhs, ref rhs } => {
                 if *op == BinaryOperator::Or || *op == BinaryOperator::And {
                     write!(post_string, "(").unwrap();
                     self.visit_expression(lhs, pre_string, post_string);
@@ -515,7 +515,7 @@ impl CodeGenVisitor{
                 }
             }
 
-            Expression::FunctionCall { ref primary, ref arguments } => {
+            ExpressionVariant::FunctionCall { ref primary, ref arguments } => {
                 let tmp_id = self.create_id();
                 let mut new_pre_string = String::new();
                 let mut new_post_string = String::new();
@@ -549,7 +549,7 @@ impl CodeGenVisitor{
                        &mut new_post_string).unwrap();
             }
 
-            Expression::Index { ref primary, ref index } => {
+            ExpressionVariant::Index { ref primary, ref index } => {
 
                 let mut primary_value = "".to_string();
                 let mut index_value = "".to_string();
@@ -570,12 +570,12 @@ impl CodeGenVisitor{
                 index_value, primary_value, exp.line_number).unwrap();
             }
 
-            Expression::Selector { ref primary, ref name } => {
+            ExpressionVariant::Selector { ref primary, ref name } => {
                 self.visit_expression(primary, pre_string, post_string);
                 write!(post_string, ".ㆭ{}", name).unwrap();
             }
 
-            Expression::Append { ref lhs, ref rhs } => {
+            ExpressionVariant::Append { ref lhs, ref rhs } => {
                 write!(post_string, "append(").unwrap();
                 self.visit_expression(lhs, pre_string, post_string);
                 write!(post_string, ", ").unwrap();
@@ -583,7 +583,7 @@ impl CodeGenVisitor{
                 write!(post_string, ")").unwrap();
             }
 
-            Expression::TypeCast { ref expr, .. } => {
+            ExpressionVariant::TypeCast { ref expr, .. } => {
                 if exp.kind.is_string() && expr.kind.is_integer() {
                     write!(post_string, "String.fromCharCode(").unwrap();
                     self.visit_expression(expr, pre_string, post_string);

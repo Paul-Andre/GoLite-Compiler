@@ -204,10 +204,10 @@ pub fn compute_binary_operation(op: BinaryOperator, lv: Value, rv: Value) -> Val
     }
 }
 
-pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Value {
-    match &expression_node.expression {
-        Expression::RawLiteral{value} => {value::parse_with_kind(&value, &expression_node.kind)}
-        Expression::BinaryOperation { op, lhs, rhs } => {
+pub fn interpret_expression(expression_node: &Expression, env: & Env) -> Value {
+    match &expression_node.variant {
+        ExpressionVariant::RawLiteral{value} => {value::parse_with_kind(&value, &expression_node.kind)}
+        ExpressionVariant::BinaryOperation { op, lhs, rhs } => {
             if let BinaryOperator::Or = op {
                 //special case, short circuiting
                 let l_ref = interpret_reference_expr(lhs, env);
@@ -243,7 +243,7 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
             }
 
         }
-        Expression::UnaryOperation { op, rhs } => {
+        ExpressionVariant::UnaryOperation { op, rhs } => {
             let rv = interpret_expression(rhs, env);
             match op {
                 UnaryOperator::Plus => builtins::plus(&rv),
@@ -252,16 +252,16 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
                 UnaryOperator::Not => builtins::not(&rv),
             }
         }
-        Expression::Identifier{..} |
-        Expression::Index { .. } |
-        Expression::Selector { .. } => {
+        ExpressionVariant::Identifier{..} |
+        ExpressionVariant::Index { .. } |
+        ExpressionVariant::Selector { .. } => {
             let r = interpret_reference_expr(expression_node, env);
             r.get_value(env)
         }
-        Expression::FunctionCall { primary, arguments } => {
+        ExpressionVariant::FunctionCall { primary, arguments } => {
             let f;
-            match &primary.expression {
-                Expression::Identifier{name, ..} => {
+            match &primary.variant {
+                ExpressionVariant::Identifier{name, ..} => {
                     f = env_get_function(env, name).unwrap();
                 },
                 _ => todo!("Haven't implemented taking an expression as a function.")
@@ -277,14 +277,14 @@ pub fn interpret_expression(expression_node: &ExpressionNode, env: & Env) -> Val
 
             interpret_function(f, env, evaled_args.into())
         }
-        Expression::Append { lhs, rhs } => {
+        ExpressionVariant::Append { lhs, rhs } => {
             let l_ref = interpret_reference_expr(lhs, env);
             let r_ref = interpret_reference_expr(rhs, env);
             let lv = l_ref.get_value(env);
             let rv = r_ref.get_value(env);
             builtins::append(lv,rv)
         }
-        Expression::TypeCast {expr, ..} => {
+        ExpressionVariant::TypeCast {expr, ..} => {
             let kind = &expression_node.kind;
             let v = interpret_expression(expr, env);
             builtins::cast(kind, &v)
@@ -531,9 +531,9 @@ pub fn env_get_reference_value(env: &Env, ident: &str, modifier_stack: &[Referen
     }
 }
 
-pub fn interpret_reference_expr(expr: &ExpressionNode, env: &Env) -> Reference {
-    match expr.expression {
-        Expression::Identifier{ref name, ..} => {
+pub fn interpret_reference_expr(expr: &Expression, env: &Env) -> Reference {
+    match expr.variant {
+        ExpressionVariant::Identifier{ref name, ..} => {
             if name == "_" {
                 Reference {
                     base: ReferenceBase::Underscore,
@@ -546,13 +546,13 @@ pub fn interpret_reference_expr(expr: &ExpressionNode, env: &Env) -> Reference {
                 }
             }
         },
-        Expression::Index{ref primary,ref  index} => {
+        ExpressionVariant::Index{ref primary,ref  index} => {
             let mut reference = interpret_reference_expr(&primary, env);
             let i = interpret_expression(&*index, env).get_integer().unwrap();
             reference.modifier_stack.push(ReferenceModifier::Index(i));
             reference
         }
-        Expression::Selector{ref primary,ref name} => {
+        ExpressionVariant::Selector{ref primary,ref name} => {
             let mut reference = interpret_reference_expr(&primary, env);
             reference.modifier_stack.push(ReferenceModifier::Selector(name.clone()));
             reference

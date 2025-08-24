@@ -175,8 +175,8 @@ fn typecheck_statement(stmt: &mut StatementNode,
         Statement::Continue => {},
         Statement::Expression(ref mut exp) => {
             typecheck_expression(exp, symbol_table, true);
-            match exp.expression {
-                Expression::FunctionCall {..} => {},
+            match exp.variant {
+                ExpressionVariant::FunctionCall {..} => {},
                 _ => {
                     eprintln!("Error: line {}: Invalid expression statement. \
                               Expected a function call", exp.line_number);
@@ -517,15 +517,15 @@ fn typecheck_kind(ast: &mut AstKindNode,
 }
 
 
-fn typecheck_expression(exp: &mut ExpressionNode, 
+fn typecheck_expression(exp: &mut Expression, 
                         symbol_table: &mut SymbolTable, 
                         from_expression_statement: bool) -> Kind {
 
-    match exp.expression {
-        Expression::RawLiteral{..} => {
+    match exp.variant {
+        ExpressionVariant::RawLiteral{..} => {
         }
 
-        Expression::Identifier { ref mut name, .. } => {
+        ExpressionVariant::Identifier { ref mut name, .. } => {
             if name == "_" {
                 exp.kind = Kind::Underscore;
                 return exp.kind.clone();
@@ -544,20 +544,20 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             }
         }
 
-        Expression::UnaryOperation { ref op, ref mut rhs } => {
+        ExpressionVariant::UnaryOperation { ref op, ref mut rhs } => {
             let kind = typecheck_expression(rhs, symbol_table, false);
             let op_kind = get_kind_unary_op(&kind, op.clone(), exp.line_number);
             exp.kind = op_kind;
         }
 
-        Expression::BinaryOperation { ref op, ref mut lhs, ref mut rhs } => {
+        ExpressionVariant::BinaryOperation { ref op, ref mut lhs, ref mut rhs } => {
             let lhs_kind = typecheck_expression(lhs, symbol_table, false);
             let rhs_kind = typecheck_expression(rhs, symbol_table, false);
             let op_kind = get_kind_binary_op(&lhs_kind, &rhs_kind, op.clone(), exp.line_number);
             exp.kind = op_kind;
         }
 
-        ref mut a@Expression::FunctionCall { .. } => {
+        ref mut a@ExpressionVariant::FunctionCall { .. } => {
             // This block is a horror
 
             // Here I do this weird thing where I reassign the node to either a function call or a
@@ -567,8 +567,8 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             let mut arguments;
             
             // To move things out of a borrowed value, I need to put something in its place
-            if let Expression::FunctionCall{ primary: p, arguments: a } = mem::replace(
-                a, Expression::Identifier{ name: "^ this is dumb ^".to_string(),
+            if let ExpressionVariant::FunctionCall{ primary: p, arguments: a } = mem::replace(
+                a, ExpressionVariant::Identifier{ name: "^ this is dumb ^".to_string(),
                 original_name: "".to_string()}) {
                 primary = p;
                 arguments = a;
@@ -579,7 +579,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             *a = 
             if let Some(ref name) =
                 // fml
-                if let Expression::Identifier{ref name, ..} = primary.expression {
+                if let ExpressionVariant::Identifier{ref name, ..} = primary.variant {
                     Some(name.clone())
                 }
                 else {
@@ -629,7 +629,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
                         }
 
                         exp.kind = cast_kind.clone();
-                        Expression::TypeCast{name:renamed, expr: Box::new(inner_expr) }
+                        ExpressionVariant::TypeCast{name:renamed, expr: Box::new(inner_expr) }
                     },
                     Declaration::Function{ref params, ref return_kind} => {
 
@@ -657,10 +657,10 @@ fn typecheck_expression(exp: &mut ExpressionNode,
                                 exp.kind = Kind::Void;
                             }
                         }
-                        Expression::FunctionCall{ primary: Box::new(ExpressionNode{
+                        ExpressionVariant::FunctionCall{ primary: Box::new(Expression{
                             kind: primary.kind.clone(),
                             line_number: exp.line_number,
-                            expression: Expression::Identifier{
+                            variant: ExpressionVariant::Identifier{
                                 name: renamed,
                                 original_name: name.to_string()
                             }})
@@ -680,7 +680,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
 
         }
 
-        Expression::Index { ref mut primary, ref mut index } => {
+        ExpressionVariant::Index { ref mut primary, ref mut index } => {
             let primary_kind = typecheck_expression(primary, symbol_table, false);
             let index_kind = typecheck_expression(index, symbol_table, false);
             match primary_kind.resolve() {
@@ -707,7 +707,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             }
         }
 
-        Expression::Selector { ref mut primary, ref name } => {
+        ExpressionVariant::Selector { ref mut primary, ref name } => {
             let kind = typecheck_expression(primary, symbol_table, false);
             if let Kind::Struct(ref fields) = kind.resolve() {
                 let mut found = false;  // used to skip over error printing messages
@@ -729,7 +729,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             }
         }
 
-        Expression::Append { ref mut lhs, ref mut rhs } => {
+        ExpressionVariant::Append { ref mut lhs, ref mut rhs } => {
             let s_kind = typecheck_expression(lhs, symbol_table, false);
             let kind = typecheck_expression(rhs, symbol_table, false);
 
@@ -748,7 +748,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
             }
         }
 
-        Expression::TypeCast { .. } => {
+        ExpressionVariant::TypeCast { .. } => {
             panic!("This should not happen at this phase.");
         }
     } 
@@ -766,7 +766,7 @@ fn typecheck_expression(exp: &mut ExpressionNode,
     }
 }
 
-fn typecheck_expression_vec(exprs: &mut [ExpressionNode], symbol_table: &mut SymbolTable) ->
+fn typecheck_expression_vec(exprs: &mut [Expression], symbol_table: &mut SymbolTable) ->
 Vec<Kind> {
     let mut ret = Vec::new();
     for e in exprs {
@@ -776,9 +776,9 @@ Vec<Kind> {
 }
 
 // this will not typecheck and will not rename variables
-fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) -> bool {
-    match exp.expression {
-        Expression::Identifier {ref original_name,.. } => {
+fn is_exp_addressable(exp: &mut Expression, symbol_table: &mut SymbolTable) -> bool {
+    match exp.variant {
+        ExpressionVariant::Identifier {ref original_name,.. } => {
             if original_name == "_" {
                 return true
             }
@@ -794,7 +794,7 @@ fn is_exp_addressable(exp: &mut ExpressionNode, symbol_table: &mut SymbolTable) 
                 }
             }
         },
-        Expression::Index { ref mut primary, .. } | Expression::Selector{ ref mut primary, .. } => {
+        ExpressionVariant::Index { ref mut primary, .. } | ExpressionVariant::Selector{ ref mut primary, .. } => {
             if let Kind::Slice(..) = primary.kind {
                 return true;
             } else {
