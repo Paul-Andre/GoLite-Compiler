@@ -156,7 +156,8 @@ pub fn zero_array(k: &Kind, len: u32) -> Value {
 }
 
 pub fn zero_slice(k: &Kind) -> Value {
-    let mut v: Vec<RefCell<Value>> = Vec::new();
+    _ = k; // interestingly, I don't even need to know the kind.
+    let v: Vec<RefCell<Value>> = Vec::new();
     Value::Slice(Slice{length:0, contents:v.into()})
 }
 pub fn zero_struct(fields: &[kind::Field]) -> Value {

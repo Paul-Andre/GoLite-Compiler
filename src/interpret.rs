@@ -27,7 +27,7 @@ fn init_top_level<'a,'b>(env: &Env<'a, 'b>, root: &'b Program) -> Box<[&'b ast::
             TopLevelDeclarationVariant::VarDeclarations{declarations} => {
                 interpret_var_declarations(declarations, env);
             },
-            TopLevelDeclarationVariant::TypeDeclarations{declarations} => {},
+            TopLevelDeclarationVariant::TypeDeclarations{..} => {},
             TopLevelDeclarationVariant::FunctionDeclaration(function) => {
                 let name = &function.name;
                 if name == "init" {
@@ -562,7 +562,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
             return Signal::None;
         },
         StatementVariant::Block(statement_node_vec) => {
-            let mut block_env = create_child_env(env);
+            let block_env = create_child_env(env);
             for sn in statement_node_vec {
                 let s = interpret_statement(&sn.variant, &block_env);
                 if !s.is_none() {
@@ -609,7 +609,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
             interpret_var_declarations(declarations, env);
             return Signal::None;
         },
-        StatementVariant::TypeDeclarations{declarations} => {
+        StatementVariant::TypeDeclarations{..} => {
             // nothing, we completely erase all types
             return Signal::None;
         },
@@ -765,7 +765,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                 Value::Bool(true)
             };
             let mut found = false;
-            'external: for CaseClause{line_number, switch_case, statements} in body {
+            'external: for CaseClause{line_number: _, switch_case, statements} in body {
                 match switch_case {
                     SwitchCase::Default => {},
                     SwitchCase::Cases(vec_expr) => {
@@ -777,7 +777,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
 
                                 let new_env = create_child_env(env);
                                 for stmt in statements {
-                                    let s = interpret_statement(&stmt.variant, &env);
+                                    let s = interpret_statement(&stmt.variant, &new_env);
                                     match s {
                                         Signal::None => {},
                                         Signal::Return(_) => {
@@ -800,13 +800,13 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
 
 
             if !found {
-                'external: for CaseClause{line_number, switch_case, statements} in body {
+                'external: for CaseClause{line_number: _, switch_case, statements} in body {
                     match switch_case {
                         SwitchCase::Cases{..} => {},
                         SwitchCase::Default => {
                             let new_env = create_child_env(env);
                             for stmt in statements {
-                                let s = interpret_statement(&stmt.variant, &env);
+                                let s = interpret_statement(&stmt.variant, &new_env);
                                 match s {
                                     Signal::None => {},
                                     Signal::Return(_) => {
