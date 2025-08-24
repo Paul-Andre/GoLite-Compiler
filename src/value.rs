@@ -3,7 +3,6 @@ use kind::Kind;
 use kind::BasicKind;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::cell::Cell;
 use std::collections::HashMap;
 use util::string_to_int;
 use std::convert::TryFrom;
@@ -79,16 +78,16 @@ fn format_float(a: f64, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "e");
 
         write!(f, "{}", if neg_exp { "-" } else {"+"});
-        while(len_exp<3) {
+        while len_exp<3 {
             write!(f, "0");
             len_exp += 1;
         }
         write!(f, "{}", exponent)
-    } else if (a.is_nan()) {
+    } else if a.is_nan() {
         write!(f,"NaN")
-    } else if (a == f64::INFINITY) {
+    } else if a == f64::INFINITY {
         write!(f,"+Inf")
-    } else if (a == f64::NEG_INFINITY) {
+    } else if a == f64::NEG_INFINITY {
         write!(f,"-Inf")
     } else {
         panic!("Those are al the f64 options, there should be any others.");
@@ -126,7 +125,7 @@ impl fmt::Display for Value {
 }
 
 pub fn parse_with_kind(s: &str,k: &Kind) -> Value {
-    match (k) {
+    match k {
         Kind::Basic(BasicKind::Int) => {
             let base: u32 = string_to_int(s);
             if base == ONE_OVER_MAX {
@@ -256,7 +255,7 @@ pub mod builtins {
                     new_contents.push(RefCell::new(a.borrow_mut().clone()));
                 }
                 new_contents.push(RefCell::new(r));
-                while(new_contents.len()<new_capacity){
+                while new_contents.len()<new_capacity {
                     new_contents.push(RefCell::new(Value::Undefined));
                 }
 

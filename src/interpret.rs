@@ -1,18 +1,10 @@
-use std::fmt::Write;
-use util::*;
 use ast;
 use ast::*;
-use kind::*;
-use std::fs::File;
-use std::io::prelude::*;
 use value;
 use value::Value;
 use value::builtins;
 use std::collections::HashMap;
 use std::cell::RefCell;
-use std::cell::RefMut;
-use std::cell::Cell;
-use std::rc::Rc;
 
 #[derive(Debug)]
 pub enum Declaration<'b> {
@@ -82,11 +74,11 @@ pub fn env_get_function<'a,'b>(env: &'a Env<'a,'b>, s: &str) -> Option<&'b ast::
 }
 
 pub fn check_bounds(a: i32, length: usize, line_number: u32) {
-    if (a < 0) {
+    if a < 0 {
         eprintln!("Error: line {}: trying to index an array or slice with negative number.", line_number);
         std::process::exit(1);
     }
-    if (a as usize >= length) {
+    if a as usize >= length {
         eprintln!("Error: line {}: index {} out of range. Should be in range of {}", line_number, a, length);
         std::process::exit(1);
     }
@@ -358,12 +350,11 @@ fn get_reference_value(base: &Value, modifier_stack: &[ReferenceModifier]) -> Va
             check_bounds(i, slice.length, 0);
             get_reference_value(& *slice.contents[i as usize].borrow(), &modifier_stack[1..])
         }
-        (_, ReferenceModifier::Index(s))  => panic!("Trying to index something that isn't an array or slice."),
+        (_, ReferenceModifier::Index(_))  => panic!("Trying to index something that isn't an array or slice."),
         (Value::Struct(ref hm), ReferenceModifier::Selector(s))  =>  {
             get_reference_value(hm.get(s).unwrap(), &modifier_stack[1..])
         }
-        (_, ReferenceModifier::Selector(s))  => panic!("Trying to get a field of something that isn't a struct."),
-        (_,_) => panic!("Invalid reference expression.")
+        (_, ReferenceModifier::Selector(_))  => panic!("Trying to get a field of something that isn't a struct.")
     }
 }
 
@@ -385,12 +376,11 @@ fn set_reference_value(base: &mut Value, modifier_stack: &[ReferenceModifier], v
             check_bounds(i, slice.length, 0);
             set_reference_value(&mut *slice.contents[i as usize].borrow_mut(), &modifier_stack[1..], value)
         }
-        (_, ReferenceModifier::Index(s))  => panic!("Trying to index something that isn't an array or slice."),
+        (_, ReferenceModifier::Index(_))  => panic!("Trying to index something that isn't an array or slice."),
         (Value::Struct(ref mut hm), ReferenceModifier::Selector(s))  =>  {
             set_reference_value(hm.get_mut(s).unwrap(), &modifier_stack[1..], value)
         }
-        (_, ReferenceModifier::Selector(s))  => panic!("Trying to get a field of something that isn't a struct."),
-        (_,_) => panic!("Invalid reference expression.")
+        (_, ReferenceModifier::Selector(_))  => panic!("Trying to get a field of something that isn't a struct.")
     }
 }
 
@@ -507,12 +497,11 @@ where F: FnOnce(&mut Value) {
             check_bounds(i, slice.length, 0);
             map_reference_value(&mut *slice.contents[i as usize].borrow_mut(), &modifier_stack[1..], f)
         }
-        (_, ReferenceModifier::Index(s))  => panic!("Trying to index something that isn't an array or slice."),
+        (_, ReferenceModifier::Index(_))  => panic!("Trying to index something that isn't an array or slice."),
         (Value::Struct(ref mut hm), ReferenceModifier::Selector(s))  =>  {
             map_reference_value(hm.get_mut(s).unwrap(), &modifier_stack[1..], f)
         }
-        (_, ReferenceModifier::Selector(s))  => panic!("Trying to get a field of something that isn't a struct."),
-        (_,_) => panic!("Invalid reference expression.")
+        (_, ReferenceModifier::Selector(_))  => panic!("Trying to get a field of something that isn't a struct.")
     }
 }
 
@@ -576,7 +565,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
             let mut block_env = create_child_env(env);
             for sn in statement_node_vec {
                 let s = interpret_statement(&sn.variant, &block_env);
-                if (!s.is_none()) {
+                if !s.is_none() {
                     return s;
                 }
             }
@@ -690,7 +679,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
         },
         StatementVariant::If{init, condition, if_branch, else_branch} => {
             let is = interpret_statement(&init.variant, env);
-            if (!is.is_none()) {
+            if !is.is_none() {
                 return is;
             }
 
@@ -700,7 +689,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                     let new_env = create_child_env(env);
                     for sn in if_branch {
                         let s = interpret_statement(&sn.variant, &new_env);
-                        if (!s.is_none()) {
+                        if !s.is_none() {
                             return s;
                         }
                     }
@@ -718,7 +707,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
         },
         StatementVariant::For{init, condition, post, body} => {
             let is = interpret_statement(&init.variant, env);
-            if (!is.is_none()) {
+            if !is.is_none() {
                 return is;
             }
             'external: loop {
@@ -739,7 +728,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                 if looping {
                     for sn in body {
                         let s = interpret_statement(&sn.variant, &new_env);
-                        match (s) {
+                        match s {
                             Signal::None => {},
                             Signal::Return(_) => {
                                 return s;
@@ -753,7 +742,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                         }
                     }
                     let ps = interpret_statement(&post.variant, &env);
-                    if (!ps.is_none()) {
+                    if !ps.is_none() {
                         return ps;
                     }
                 } else {
@@ -765,7 +754,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
         StatementVariant::Switch{init, expr, body} => {
             // TODO: check order of evaluation when using init statement
             let is = interpret_statement(&init.variant, env);
-            if (!is.is_none()) {
+            if !is.is_none() {
                 // Technically it should alway be None...
                 return is;
             }
@@ -783,13 +772,13 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                         for expr in vec_expr {
                             let rv = interpret_expression(&expr, env);
 
-                            if (lv == rv) {
+                            if lv == rv {
                                 found = true;
 
                                 let new_env = create_child_env(env);
                                 for stmt in statements {
                                     let s = interpret_statement(&stmt.variant, &env);
-                                    match (s) {
+                                    match s {
                                         Signal::None => {},
                                         Signal::Return(_) => {
                                             return s;
@@ -818,7 +807,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                             let new_env = create_child_env(env);
                             for stmt in statements {
                                 let s = interpret_statement(&stmt.variant, &env);
-                                match (s) {
+                                match s {
                                     Signal::None => {},
                                     Signal::Return(_) => {
                                         return s;

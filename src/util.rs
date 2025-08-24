@@ -64,7 +64,7 @@ pub fn parse_string_literal(value: &str) -> String {
             let mut it = value[1..value.len()-1].chars();
 
             while let Some(c) = it.next() {
-                if (c == '\\' ){
+                if c == '\\' {
                     if let Some(cc) = it.next() {
                         let escape =
                         match cc {
