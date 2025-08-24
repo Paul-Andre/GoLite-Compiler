@@ -72,14 +72,14 @@ fn format_float(a: f64, f: &mut fmt::Formatter) -> fmt::Result {
 
         let mut len_exp = exponent.len();
 
-        write!(f, "{}", if neg_mant { "-" } else {"+"});
-        write!(f, "{}", mantissa);
+        write!(f, "{}", if neg_mant { "-" } else {"+"})?;
+        write!(f, "{}", mantissa)?;
 
-        write!(f, "e");
+        write!(f, "e")?;
 
-        write!(f, "{}", if neg_exp { "-" } else {"+"});
+        write!(f, "{}", if neg_exp { "-" } else {"+"})?;
         while len_exp<3 {
-            write!(f, "0");
+            write!(f, "0")?;
             len_exp += 1;
         }
         write!(f, "{}", exponent)
@@ -112,9 +112,9 @@ impl fmt::Display for Value {
 
             Array(..) => write!(f, "<array>"),
             Slice(s) => {
-                write!(f, "<slice> [");
+                write!(f, "<slice> [")?;
                 for v in s.contents.iter() {
-                    write!(f, "{} ", v.borrow());
+                    write!(f, "{} ", v.borrow())?;
                 }
                 write!(f, "]")
             },
