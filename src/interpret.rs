@@ -556,15 +556,15 @@ pub fn interpret_reference_expr(expr: &Expression, env: &Env) -> Reference {
 }
 
 #[must_use]
-pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
-    match statement {
+pub fn interpret_statement(statement: &StatementNode, env: & Env) -> Signal {
+    match &statement.variant {
         StatementVariant::Empty => {
             return Signal::None;
         },
         StatementVariant::Block(statement_node_vec) => {
             let block_env = create_child_env(env);
             for sn in statement_node_vec {
-                let s = interpret_statement(&sn.variant, &block_env);
+                let s = interpret_statement(sn, &block_env);
                 if !s.is_none() {
                     return s;
                 }
@@ -678,7 +678,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
             return Signal::None;
         },
         StatementVariant::If{init, condition, if_branch, else_branch} => {
-            let is = interpret_statement(&init.variant, env);
+            let is = interpret_statement(init, env);
             if !is.is_none() {
                 return is;
             }
@@ -688,14 +688,14 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                 if b {
                     let new_env = create_child_env(env);
                     for sn in if_branch {
-                        let s = interpret_statement(&sn.variant, &new_env);
+                        let s = interpret_statement(sn, &new_env);
                         if !s.is_none() {
                             return s;
                         }
                     }
                     return Signal::None;
                 } else if let Some(s) = else_branch{
-                    return interpret_statement(&(*s).variant, env);
+                    return interpret_statement(&(*s), env);
                 } else {
                     // condition was false and there is no else branch
                     return Signal::None;
@@ -706,7 +706,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
             }
         },
         StatementVariant::For{init, condition, post, body} => {
-            let is = interpret_statement(&init.variant, env);
+            let is = interpret_statement(init, env);
             if !is.is_none() {
                 return is;
             }
@@ -727,7 +727,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
 
                 if looping {
                     for sn in body {
-                        let s = interpret_statement(&sn.variant, &new_env);
+                        let s = interpret_statement(sn, &new_env);
                         match s {
                             Signal::None => {},
                             Signal::Return(_) => {
@@ -741,7 +741,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                             },
                         }
                     }
-                    let ps = interpret_statement(&post.variant, &env);
+                    let ps = interpret_statement(post, &env);
                     if !ps.is_none() {
                         return ps;
                     }
@@ -753,7 +753,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
         },     
         StatementVariant::Switch{init, expr, body} => {
             // TODO: check order of evaluation when using init statement
-            let is = interpret_statement(&init.variant, env);
+            let is = interpret_statement(init, env);
             if !is.is_none() {
                 // Technically it should alway be None...
                 return is;
@@ -777,7 +777,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
 
                                 let new_env = create_child_env(env);
                                 for stmt in statements {
-                                    let s = interpret_statement(&stmt.variant, &new_env);
+                                    let s = interpret_statement(stmt, &new_env);
                                     match s {
                                         Signal::None => {},
                                         Signal::Return(_) => {
@@ -806,7 +806,7 @@ pub fn interpret_statement(statement: &StatementVariant, env: & Env) -> Signal {
                         SwitchCase::Default => {
                             let new_env = create_child_env(env);
                             for stmt in statements {
-                                let s = interpret_statement(&stmt.variant, &new_env);
+                                let s = interpret_statement(stmt, &new_env);
                                 match s {
                                     Signal::None => {},
                                     Signal::Return(_) => {
@@ -872,7 +872,7 @@ pub fn interpret_function<'a,'b>(f: &ast::Function, tl_env: &'a Env<'a,'b>, args
     }
 
     for statement_node in &f.body {
-        let s = interpret_statement(&statement_node.variant,&mut env);
+        let s = interpret_statement(statement_node,&mut env);
         match s {
             Signal::None => {},
             Signal::Return(v) => {return v},

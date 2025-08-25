@@ -72,7 +72,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec, indent: i32){
     match var_spec.kind {
         Some(ref k) => {
             print!(" ");
-            pretty_print_ast_kind(&k.variant, indent);
+            pretty_print_ast_kind(k, indent);
         }
         None => ()
     }
@@ -98,7 +98,7 @@ fn pretty_print_var_declaration(var_spec: &VarSpec, indent: i32){
 fn pretty_print_type_declaration(type_spec: &TypeSpec, indent: i32){
     indent_print(&type_spec.name, indent);
     print!(" ");
-    pretty_print_ast_kind(&type_spec.kind.variant, indent)
+    pretty_print_ast_kind(&type_spec.kind, indent)
 }
 
 
@@ -127,7 +127,7 @@ fn pretty_print_function_declaration(name: &String,
 
     match return_kind {
         &Some(ref k) => {
-            pretty_print_ast_kind(&k.variant, 1)
+            pretty_print_ast_kind(k, 1)
         },
         &None =>()
     }
@@ -141,16 +141,16 @@ fn pretty_print_function_declaration(name: &String,
 }
 
 /// Pretty prints ast kinds such as identifier, slices, arrays, and structs
-fn pretty_print_ast_kind(kind: &AstKindVariant, indent: i32){
-    match kind {
+fn pretty_print_ast_kind(kind: &AstKindNode, indent: i32){
+    match &kind.variant {
         &AstKindVariant::Identifier { ref name } => print!("{}", &name),
         &AstKindVariant::Slice { ref base } => {
             print!("[]");
-            pretty_print_ast_kind(&base.variant, indent)
+            pretty_print_ast_kind(base, indent)
         },
         &AstKindVariant::Array { ref base, ref size} => {
             print!("[{}]", &size);
-            pretty_print_ast_kind(&base.variant, indent)
+            pretty_print_ast_kind(base, indent)
         },
         &AstKindVariant::Struct { ref fields } => {
             println!("struct {{");
@@ -184,7 +184,7 @@ fn pretty_print_field(field: &Field, indent: i32){
     }
     print!(" ");
 
-    pretty_print_ast_kind(&field.kind.variant, indent);
+    pretty_print_ast_kind(&field.kind, indent);
 }
 
 fn pretty_print_statement_vector(v: &Vec<StatementNode>, indent: i32) {
